@@ -47,5 +47,6 @@ module.exports = {
 module.exports = {
   transporter,
   verifyEmailConnection,
+  sendOtpEmail,
 };
 
