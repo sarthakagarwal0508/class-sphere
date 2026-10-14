@@ -1,4 +1,3 @@
-
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema(
@@ -14,14 +13,24 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
+      maxlength: 254,
+      unique: true,
     },
 
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
+      select: false,
+    },
+
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
       select: false,
     },
 
@@ -55,6 +64,11 @@ const userSchema = new mongoose.Schema(
 
     otpResendAvailableAt: {
       type: Date,
+      select: false,
+    },
+
+    refreshTokenHash: {
+      type: String,
       select: false,
     },
   },
