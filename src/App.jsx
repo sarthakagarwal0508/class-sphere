@@ -1,10 +1,16 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import StudentLayout from './layouts/StudentLayout'
+import StudentDashboard from './pages/student/StudentDashboard'
 
 function App() {
-  return <h1 className="text-3xl font-bold text-green-600">Tailwind working!</h1>
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/student/dashboard" />} />
+      <Route path="/student" element={<StudentLayout />}>
+        <Route path="dashboard" element={<StudentDashboard />} />
+      </Route>
+    </Routes>
+  )
 }
+
 export default App
