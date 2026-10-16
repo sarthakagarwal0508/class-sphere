@@ -1,49 +1,39 @@
-import { NavLink } from 'react-router-dom'
-import {
-  LayoutDashboard,
-  BookOpen,
-  FileText,
-  ClipboardList,
-  HelpCircle,
-  Layers,
-  BarChart3,
-} from 'lucide-react'
+import { NavLink } from "react-router-dom";
+import { linksByRole } from "../data/navLinks";
 
-const links = [
-  { name: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard },
-  { name: 'My Classes', path: '/student/classes', icon: BookOpen },
-  { name: 'Study Material', path: '/student/material', icon: FileText },
-  { name: 'Assignments', path: '/student/assignments', icon: ClipboardList },
-  { name: 'Quizzes', path: '/student/quizzes', icon: HelpCircle },
-  { name: 'Flashcards', path: '/student/flashcards', icon: Layers },
-  { name: 'Progress', path: '/student/progress', icon: BarChart3 },
-]
+export default function Sidebar({ role = "student" }) {
+  const links = linksByRole[role] ?? [];
 
-function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-white border-r border-gray-200 p-5 flex flex-col">
-      <h1 className="text-2xl font-bold mb-8">ClassSphere</h1>
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-gray-100 bg-white p-3 lg:flex">
+      <h1 className="px-3 py-3 text-xl font-extrabold">
+        Class<span className="text-amber-700">Sphere</span>
+      </h1>
 
-      <nav className="flex flex-col gap-2">
-        {links.map((item) => (
+      <nav className="flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
+        {links.map(({ label, to, icon: Icon }) => (
           <NavLink
-            key={item.name}
-            to={item.path}
+            key={to}
+            to={to}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-4 py-3 rounded-xl text-sm ${
-                isActive
-                  ? 'bg-yellow-300 font-semibold'
-                  : 'text-gray-600 hover:bg-gray-100'
+              `flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition ${
+                isActive ? "bg-brand text-navy" : "text-muted hover:bg-gray-50"
               }`
             }
           >
-            <item.icon size={20} />
-            {item.name}
+            <Icon size={16} />
+            {label}
           </NavLink>
         ))}
       </nav>
-    </aside>
-  )
-}
 
-export default Sidebar
+      <div className="mt-3 shrink-0 rounded-2xl bg-navy p-3 text-center text-white">
+        <p className="text-xs font-bold">Help center</p>
+        <p className="mt-0.5 text-xs text-white/80">Have a problem? Send us a message.</p>
+        <button className="mt-2 w-full rounded-lg bg-white py-1.5 text-xs font-bold text-navy">
+          Go to help center
+        </button>
+      </div>
+    </aside>
+  );
+}

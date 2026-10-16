@@ -1,16 +1,16 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import StudentLayout from './layouts/StudentLayout'
-import StudentDashboard from './pages/student/StudentDashboard'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import StudentLayout from "./layouts/StudentLayout";
+import StudentDashboard from "./pages/student/StudentDashboard";
 
-function App() {
+export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/student/dashboard" />} />
-      <Route path="/student" element={<StudentLayout />}>
-        <Route path="dashboard" element={<StudentDashboard />} />
-      </Route>
-    </Routes>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
+        <Route path="/student" element={<StudentLayout />}>
+          <Route path="dashboard" element={<StudentDashboard />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App

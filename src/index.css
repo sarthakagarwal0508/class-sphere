@@ -2,4 +2,18 @@
 
 @theme {
   --font-sans: "Mulish", sans-serif;
+  --color-navy: #1e1e3f;
+  --color-brand: #ffe04d;
+  --color-brand-soft: #fff6d1;
+  --color-lavender: #3d3a6b;
+  --color-surface: #fafafa;
+  --color-muted: #6b6b80;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  @apply bg-surface text-navy font-sans;
 }

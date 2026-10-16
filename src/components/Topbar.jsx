@@ -1,30 +1,27 @@
-import { Search, Bell } from 'lucide-react'
+import { Search, Bell } from "lucide-react";
 
-function Topbar() {
+export default function Topbar({ title, subtitle }) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <header className="flex items-start justify-between gap-4">
       <div>
-        <h2 className="text-2xl font-bold">Hello, Student 👋</h2>
-        <p className="text-sm text-gray-500">Let's learn something new today!</p>
+        <h1 className="text-2xl font-extrabold leading-tight">{title}</h1>
+        {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-2.5 w-72">
-          <Search size={18} className="text-gray-400" />
+      <div className="flex items-center gap-2.5">
+        <div className="hidden w-72 items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 sm:flex">
+          <Search size={15} className="text-muted" />
           <input
-            type="text"
+            className="w-full bg-transparent text-xs outline-none"
             placeholder="Search for classes, tasks, etc..."
-            className="outline-none text-sm w-full bg-transparent"
           />
         </div>
 
-        <button className="relative bg-white border border-gray-200 rounded-xl p-2.5">
-          <Bell size={20} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+        <button className="relative rounded-xl border border-gray-200 bg-white p-2.5">
+          <Bell size={16} />
+          <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-red-500" />
         </button>
       </div>
-    </div>
-  )
+    </header>
+  );
 }
-
-export default Topbar
