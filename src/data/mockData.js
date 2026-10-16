@@ -36,6 +36,20 @@ export const upNextQuiz = {
 
 export const flashcardsDue = { count: 5 };
 
+export const materials = [
+  { id: 1, title: "Linked Lists: Complete Notes", courseId: 1, topic: "Linked List", type: "PDF", detail: "1.2 MB" },
+  { id: 2, title: "Stack and Queue Cheat Sheet", courseId: 1, topic: "Stack and Queue", type: "Notes", detail: "320 KB" },
+  { id: 3, title: "Normalization Explained", courseId: 2, topic: "Normalization", type: "PDF", detail: "2.1 MB" },
+  { id: 4, title: "SQL Practice Playlist", courseId: 2, topic: "SQL", type: "Link", detail: "YouTube" },
+  { id: 5, title: "Responsive Design Guide", courseId: 3, topic: "CSS", type: "PDF", detail: "980 KB" },
+  { id: 6, title: "JavaScript Event Loop", courseId: 3, topic: "JavaScript", type: "Notes", detail: "450 KB" },
+];
+
+export const recentlyOpened = [
+  { id: 1, materialId: 1, openedAt: "Opened yesterday", action: "downloaded" },
+  { id: 2, materialId: 4, openedAt: "Opened 3 days ago", action: "viewed" },
+];
+
 export const schedule = [
   { id: 1, date: "17 Oct", time: "12:00", title: "Data Structures", detail: "Lecture, Prof. Sharma" },
   { id: 2, date: "18 Oct", time: "14:30", title: "DBMS Quiz", detail: "Normalization, 20 min" },

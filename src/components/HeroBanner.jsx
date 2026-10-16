@@ -1,3 +1,13 @@
+function Tile({ Icon, className }) {
+  return (
+    <div
+      className={`absolute grid h-14 w-14 place-items-center rounded-2xl bg-card text-ink shadow-lg ${className}`}
+    >
+      <Icon size={22} />
+    </div>
+  );
+}
+
 export default function HeroBanner({
   variant = "navy",
   eyebrow,
@@ -5,6 +15,7 @@ export default function HeroBanner({
   subtitle,
   buttonText,
   onButtonClick,
+  icons = [],
 }) {
   const isNavy = variant === "navy";
 
@@ -44,6 +55,14 @@ export default function HeroBanner({
           isNavy ? "bg-panel-2" : "bg-black/5"
         }`}
       />
+
+      {icons.length === 3 && (
+        <div className="absolute right-12 top-1/2 hidden h-24 w-44 -translate-y-1/2 sm:block">
+          <Tile Icon={icons[0]} className="left-0 top-1 -rotate-6" />
+          <Tile Icon={icons[1]} className="left-14 top-8 rotate-6" />
+          <Tile Icon={icons[2]} className="right-0 top-0 rotate-6" />
+        </div>
+      )}
     </section>
   );
 }

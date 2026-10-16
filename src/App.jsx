@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
+import StudyMaterial from "./pages/student/StudyMaterial";
 
 export default function App() {
   return (
@@ -9,6 +10,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/student/dashboard" replace />} />
         <Route path="/student" element={<StudentLayout />}>
           <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="materials" element={<StudyMaterial />} />
         </Route>
       </Routes>
     </BrowserRouter>
