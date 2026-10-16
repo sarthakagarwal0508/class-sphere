@@ -29,7 +29,7 @@ export default function StudyMaterial() {
   const visible = materials.filter((m) => courseId === "all" || m.courseId === courseId);
 
   return (
-    <div className="space-y-5">
+    <div className="dashboard-stagger space-y-5">
       <Topbar
         title="Study Material"
         subtitle="Notes, PDFs and links shared by your teachers"

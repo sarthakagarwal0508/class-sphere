@@ -46,9 +46,9 @@ export default function StudentDashboard() {
   return (
     <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_20rem]">
       {/* Left: main content */}
-      <div className="space-y-5">
+      <div className="dashboard-stagger space-y-5">
         <Topbar
-          title={`Hello, ${student.firstName}`}
+          title={`Hello, ${student.firstName}` }
           subtitle="Let's learn something new today!"
         />
 
@@ -58,6 +58,8 @@ export default function StudentDashboard() {
           title={continueLearning.title}
           subtitle={`${continueLearning.course}, lesson ${continueLearning.lesson} of ${continueLearning.totalLessons}`}
           buttonText="Resume lesson"
+          imageUrl={continueLearning.imageUrl}
+          imageAlt="Programming code on a laptop"
         />
 
         <section className="grid grid-cols-2 gap-3 min-[1200px]:grid-cols-4">
@@ -119,7 +121,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Right: panel */}
-      <aside className="space-y-5 [scrollbar-width:thin] min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:max-h-[calc(100vh-3rem)] min-[1100px]:self-start min-[1100px]:overflow-y-auto">
+      <aside className="dashboard-stagger space-y-5 [scrollbar-width:thin] min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:max-h-[calc(100vh-3rem)] min-[1100px]:self-start min-[1100px]:overflow-y-auto">
         <ProfilePanel name={student.name} email={student.email} />
         <CalendarCard />
         <ScheduleCard items={schedule} />

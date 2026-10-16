@@ -13,14 +13,14 @@ export default function CourseCard({ course }) {
 
   return (
     <Card className="overflow-hidden">
-      <div className={`h-16 ${header}`} />
-
-      <div className="px-4 pb-4">
-        <div className="-mt-5 mb-2 grid h-10 w-10 place-items-center rounded-xl bg-card shadow">
+      <div className={`relative h-24 overflow-hidden ${header}`}>
+        <div className="absolute bottom-3 left-4 grid h-10 w-10 place-items-center rounded-xl border border-white/70 bg-card/95 text-ink shadow-md">
           <Icon size={18} />
         </div>
+      </div>
 
-        <h3 className="text-base font-bold leading-tight">{name}</h3>
+      <div className="px-4 pb-4">
+        <h3 className="mt-3 text-base font-extrabold leading-tight tracking-tight">{name}</h3>
         <p className="text-xs text-muted">{teacher}</p>
 
         <p className="mt-2 text-xs font-bold text-tone-green-fg">{tag}</p>

@@ -16,6 +16,8 @@ export default function HeroBanner({
   buttonText,
   onButtonClick,
   icons = [],
+  imageUrl,
+  imageAlt = "",
 }) {
   const isNavy = variant === "navy";
 
@@ -25,7 +27,27 @@ export default function HeroBanner({
         isNavy ? "bg-panel text-white" : "bg-brand text-on-brand"
       }`}
     >
-      <div className="relative z-10 max-w-md">
+      {imageUrl && (
+        <>
+          <img
+            src={imageUrl}
+            alt={imageAlt}
+            className="absolute inset-y-0 right-0 hidden h-full w-[46%] object-cover sm:block"
+            onError={(event) => {
+              event.currentTarget.hidden = true;
+            }}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isNavy
+                ? "bg-gradient-to-r from-panel via-panel/95 to-panel/15"
+                : "bg-gradient-to-r from-brand via-brand/95 to-brand/15"
+            }`}
+          />
+        </>
+      )}
+
+      <div className={`relative z-10 max-w-md ${imageUrl ? "sm:max-w-[60%]" : ""}`}>
         {eyebrow && (
           <p className={`text-base ${isNavy ? "text-white/80" : "text-on-brand/70"}`}>
             {eyebrow}

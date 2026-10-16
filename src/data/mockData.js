@@ -12,6 +12,8 @@ export const continueLearning = {
   course: "Data Structures",
   lesson: 6,
   totalLessons: 8,
+  imageUrl:
+    "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=1000&q=85",
 };
 
 export const courses = [
