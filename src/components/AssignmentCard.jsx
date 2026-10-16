@@ -2,9 +2,21 @@ import { ClipboardList } from "lucide-react";
 import Card from "./Card";
 
 const styles = {
-  pending: { label: "Pending", icon: "bg-amber-100", badge: "bg-amber-100 text-amber-800" },
-  submitted: { label: "Submitted", icon: "bg-blue-100", badge: "bg-blue-100 text-blue-700" },
-  graded: { label: "Graded", icon: "bg-green-100", badge: "bg-green-100 text-green-700" },
+  pending: {
+    label: "Pending",
+    icon: "bg-tone-yellow",
+    badge: "bg-tone-yellow text-tone-yellow-fg",
+  },
+  submitted: {
+    label: "Submitted",
+    icon: "bg-tone-blue",
+    badge: "bg-tone-blue text-tone-blue-fg",
+  },
+  graded: {
+    label: "Graded",
+    icon: "bg-tone-green",
+    badge: "bg-tone-green text-tone-green-fg",
+  },
 };
 
 // compact = dashboard version, full = Assignments page version
@@ -44,7 +56,7 @@ export default function AssignmentCard({ assignment, compact = false, onSubmit }
       {status === "pending" && (
         <button
           onClick={() => onSubmit?.(assignment)}
-          className="rounded-lg bg-brand px-4 py-1.5 text-sm font-bold text-navy"
+          className="rounded-lg bg-brand px-4 py-1.5 text-sm font-bold text-on-brand"
         >
           Submit
         </button>

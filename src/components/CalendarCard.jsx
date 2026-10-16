@@ -18,7 +18,7 @@ export default function CalendarCard() {
   const week = getWeek(today);
 
   return (
-    <div className="flex justify-between rounded-xl bg-gray-100 p-1.5">
+    <div className="flex justify-between rounded-xl bg-soft p-1.5">
       {week.map((d, i) => {
         const isToday = d.toDateString() === today.toDateString();
 
@@ -26,7 +26,7 @@ export default function CalendarCard() {
           <div
             key={i}
             className={`flex w-8 flex-col items-center rounded-lg py-1.5 text-xs ${
-              isToday ? "bg-navy text-white" : "text-muted"
+              isToday ? "bg-panel text-white" : "text-muted"
             }`}
           >
             <span>{letters[i]}</span>

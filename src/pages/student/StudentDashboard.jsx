@@ -70,13 +70,13 @@ export default function StudentDashboard() {
         <section>
           <h2 className="text-xl font-extrabold">My Courses</h2>
 
-          <div className="mt-2 flex gap-4 border-b border-gray-200">
+          <div className="mt-2 flex gap-4 border-b border-line">
             {tabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
                 className={`-mb-px border-b-2 pb-1 text-sm font-semibold ${
-                  tab === t.key ? "border-navy text-navy" : "border-transparent text-muted"
+                  tab === t.key ? "border-ink text-ink" : "border-transparent text-muted"
                 }`}
               >
                 {t.label}

@@ -1,10 +1,10 @@
 import Card from "./Card";
 
 const tones = {
-  yellow: "bg-brand-soft text-amber-700",
-  red: "bg-red-100 text-red-500",
-  green: "bg-green-100 text-green-600",
-  blue: "bg-blue-100 text-blue-600",
+  yellow: "bg-tone-yellow text-tone-yellow-fg",
+  red: "bg-tone-red text-tone-red-fg",
+  green: "bg-tone-green text-tone-green-fg",
+  blue: "bg-tone-blue text-tone-blue-fg",
 };
 
 export default function StatCard({ label, value, icon: Icon, tone = "yellow" }) {

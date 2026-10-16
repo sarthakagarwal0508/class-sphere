@@ -12,7 +12,7 @@ export default function ReminderCard({ items }) {
       <div className="mt-2 space-y-2">
         {items.map((r) => (
           <div key={r.id} className="flex items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-green-100 text-green-700">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-tone-green text-tone-green-fg">
               <Clock size={18} />
             </div>
             <div>

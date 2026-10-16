@@ -11,7 +11,7 @@ export default function ScheduleCard({ items }) {
         {items.map((item) => (
           <div key={item.id}>
             <p className="text-xs text-muted">{item.date}</p>
-            <div className="mt-0.5 rounded-lg border-l-4 border-navy bg-brand-soft px-3 py-1.5">
+            <div className="mt-0.5 rounded-lg border-l-4 border-ink bg-brand-soft px-3 py-1.5">
               <p className="text-sm">
                 <span className="font-bold">{item.time}</span> {item.title}
               </p>
