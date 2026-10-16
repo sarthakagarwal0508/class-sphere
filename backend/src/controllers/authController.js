@@ -64,10 +64,10 @@ const sendAuthResponse = (res, user, accessToken, refreshToken) =>
     },
   });
 
-// 1. Register a student and send verification OTP.
+// 1. Register a student or teacher and send verification OTP.
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role = "student" } = req.body;
 
     if (
       typeof name !== "string" ||
@@ -77,6 +77,14 @@ const register = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Name, email and password are required.",
+      });
+    }
+
+    // Only student and teacher roles are allowed.
+    if (!["student", "teacher"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role must be either student or teacher.",
       });
     }
 
@@ -107,7 +115,8 @@ const register = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 8 characters and at most 72 UTF-8 bytes.",
+        message:
+          "Password must be at least 8 characters and at most 72 UTF-8 bytes.",
       });
     }
 
@@ -130,7 +139,7 @@ const register = async (req, res) => {
       name: cleanName,
       email: normalizedEmail,
       password: await hashPassword(password),
-      role: "student",
+      role,
       isEmailVerified: false,
       emailVerificationOtpHash: hashOtp(otp),
       emailVerificationOtpExpires: new Date(
@@ -157,7 +166,8 @@ const register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Registration successful. Verify your email using the OTP sent to you.",
+      message:
+        "Registration successful. Verify your email using the OTP sent to you.",
       data: {
         userId: user._id,
         name: user.name,
@@ -224,7 +234,8 @@ const verifyOtp = async (req, res) => {
     if (user.emailVerificationAttempts >= MAX_OTP_ATTEMPTS) {
       return res.status(429).json({
         success: false,
-        message: "Maximum OTP attempts reached. Request a new OTP after cooldown.",
+        message:
+          "Maximum OTP attempts reached. Request a new OTP after cooldown.",
       });
     }
 
@@ -401,7 +412,11 @@ const login = async (req, res) => {
       email: email.trim().toLowerCase(),
     }).select("+password +refreshTokenHash");
 
-    if (!user || !user.password || !(await comparePassword(password, user.password))) {
+    if (
+      !user ||
+      !user.password ||
+      !(await comparePassword(password, user.password))
+    ) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",

@@ -6,38 +6,61 @@ const { hashValue } = require("../utils/otp");
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const ALLOWED_ROLES = ["student", "teacher"];
+
 const createAccessToken = (user) =>
   jwt.sign(
-    { sub: user._id.toString(), role: user.role, type: "access" },
+    {
+      sub: user._id.toString(),
+      role: user.role,
+      type: "access",
+    },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m" }
+    {
+      expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN || "15m",
+    }
   );
 
 const createRefreshToken = (user) =>
   jwt.sign(
-    { sub: user._id.toString(), jti: crypto.randomUUID(), type: "refresh" },
+    {
+      sub: user._id.toString(),
+      jti: crypto.randomUUID(),
+      type: "refresh",
+    },
     process.env.JWT_REFRESH_SECRET,
-    { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d" }
+    {
+      expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d",
+    }
   );
 
-const googleAuth = async (req, res, next) => {
+const googleAuth = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, role } = req.body;
 
     if (!idToken) {
-      return res.status(400).json({ success: false, message: "Google ID token is required." });
+      return res.status(400).json({
+        success: false,
+        message: "Google ID token is required.",
+      });
     }
 
     if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(500).json({ success: false, message: "Google authentication is not configured." });
+      return res.status(500).json({
+        success: false,
+        message: "Google authentication is not configured.",
+      });
     }
 
+    // Verify the Google ID token
     let payload;
+
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
+
       payload = ticket.getPayload();
     } catch {
       return res.status(401).json({
@@ -46,34 +69,68 @@ const googleAuth = async (req, res, next) => {
       });
     }
 
-    if (!payload?.sub || !payload.email || payload.email_verified !== true) {
-      return res.status(401).json({ success: false, message: "Google account could not be verified." });
+    if (
+      !payload?.sub ||
+      !payload.email ||
+      payload.email_verified !== true
+    ) {
+      return res.status(401).json({
+        success: false,
+        message: "Google account could not be verified.",
+      });
     }
 
-    const email = payload.email.toLowerCase();
-    let user = await User.findOne({ $or: [{ googleId: payload.sub }, { email }] }).select("+googleId");
+    const email = payload.email.toLowerCase().trim();
+
+    // Find an existing account by Google ID or email
+    let user = await User.findOne({
+      $or: [{ googleId: payload.sub }, { email }],
+    }).select("+googleId");
 
     if (user) {
+      // Never change an existing user's role from this request
       if (user.email.toLowerCase() !== email) {
-        return res.status(409).json({ success: false, message: "This Google account is linked to a different email." });
+        return res.status(409).json({
+          success: false,
+          message: "This Google account is linked to a different email.",
+        });
       }
+
       if (user.googleId && user.googleId !== payload.sub) {
-        return res.status(409).json({ success: false, message: "This email is linked to another Google account." });
+        return res.status(409).json({
+          success: false,
+          message: "This email is linked to another Google account.",
+        });
       }
-      if (!user.googleId) user.googleId = payload.sub;
+
+      if (!user.googleId) {
+        user.googleId = payload.sub;
+      }
+
       user.isEmailVerified = true;
       await user.save();
     } else {
+      // Role is required only when creating a new Google account
+      if (!ALLOWED_ROLES.includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: "Please select a valid role: student or teacher.",
+        });
+      }
+
       user = await User.create({
         name: payload.name || email.split("@")[0],
         email,
         googleId: payload.sub,
+        role,
         isEmailVerified: true,
       });
     }
 
+    // Issue ClassSphere access and refresh tokens
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
+
     user.refreshTokenHash = hashValue(refreshToken);
     await user.save();
 
@@ -96,6 +153,7 @@ const googleAuth = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Google authentication error:", error.message);
+
     return res.status(500).json({
       success: false,
       message: "Internal server error.",

@@ -19,6 +19,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
     },
 
+    // Password is optional for Google-only accounts.
     password: {
       type: String,
       required: function () {
