@@ -1,0 +1,633 @@
+
+.landing-page {
+  min-height: 100vh;
+}
+
+.landing-hero {
+  position: relative;
+  display: flex;
+  height: 100vh;
+  height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(180deg, #ffed98 0%, #ffe47b 76%, #f8db6c 100%);
+}
+
+.landing-navbar {
+  position: relative;
+  z-index: 10;
+  min-height: 58px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  background: #1f1d3d;
+  box-shadow: 0 12px 28px rgb(31 29 61 / 22%);
+}
+
+.landing-nav {
+  scrollbar-width: none;
+}
+
+.landing-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.landing-nav-link {
+  flex: 0 0 auto;
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  color: rgb(255 255 255 / 75%);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.landing-nav-link:hover,
+.landing-nav-link:focus-visible {
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+}
+
+.cs-scene {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  isolation: isolate;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    #ffed98 0%,
+    #ffe47b 76%,
+    #f8db6c 100%
+  );
+}
+
+.landing-content {
+  position: relative;
+  z-index: 6;
+}
+
+.landing-section {
+  scroll-margin-top: 1rem;
+}
+
+.landing-features {
+  background-color: #fffdf7;
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 3rem, rgb(226 104 104 / 12%) 3rem, rgb(226 104 104 / 12%) calc(3rem + 1px), transparent calc(3rem + 1px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 31px, rgb(50 102 181 / 8%) 31px, rgb(50 102 181 / 8%) 32px);
+  background-position: 0 0;
+}
+
+.landing-feature-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #e6eaf1;
+  border-radius: 1.25rem;
+  background: #fff;
+  padding: 1.5rem;
+  box-shadow: 0 14px 32px rgb(31 29 61 / 8%), inset 0 1px rgb(255 255 255 / 90%);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.landing-feature-card::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: #ffdf59;
+  content: "";
+}
+
+.landing-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgb(50 102 181 / 28%);
+  box-shadow: 0 20px 40px rgb(31 29 61 / 13%);
+}
+
+.landing-feature-icon {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border: 1px solid rgb(255 223 89 / 80%);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, #fff1ae, #fff9df);
+  font-size: 1.5rem;
+  box-shadow: 0 6px 14px rgb(31 29 61 / 8%);
+}
+
+.landing-faq {
+  background-color: #f7f9ff;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 31px,
+    rgb(31 29 61 / 6%) 31px,
+    rgb(31 29 61 / 6%) 32px
+  );
+}
+
+.landing-faq-item {
+  position: relative;
+  border: 1px solid rgb(31 29 61 / 10%);
+  border-radius: 1rem;
+  background: #fff;
+  padding: 1rem 1.25rem;
+  box-shadow: 0 8px 22px rgb(31 29 61 / 6%), inset 0 1px #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.landing-faq-item:hover,
+.landing-faq-item[open] {
+  transform: translateY(-1px);
+  border-color: rgb(50 102 181 / 35%);
+  box-shadow: 0 12px 28px rgb(31 29 61 / 10%), inset 3px 0 #ffdf59;
+}
+
+.landing-faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+  list-style: none;
+}
+
+.landing-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.landing-faq-item summary::after {
+  float: right;
+  margin-left: 1rem;
+  color: #3266b5;
+  content: "+";
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.landing-faq-item[open] summary::after {
+  color: #1f1d3d;
+  content: "−";
+}
+
+.landing-faq-item p {
+  margin-top: 0.75rem;
+  line-height: 1.7;
+  color: #64748b;
+}
+
+.landing-contact,
+.landing-footer {
+  background: #1f1d3d;
+}
+
+/* Sun */
+.cs-sun {
+  top: 34px;
+  right: 9%;
+  width: 76px;
+  height: 76px;
+  background: #fff9df;
+  box-shadow: 0 0 0 15px rgb(255 255 255 / 20%);
+  animation: cs-sun-pulse 4s ease-in-out infinite;
+}
+
+/* Clouds */
+.cs-cloud {
+  position: absolute;
+  z-index: 1;
+  width: 126px;
+  height: 25px;
+  border-radius: 30px;
+  background: #fff;
+  animation: cs-cloud-drift 12s ease-in-out infinite alternate;
+}
+
+.cs-cloud::before,
+.cs-cloud::after,
+.cs-cloud span {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+  content: "";
+}
+
+.cs-cloud::before {
+  top: -24px;
+  left: 24px;
+  width: 45px;
+  height: 45px;
+}
+
+.cs-cloud::after {
+  top: -16px;
+  right: 18px;
+  width: 37px;
+  height: 37px;
+}
+
+.cs-cloud-one {
+  top: 20%;
+  left: 11%;
+}
+
+.cs-cloud-two {
+  top: 13%;
+  left: 45%;
+  transform: scale(0.75);
+  animation-delay: -4s;
+}
+
+.cs-cloud-three {
+  top: 37%;
+  right: 17%;
+  transform: scale(0.62);
+  animation-delay: -7s;
+}
+
+/* Hills */
+.cs-hill {
+  position: absolute;
+  z-index: 1;
+  bottom: 30px;
+  height: 95px;
+  border-radius: 50% 50% 0 0;
+}
+
+.cs-hill-one {
+  left: -9%;
+  width: 72%;
+  background: #d9f0e7;
+  transform: rotate(-3deg);
+}
+
+.cs-hill-two {
+  right: -10%;
+  width: 69%;
+  bottom: 22px;
+  background: #c7e8dc;
+  transform: rotate(3deg);
+}
+
+/* Trees */
+.cs-tree {
+  position: absolute;
+  z-index: 2;
+  bottom: 58px;
+  width: 65px;
+  height: 118px;
+  transform-origin: bottom center;
+  animation: cs-tree-sway 3.5s ease-in-out infinite;
+}
+
+.cs-tree-one {
+  left: 13%;
+}
+
+.cs-tree-two {
+  right: 13%;
+  animation-delay: -1s;
+}
+
+.cs-tree-three {
+  left: 29%;
+  transform: scale(0.68);
+  animation-delay: -2s;
+}
+
+.cs-tree::before {
+  position: absolute;
+  bottom: 0;
+  left: 29px;
+  width: 8px;
+  height: 43px;
+  border-radius: 5px;
+  background: #c58a45;
+  content: "";
+}
+
+.cs-tree span {
+  position: absolute;
+  left: 3px;
+  width: 59px;
+  height: 64px;
+  border: 3px solid #239d87;
+  border-radius: 50%;
+  background: #32b99b;
+}
+
+.cs-tree span:first-child {
+  top: 0;
+}
+
+.cs-tree span:last-child {
+  top: 34px;
+  left: -2px;
+}
+
+/* Road */
+.cs-road {
+  z-index: 3;
+  height: 37px;
+  border-top: 5px solid #eef7f1;
+  background: #263341;
+}
+
+.cs-road span {
+  position: absolute;
+  top: 15px;
+  width: 48px;
+  height: 4px;
+  border-radius: 3px;
+  background: #e8d98b;
+}
+
+.cs-road span:nth-child(1) {
+  left: 10%;
+}
+
+.cs-road span:nth-child(2) {
+  left: 37%;
+}
+
+.cs-road span:nth-child(3) {
+  left: 64%;
+}
+
+.cs-road span:nth-child(4) {
+  right: 10%;
+}
+
+/* Bus body */
+.cs-bus {
+  position: absolute;
+  z-index: 5;
+  bottom: 27px;
+  left: 0;
+  width: 265px;
+  height: 111px;
+  border: 5px solid #f0b72a;
+  border-radius: 19px 23px 9px 9px;
+  background: #ffca35;
+  box-shadow: 0 7px 0 rgb(151 105 18 / 9%);
+  animation: cs-bus-drive 12s linear infinite;
+  will-change: transform;
+}
+
+.cs-bus-label {
+  position: absolute;
+  top: 7px;
+  left: 15px;
+  color: #75591b;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+
+.cs-bus-windows {
+  position: absolute;
+  top: 25px;
+  left: 14px;
+  display: flex;
+  gap: 7px;
+}
+
+.cs-bus-windows span {
+  width: 39px;
+  height: 38px;
+  border: 4px solid #fff3c7;
+  border-radius: 9px;
+  background: #e8f7ff;
+}
+
+.cs-bus-front-window {
+  position: absolute;
+  top: 23px;
+  right: 10px;
+  width: 48px;
+  height: 43px;
+  border: 4px solid #fff3c7;
+  border-radius: 9px 13px 8px 8px;
+  background: #e1f4ff;
+}
+
+.cs-bus-bumper {
+  position: absolute;
+  right: -10px;
+  bottom: 0;
+  left: -10px;
+  height: 8px;
+  border-radius: 5px;
+  background: #e7a923;
+}
+
+/* Wheels */
+.cs-wheel {
+  position: absolute;
+  bottom: -19px;
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: #263341;
+}
+
+.cs-wheel > span {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #b9c8d1;
+}
+
+.cs-wheel-one {
+  left: 30px;
+}
+
+.cs-wheel-two {
+  right: 29px;
+}
+
+/* Decorative sparkles */
+.cs-sparkle {
+  position: absolute;
+  z-index: 2;
+  color: #fff;
+  font-size: 30px;
+  animation: cs-twinkle 2.5s ease-in-out infinite;
+}
+
+.cs-sparkle-one {
+  top: 49%;
+  left: 38%;
+}
+
+.cs-sparkle-two {
+  top: 34%;
+  right: 27%;
+  animation-delay: -1s;
+}
+
+/* Scene caption */
+.cs-scene-caption {
+  position: absolute;
+  z-index: 6;
+  right: 22px;
+  bottom: 10px;
+  margin: 0;
+  color: #9b7b12;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+/* ==========================================
+   Animations
+   ========================================== */
+
+/* Full left-to-right journey, then re-enter */
+@keyframes cs-bus-drive {
+  from {
+    transform: translateX(-280px);
+  }
+
+  to {
+    transform: translateX(calc(100vw + 280px));
+  }
+}
+
+@keyframes cs-cloud-drift {
+  from {
+    margin-left: -10px;
+  }
+
+  to {
+    margin-left: 15px;
+  }
+}
+
+@keyframes cs-tree-sway {
+  0%,
+  100% {
+    rotate: -2deg;
+  }
+
+  50% {
+    rotate: 2deg;
+  }
+}
+
+@keyframes cs-sun-pulse {
+  0%,
+  100% {
+    scale: 1;
+  }
+
+  50% {
+    scale: 1.07;
+  }
+}
+
+@keyframes cs-twinkle {
+  0%,
+  100% {
+    opacity: 0.65;
+    scale: 0.9;
+  }
+
+  50% {
+    opacity: 1;
+    scale: 1.15;
+  }
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .landing-nav-link {
+    padding: 0.55rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  .cs-sun {
+    top: 25px;
+    right: 8%;
+    width: 55px;
+    height: 55px;
+  }
+
+  .cs-cloud-one {
+    left: 7%;
+  }
+
+  .cs-cloud-two {
+    left: 48%;
+  }
+
+  .cs-cloud-three {
+    right: 7%;
+  }
+
+  .cs-tree-one {
+    left: 4%;
+  }
+
+  .cs-tree-two {
+    right: 4%;
+  }
+
+  .cs-tree-three {
+    left: 24%;
+  }
+
+  .cs-bus {
+    scale: 0.78;
+    transform-origin: bottom left;
+  }
+
+  .cs-scene-caption {
+    right: 8px;
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+}
+
+@media (max-height: 680px) and (min-width: 641px) {
+  .landing-content {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .landing-content > p:first-child {
+    margin-bottom: 0.75rem;
+  }
+
+  .landing-content > p:last-child {
+    margin-top: 0.75rem;
+  }
+}
+
+/* Respect reduced-motion accessibility preference */
+@media (prefers-reduced-motion: reduce) {
+  .landing-feature-card,
+  .landing-faq-item {
+    transition: none;
+  }
+
+  .landing-feature-card:hover,
+  .landing-faq-item:hover,
+  .landing-faq-item[open] {
+    transform: none;
+  }
+
+  .cs-bus,
+  .cs-cloud,
+  .cs-tree,
+  .cs-sun,
+  .cs-sparkle {
+    animation: none;
+  }
+
+  .cs-bus {
+    left: 20px;
+    transform: none;
+  }
+}
