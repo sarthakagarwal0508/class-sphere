@@ -12,6 +12,7 @@ function nameFromEmail(email) {
 
 export async function loginRequest({ email, role }) {
   await delay();
+  
   // Real: const { data } = await api.post("/auth/login", { email, password, role });
   return {
     token: "mock-token",
