@@ -10,7 +10,8 @@ export default function ClassAnalytics() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6">git add .
+
       <div>
         <h1 className="text-xl font-bold text-slate-900">Class analytics</h1>
         <p className="text-xs text-slate-500">Averages, quiz trends and submission completion</p>
