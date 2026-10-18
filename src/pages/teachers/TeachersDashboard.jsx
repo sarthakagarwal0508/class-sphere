@@ -32,7 +32,7 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+      <div className="space-y-6 dashboard-stagger">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 md:p-8 backdrop-blur-xl">
         <div className="relative z-10 max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-3">

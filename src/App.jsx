@@ -1,16 +1,17 @@
+import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Public & Landing
+// 1. Landing & Auth
 import LandingPage from "./LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 
-// Student Portal
+// 2. Student Portal
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudyMaterial from "./pages/student/StudyMaterial";
 
-// Teacher Portal
+// 3. Teacher Portal Layout & Pages
 import TeacherLayout from "./layouts/TeacherLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import CreateClassroom from "./pages/teacher/CreateClassroom";
@@ -31,18 +32,18 @@ export default function App() {
         {/* Landing Page */}
         <Route path="/" element={<LandingPage />} />
 
-        {/* Auth Routes */}
+        {/* Authentication */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Student Routes */}
+        {/* Student Portal */}
         <Route path="/student" element={<StudentLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="materials" element={<StudyMaterial />} />
         </Route>
 
-        {/* Teacher Routes */}
+        {/* Teacher Portal */}
         <Route path="/teacher" element={<TeacherLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
@@ -59,7 +60,7 @@ export default function App() {
           <Route path="doubt-forum" element={<DoubtForum />} />
         </Route>
 
-        {/* Fallback Catch-all Route */}
+        {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

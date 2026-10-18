@@ -76,10 +76,34 @@
   --color-tone-red-fg: var(--tone-red-fg);
 }
 
+/* 4. Global Smooth Scroll & Typography */
 html {
   font-size: 15px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
 }
 
+/* 5. Minimalist Slim Scrollbar (Theme-Adaptive) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--muted) 35%, transparent);
+  border-radius: 9999px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--muted) 65%, transparent);
+}
+
+/* 6. Body styling */
 body {
   @apply bg-surface text-ink font-sans transition-colors duration-200;
   background-image:
@@ -103,6 +127,7 @@ body {
   background-attachment: fixed;
 }
 
+/* 7. Glassmorphism Sidebar */
 .glass-sidebar {
   background: linear-gradient(145deg, rgb(18 18 40 / 96%), rgb(30 30 63 / 90%));
   border: 1px solid rgb(255 255 255 / 25%);
@@ -127,12 +152,12 @@ body {
     inset 1px 0 rgb(255 255 255 / 10%);
 }
 
+/* 8. Smooth Scroll-In & Stagger Animations */
 @keyframes dashboard-reveal {
   from {
     opacity: 0;
     transform: translateY(12px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -140,30 +165,27 @@ body {
 }
 
 .dashboard-stagger > * {
-  animation: dashboard-reveal 550ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  animation: dashboard-reveal 450ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
 
-.dashboard-stagger > :nth-child(2) {
-  animation-delay: 70ms;
-}
+.dashboard-stagger > :nth-child(1) { animation-delay: 40ms; }
+.dashboard-stagger > :nth-child(2) { animation-delay: 90ms; }
+.dashboard-stagger > :nth-child(3) { animation-delay: 140ms; }
+.dashboard-stagger > :nth-child(4) { animation-delay: 190ms; }
+.dashboard-stagger > :nth-child(5) { animation-delay: 240ms; }
+.dashboard-stagger > :nth-child(6) { animation-delay: 290ms; }
 
-.dashboard-stagger > :nth-child(3) {
-  animation-delay: 140ms;
-}
-
-.dashboard-stagger > :nth-child(4) {
-  animation-delay: 210ms;
-}
-
-.dashboard-stagger > :nth-child(5) {
-  animation-delay: 280ms;
-}
-
-.dashboard-stagger > :nth-child(6) {
-  animation-delay: 350ms;
+/* Smooth scroll container utility */
+.smooth-scroll {
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   .dashboard-stagger > * {
     animation: none;
   }

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, FileCheck2, Sparkles, Award } from 'lucide-react';
 
@@ -6,32 +6,31 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
 
   const metrics = [
-    { label: 'Active Classrooms', value: '3', icon: BookOpen, color: 'bg-amber-100 text-amber-800' },
-    { label: 'Enrolled Students', value: '184', icon: Users, color: 'bg-blue-100 text-blue-800' },
-    { label: 'Pending to Grade', value: '6', icon: FileCheck2, color: 'bg-rose-100 text-rose-800' },
-    { label: 'Class Average', value: '74%', icon: Award, color: 'bg-emerald-100 text-emerald-800' },
+    { label: 'Classrooms', value: '3', icon: BookOpen, color: 'bg-amber-100 text-amber-800' },
+    { label: 'Total students', value: '184', icon: Users, color: 'bg-blue-100 text-blue-800' },
+    { label: 'To grade', value: '6', icon: FileCheck2, color: 'bg-rose-100 text-rose-800' },
+    { label: 'Class average', value: '74%', icon: Award, color: 'bg-emerald-100 text-emerald-800' },
   ];
 
-  const classes = [
-    { id: 'cls-1', name: 'Data Structures', section: 'Section A, 62 students', joinCode: 'DS4X9K', stats: '4 assignments  3 quizzes', avg: '74%', progress: 74, bg: 'bg-[#fefce8] border-amber-200' },
-    { id: 'cls-2', name: 'Database Systems', section: 'Section A, 58 students', joinCode: 'DB7M2Q', stats: '2 assignments  5 quizzes', avg: '68%', progress: 68, bg: 'bg-white border-[#eceee8]' },
-    { id: 'cls-3', name: 'Web Development', section: 'Section B, 64 students', joinCode: 'WD1P8R', stats: '6 assignments  2 quizzes', avg: '81%', progress: 81, bg: 'bg-white border-[#eceee8]' },
+  const classrooms = [
+    { id: 'dsa', name: 'Data Structures', section: 'Section A, 62 students', joinCode: 'DS4X9K', stats: '4 assignments  3 quizzes', avg: '74%', progress: 74, bg: 'bg-[#fefce8] border-amber-200' },
+    { id: 'dbms', name: 'Database Systems', section: 'Section A, 58 students', joinCode: 'DB7M2Q', stats: '2 assignments  5 quizzes', avg: '68%', progress: 68, bg: 'bg-white border-[#eceee8]' },
+    { id: 'webdev', name: 'Web Development', section: 'Section B, 64 students', joinCode: 'WD1P8R', stats: '6 assignments  2 quizzes', avg: '81%', progress: 81, bg: 'bg-white border-[#eceee8]' },
   ];
 
-  const recentSubmissions = [
-    { id: 'sub-1', student: 'Aarav Mehta', task: 'Linked List Implementation, 19 Oct', status: 'Submitted', type: 'pending' },
-    { id: 'sub-2', student: 'Kabir Singh', task: 'ER Diagram Design, 18 Oct', status: 'Submitted', type: 'pending' },
-    { id: 'sub-3', student: 'Riya Sharma', task: 'Linked List Implementation, 18 Oct', score: '18/20', status: 'Graded', type: 'graded' },
+  const needsGrading = [
+    { id: 1, name: 'Aarav Mehta', task: 'Linked List Implementation, 19 Oct', status: 'Submitted', type: 'pending' },
+    { id: 2, name: 'Kabir Singh', task: 'ER Diagram Design, 18 Oct', status: 'Submitted', type: 'pending' },
+    { id: 3, name: 'Riya Sharma', task: 'Linked List Implementation, 18 Oct', score: '18/20', status: 'Graded', type: 'graded' },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* 🌟 Yellow Higher Card (Top Hero Banner) */}
+    <div className="space-y-6 dashboard-stagger">
+      {/* 🌟 Yellow Higher Card */}
       <div className="rounded-3xl bg-[#fde047] p-6 md:p-8 shadow-sm text-slate-900 flex items-center justify-between relative overflow-hidden">
         <div className="max-w-xl space-y-2 z-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/10 text-slate-900 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            Fall Semester 2026 Academic Portal
+            <Sparkles className="w-3.5 h-3.5" /> Academic Portal &bull; Fall 2026
           </div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
             Welcome back, Prof. Sharma! 👋
@@ -40,22 +39,14 @@ export default function TeacherDashboard() {
             You have <span className="font-bold underline decoration-slate-900">6 assignments</span> awaiting evaluation across your 3 active classrooms today.
           </p>
           <div className="pt-2 flex items-center gap-2">
-            <button
-              onClick={() => navigate('/teacher/submissions')}
-              className="px-4 py-2 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-semibold shadow-sm transition-colors"
-            >
+            <button onClick={() => navigate('/teacher/submissions')} className="px-4 py-2 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-semibold shadow-sm transition-colors">
               Grade pending work
             </button>
-            <button
-              onClick={() => navigate('/teacher/create-classroom')}
-              className="px-4 py-2 rounded-xl bg-white/70 hover:bg-white text-slate-900 text-xs font-semibold transition-colors"
-            >
+            <button onClick={() => navigate('/teacher/create-classroom')} className="px-4 py-2 rounded-xl bg-white/70 hover:bg-white text-slate-900 text-xs font-semibold transition-colors">
               New classroom
             </button>
           </div>
         </div>
-
-        {/* Floating Icons */}
         <div className="hidden sm:flex items-center gap-3 z-10">
           <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
             <BookOpen className="w-5 h-5 text-slate-800" />
@@ -71,34 +62,25 @@ export default function TeacherDashboard() {
 
       {/* Metrics Row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metrics.map((metric, i) => {
-          const Icon = metric.icon;
-          return (
-            <div
-              key={i}
-              className="bg-white border border-[#eceee8] rounded-2xl p-4 shadow-xs flex items-center gap-3"
-            >
-              <div className={`w-10 h-10 rounded-xl ${metric.color} flex items-center justify-center`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 font-medium">{metric.label}</p>
-                <p className="text-xl font-black text-slate-900">{metric.value}</p>
-              </div>
+        {metrics.map((m) => (
+          <div key={m.label} className="bg-white border border-[#eceee8] rounded-2xl p-4 shadow-xs flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${m.color}`}>
+              <m.icon className="w-4 h-4" />
             </div>
-          );
-        })}
+            <div>
+              <p className="text-xs text-slate-500">{m.label}</p>
+              <p className="text-xl font-extrabold text-slate-900">{m.value}</p>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Classrooms */}
       <div className="space-y-3">
         <h2 className="text-sm font-bold text-slate-900">My Classrooms</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {classes.map((c) => (
-            <div
-              key={c.id}
-              className={`${c.bg} border rounded-2xl p-5 space-y-3 hover:border-slate-300 transition-all`}
-            >
+          {classrooms.map((c) => (
+            <div key={c.id} className={`${c.bg} border rounded-2xl p-5 space-y-3 hover:border-slate-300 transition-all`}>
               <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
                 <BookOpen className="w-4 h-4" />
               </div>
@@ -121,33 +103,29 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* Needs Grading & Quiz Averages */}
+      {/* Needs Grading */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">Needs grading</h3>
           <div className="space-y-3">
-            {recentSubmissions.map((item) => (
+            {needsGrading.map((item) => (
               <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-[#fbfbf9] border border-slate-100">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-semibold">
-                    {item.student.charAt(0)}
+                    {item.name.charAt(0)}
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900">{item.student}</h4>
+                    <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
                     <p className="text-[11px] text-slate-500">{item.task}</p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2">
                   {item.type === 'pending' ? (
                     <>
                       <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
                         {item.status}
                       </span>
-                      <button
-                        onClick={() => navigate('/teacher/submissions')}
-                        className="px-3 py-1 rounded-lg bg-[#fde047] hover:bg-amber-400 text-slate-900 text-xs font-bold transition-colors"
-                      >
+                      <button onClick={() => navigate('/teacher/submissions')} className="px-3 py-1 rounded-lg bg-[#fde047] hover:bg-amber-400 text-slate-900 text-xs font-bold transition-colors">
                         Grade
                       </button>
                     </>
