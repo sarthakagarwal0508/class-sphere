@@ -1,189 +1,99 @@
-import React from 'react';
+﻿import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, FileCheck2, BarChart2 } from 'lucide-react';
+import { Users, BookOpen, FileCheck2, Clock, PlusCircle, Upload, HelpCircle, ArrowRight, Copy, Check, ChevronRight, Sparkles } from 'lucide-react';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
+  const [copiedCode, setCopiedCode] = useState(null);
 
   const metrics = [
-    { label: 'Classrooms', value: '3', icon: BookOpen, color: 'bg-amber-100 text-amber-800' },
-    { label: 'Total students', value: '184', icon: Users, color: 'bg-blue-100 text-blue-800' },
-    { label: 'To grade', value: '6', icon: FileCheck2, color: 'bg-rose-100 text-rose-800' },
-    { label: 'Class average', value: '74%', icon: BarChart2, color: 'bg-emerald-100 text-emerald-800' },
+    { label: 'Active Classrooms', value: '6', subtext: '+1 this semester', icon: BookOpen, color: 'from-blue-500/20 to-indigo-500/20', text: 'text-blue-400' },
+    { label: 'Enrolled Students', value: '284', subtext: '94% average attendance', icon: Users, color: 'from-emerald-500/20 to-teal-500/20', text: 'text-emerald-400' },
+    { label: 'Pending to Grade', value: '38', subtext: '8 urgent (< 24h)', icon: FileCheck2, color: 'from-amber-500/20 to-orange-500/20', text: 'text-amber-400' },
+    { label: 'Upcoming Deadlines', value: '4', subtext: 'Next in 18 hours', icon: Clock, color: 'from-purple-500/20 to-pink-500/20', text: 'text-purple-400' },
   ];
 
-  const classrooms = [
-    {
-      id: 'dsa',
-      name: 'Data Structures',
-      section: 'Section A, 62 students',
-      joinCode: 'DS4X9K',
-      stats: '4 assignments  3 quizzes',
-      avg: '74%',
-      progress: 74,
-    },
-    {
-      id: 'dbms',
-      name: 'Database Systems',
-      section: 'Section A, 58 students',
-      joinCode: 'DB7M2Q',
-      stats: '2 assignments  5 quizzes',
-      avg: '68%',
-      progress: 68,
-    },
-    {
-      id: 'webdev',
-      name: 'Web Development',
-      section: 'Section B, 64 students',
-      joinCode: 'WD1P8R',
-      stats: '6 assignments  2 quizzes',
-      avg: '81%',
-      progress: 81,
-    },
+  const classes = [
+    { id: 'cls-1', name: 'Data Structures & Algorithms', subject: 'Computer Science', section: 'CS-A', studentsCount: 64, joinCode: 'DSA402', color: 'border-l-indigo-500', nextAssignment: 'Binary Trees Implementation' },
+    { id: 'cls-2', name: 'Advanced Web Engineering', subject: 'Software Eng.', section: 'SE-3B', studentsCount: 52, joinCode: 'WEB881', color: 'border-l-emerald-500', nextAssignment: 'GraphQL Microservices Lab' },
+    { id: 'cls-3', name: 'Machine Learning Fundamentals', subject: 'Artificial Intelligence', section: 'AI-1A', studentsCount: 78, joinCode: 'ML9032', color: 'border-l-purple-500', nextAssignment: 'Linear Regression from Scratch' },
   ];
 
-  const needsGrading = [
-    { id: 1, name: 'Aarav Mehta', task: 'Linked List Implementation, 19 Oct', status: 'Submitted', type: 'pending' },
-    { id: 2, name: 'Kabir Singh', task: 'ER Diagram Design, 18 Oct', status: 'Submitted', type: 'pending' },
-    { id: 3, name: 'Riya Sharma', task: 'Linked List Implementation, 18 Oct', score: '18/20', status: 'Graded', type: 'graded' },
+  const recentSubmissions = [
+    { id: 'sub-1', student: 'Alex Johnson', class: 'CS-A', assignment: 'Lab 4: Binary Trees', time: '12m ago', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100' },
+    { id: 'sub-2', student: 'Priya Sharma', class: 'AI-1A', assignment: 'Model Overfitting Analysis', time: '45m ago', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100' },
+    { id: 'sub-3', student: 'Marcus Vance', class: 'SE-3B', assignment: 'REST API Authentication', time: '2h ago', avatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100' },
   ];
+
+  const handleCopyCode = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2500);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Page Heading */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Hello, Prof. Sharma</h1>
-        <p className="text-xs text-slate-500">Here is how your classes are doing</p>
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900/60 via-slate-900 to-slate-900 border border-indigo-500/20 p-6 md:p-8 backdrop-blur-xl">
+        <div className="relative z-10 max-w-xl">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-3">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            Fall Semester 2026 Academic Portal
+          </div>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-white tracking-tight">Welcome back, Dr. Jenkins! 👋</h1>
+          <p className="mt-2 text-sm text-slate-300">You have <span className="text-amber-400 font-semibold">38 assignments</span> awaiting evaluation.</p>
+        </div>
       </div>
 
-      {/* Stat Bar */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {metrics.map((m) => {
-          const Icon = m.icon;
+        {metrics.map((metric, i) => {
+          const Icon = metric.icon;
           return (
-            <div key={m.label} className="bg-white border border-[#eceee8] rounded-2xl p-4 flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${m.color}`}>
-                <Icon className="w-4 h-4" />
+            <div key={i} className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 shadow-sm backdrop-blur-sm">
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${metric.color} flex items-center justify-center mb-3`}>
+                <Icon className={`w-5 h-5 ${metric.text}`} />
               </div>
-              <div>
-                <p className="text-xs text-slate-500">{m.label}</p>
-                <p className="text-xl font-extrabold text-slate-900">{m.value}</p>
-              </div>
+              <p className="text-2xl font-bold text-slate-100">{metric.value}</p>
+              <p className="text-xs font-medium text-slate-300 mt-0.5">{metric.label}</p>
+              <p className="text-[11px] text-slate-400 mt-1">{metric.subtext}</p>
             </div>
           );
         })}
       </div>
 
-      {/* My Classrooms Section */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-bold text-slate-900">My Classrooms</h2>
+      <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Quick Actions</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button onClick={() => navigate('/teacher/create-class')} className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-indigo-600/10 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-600 hover:text-white transition-all text-xs font-semibold">
+            <PlusCircle className="w-4 h-4" /> New Classroom
+          </button>
+          <button onClick={() => navigate('/teacher/create-assignment')} className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-emerald-600/10 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600 hover:text-white transition-all text-xs font-semibold">
+            <BookOpen className="w-4 h-4" /> New Assignment
+          </button>
+          <button onClick={() => navigate('/teacher/upload-material')} className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-600/10 border border-blue-500/30 text-blue-300 hover:bg-blue-600 hover:text-white transition-all text-xs font-semibold">
+            <Upload className="w-4 h-4" /> Upload Notes
+          </button>
+          <button onClick={() => navigate('/teacher/create-quiz')} className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-600/10 border border-purple-500/30 text-purple-300 hover:bg-purple-600 hover:text-white transition-all text-xs font-semibold">
+            <HelpCircle className="w-4 h-4" /> Create Quiz
+          </button>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold text-slate-100">My Created Classrooms ({classes.length})</h2>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {classrooms.map((c) => (
-            <div key={c.id} className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3 hover:border-slate-300 transition-all">
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-bold text-sm text-slate-900">{c.name}</h3>
-                <p className="text-xs text-slate-500">{c.section}</p>
-              </div>
-              <div className="inline-block bg-[#f4f5f0] text-slate-700 font-mono text-[11px] font-semibold px-2.5 py-1 rounded-lg">
-                Join code: {c.joinCode}
-              </div>
-              <p className="text-xs text-slate-500">{c.stats}</p>
-              <div className="space-y-1 pt-1">
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#181829] h-full rounded-full" style={{ width: `${c.progress}%` }} />
-                </div>
-                <p className="text-[11px] text-slate-400">Class average {c.avg}</p>
+          {classes.map((c) => (
+            <div key={c.id} className={`bg-slate-900/70 border border-slate-800 rounded-2xl p-5 border-l-4 ${c.color}`}>
+              <h3 className="font-bold text-slate-100 text-base">{c.name}</h3>
+              <p className="text-xs text-slate-400 mt-1">{c.subject} &bull; {c.section}</p>
+              <div className="mt-4 flex items-center justify-between bg-slate-800/50 p-2.5 rounded-xl border border-slate-800">
+                <span className="text-xs text-slate-400">{c.studentsCount} Students</span>
+                <span className="text-xs font-mono bg-slate-950 px-2 py-0.5 rounded text-indigo-300 font-bold border border-slate-700">{c.joinCode}</span>
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Needs Grading & Quiz Averages */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Needs Grading List (2 cols) */}
-        <div className="lg:col-span-2 bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">Needs grading</h3>
-          <div className="space-y-3">
-            {needsGrading.map((item) => (
-              <div key={item.id} className="flex items-center justify-between p-3 rounded-xl bg-[#fbfbf9] border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center text-xs font-semibold">
-                    {item.name.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">{item.name}</h4>
-                    <p className="text-[11px] text-slate-500">{item.task}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {item.type === 'pending' ? (
-                    <>
-                      <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200">
-                        {item.status}
-                      </span>
-                      <button
-                        onClick={() => navigate('/teacher/submissions')}
-                        className="px-3 py-1 rounded-lg bg-[#fde047] hover:bg-amber-400 text-slate-900 text-xs font-bold transition-colors"
-                      >
-                        Grade
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-xs font-bold font-mono text-slate-800">{item.score}</span>
-                      <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200">
-                        {item.status}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quiz Averages Bar Visual (1 col) */}
-        <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4 flex flex-col justify-between">
-          <h3 className="text-sm font-bold text-slate-900">Quiz averages</h3>
-          <div className="flex items-end justify-around h-36 pt-4">
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-600">62%</span>
-              <div className="w-10 bg-[#fde047] rounded-t-lg" style={{ height: '70px' }} />
-              <span className="text-xs text-slate-500 font-semibold">Q1</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-600">70%</span>
-              <div className="w-10 bg-[#fde047] rounded-t-lg" style={{ height: '90px' }} />
-              <span className="text-xs text-slate-500 font-semibold">Q2</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[11px] font-bold text-slate-600">74%</span>
-              <div className="w-10 bg-[#fde047] rounded-t-lg" style={{ height: '105px' }} />
-              <span className="text-xs text-slate-500 font-semibold">Q3</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex items-center gap-3 pt-2">
-        <button
-          onClick={() => navigate('/teacher/create-quiz')}
-          className="px-4 py-2.5 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-semibold transition-colors"
-        >
-          Create a quiz
-        </button>
-        <button
-          onClick={() => navigate('/teacher/announcements')}
-          className="px-4 py-2.5 rounded-xl bg-[#fde047] hover:bg-amber-400 text-slate-900 text-xs font-bold transition-colors"
-        >
-          Post an announcement
-        </button>
       </div>
     </div>
   );
