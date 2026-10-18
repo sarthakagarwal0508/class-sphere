@@ -21,7 +21,7 @@ export default function Announcements() {
         <p className="text-xs text-slate-500">Post class updates and alerts</p>
       </div>
 
-      {/* Dark Navy Hero Banner */}
+   
       <div className="bg-[#181829] text-white rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
         <div className="space-y-2">
           <h2 className="text-2xl font-black">Keep everyone in the loop</h2>
