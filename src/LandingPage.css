@@ -178,7 +178,7 @@
   background: #1f1d3d;
 }
 
-/* Sun */
+
 .cs-sun {
   top: 34px;
   right: 9%;
@@ -189,7 +189,7 @@
   animation: cs-sun-pulse 4s ease-in-out infinite;
 }
 
-/* Clouds */
+
 .cs-cloud {
   position: absolute;
   z-index: 1;
@@ -243,7 +243,7 @@
   animation-delay: -7s;
 }
 
-/* Hills */
+
 .cs-hill {
   position: absolute;
   z-index: 1;
@@ -267,7 +267,7 @@
   transform: rotate(3deg);
 }
 
-/* Trees */
+
 .cs-tree {
   position: absolute;
   z-index: 2;
@@ -323,7 +323,7 @@
   left: -2px;
 }
 
-/* Road */
+
 .cs-road {
   z-index: 3;
   height: 37px;
@@ -356,7 +356,6 @@
   right: 10%;
 }
 
-/* Bus body */
 .cs-bus {
   position: absolute;
   z-index: 5;
@@ -419,7 +418,7 @@
   background: #e7a923;
 }
 
-/* Wheels */
+
 .cs-wheel {
   position: absolute;
   bottom: -19px;
@@ -447,7 +446,7 @@
   right: 29px;
 }
 
-/* Decorative sparkles */
+
 .cs-sparkle {
   position: absolute;
   z-index: 2;
@@ -467,7 +466,7 @@
   animation-delay: -1s;
 }
 
-/* Scene caption */
+
 .cs-scene-caption {
   position: absolute;
   z-index: 6;
@@ -480,11 +479,7 @@
   letter-spacing: 2px;
 }
 
-/* ==========================================
-   Animations
-   ========================================== */
 
-/* Full left-to-right journey, then re-enter */
 @keyframes cs-bus-drive {
   from {
     transform: translateX(-280px);
@@ -605,8 +600,8 @@
   }
 }
 
-/* Respect reduced-motion accessibility preference */
-@media (prefers-reduced-motion: reduce) {
+
+/* @media (prefers-reduced-motion: reduce) {
   .landing-feature-card,
   .landing-faq-item {
     transition: none;
@@ -630,4 +625,4 @@
     left: 20px;
     transform: none;
   }
-}
+} */

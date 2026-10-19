@@ -6,12 +6,12 @@ export default function LandingPage() {
   return (
     <main className="landing-page w-full bg-white text-[#1F1D3D]">
       <section id="home" className="landing-hero">
-        {/* Animated school scene */}
+        
         <div className="cs-scene" aria-hidden="true">
-        {/* Sun */}
+       
         <div className="cs-sun absolute rounded-full" />
 
-        {/* Clouds */}
+      
         <div className="cs-cloud cs-cloud-one">
           <span />
           <span />
@@ -27,11 +27,10 @@ export default function LandingPage() {
           <span />
         </div>
 
-        {/* Hills */}
         <div className="cs-hill cs-hill-one" />
         <div className="cs-hill cs-hill-two" />
 
-        {/* Trees */}
+       
         <div className="cs-tree cs-tree-one">
           <span />
           <span />
@@ -47,7 +46,6 @@ export default function LandingPage() {
           <span />
         </div>
 
-        {/* Road */}
         <div className="cs-road absolute inset-x-0 bottom-0">
           <span />
           <span />
@@ -55,7 +53,7 @@ export default function LandingPage() {
           <span />
         </div>
 
-        {/* Moving school bus */}
+       
         <div className="cs-bus">
           <span className="cs-bus-label">SCHOOL</span>
 
@@ -79,7 +77,6 @@ export default function LandingPage() {
           </span>
         </div>
 
-        {/* Sparkles */}
         <span className="cs-sparkle cs-sparkle-one">✦</span>
         <span className="cs-sparkle cs-sparkle-two">✧</span>
 
@@ -114,7 +111,7 @@ export default function LandingPage() {
           </div>
         </header>
 
-        {/* Hero content */}
+      
         <div className="landing-content mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col items-start justify-center px-5 py-5 text-left sm:px-8 sm:py-6">
         <p className="mb-5 text-xs font-extrabold tracking-[0.22em] text-[#3266B5] sm:text-sm">
           ✦ YOUR LEARNING SPACE ✦
@@ -204,14 +201,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* <section id="contact" className="landing-contact px-5 py-12 text-center text-white sm:px-8">
-        <div className="mx-auto max-w-3xl">
-          <p className="text-sm font-extrabold tracking-[0.2em] text-[#FFDF59]">WE’RE HERE TO HELP</p>
-          <h2 className="mt-3 text-3xl font-extrabold">Let’s make learning feel simpler.</h2>
-          <p className="mx-auto mt-3 max-w-2xl leading-7 text-white/75">Have a question about your classes or study materials? Check the FAQs above or reach out to your teacher or course team for support.</p>
-          <a href="#faq" className="mt-6 inline-flex rounded-xl bg-[#FFDF59] px-5 py-3 font-bold text-[#1F1D3D] transition hover:bg-[#ffe873]">Visit FAQs</a>
-        </div>
-      </section> */}
+    
 
       <footer className="landing-footer px-5 py-10 text-white sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4">

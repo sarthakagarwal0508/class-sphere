@@ -1,7 +1,7 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 1. Light theme (default) */
+
 :root {
   color-scheme: light;
   --bg: #fafafa;
@@ -25,7 +25,7 @@
   --tone-red-fg: #ef4444;
 }
 
-/* 2. Dark theme: near-black */
+
 .dark {
   color-scheme: dark;
   --bg: #0b0b0c;
@@ -49,7 +49,7 @@
   --tone-red-fg: #fca5a5;
 }
 
-/* 3. Tailwind classes (bg-card, text-ink...) */
+
 @theme inline {
   --font-sans: "Manrope", sans-serif;
 
@@ -77,14 +77,13 @@
   --color-tone-red-fg: var(--tone-red-fg);
 }
 
-/* 4. Global Smooth Scroll & Typography */
+
 html {
   font-size: 15px;
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
 }
 
-/* 5. Minimalist Slim Scrollbar (Theme-Adaptive) */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -104,7 +103,7 @@ html {
   background: color-mix(in srgb, var(--muted) 65%, transparent);
 }
 
-/* 6. Body styling */
+
 body {
   @apply bg-surface text-ink font-sans transition-colors duration-200;
   background-image:
@@ -128,7 +127,7 @@ body {
   background-attachment: fixed;
 }
 
-/* 7. Glassmorphism Sidebar */
+/*Glassmorphism Sidebar*/
 .glass-sidebar {
   background: linear-gradient(145deg, rgb(18 18 40 / 96%), rgb(30 30 63 / 90%));
   border: 1px solid rgb(255 255 255 / 25%);
@@ -153,7 +152,7 @@ body {
     inset 1px 0 rgb(255 255 255 / 10%);
 }
 
-/* 8. Smooth Scroll-In & Stagger Animations */
+/*Stagger Animations */
 @keyframes dashboard-reveal {
   from {
     opacity: 0;

@@ -19,7 +19,7 @@ export default function UploadMaterial() {
         <p className="text-xs text-slate-500">Share notes, PDFs and links topic-wise</p>
       </div>
 
-      {/* Yellow Hero Banner */}
+     
       <div className="bg-[#fde047] rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
         <div className="space-y-2">
           <h2 className="text-2xl font-black text-slate-900">Share learning material</h2>
@@ -42,7 +42,7 @@ export default function UploadMaterial() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Upload Form */}
+      
         <div className="bg-white border border-[#eceee8] rounded-2xl p-6 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">New material</h3>
 
@@ -73,7 +73,6 @@ export default function UploadMaterial() {
             </div>
           </div>
 
-          {/* Type Toggle */}
           <div className="flex gap-2 pt-1">
             {['PDF', 'Notes', 'Link'].map((t) => (
               <button
@@ -91,7 +90,6 @@ export default function UploadMaterial() {
             ))}
           </div>
 
-          {/* Dropzone */}
           <div className="border border-dashed border-slate-300 rounded-xl p-6 text-center bg-[#fbfbf9] cursor-pointer">
             <p className="text-xs font-semibold text-slate-800">Drop a PDF here or browse</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Max 20 MB</p>
@@ -112,7 +110,6 @@ export default function UploadMaterial() {
           </button>
         </div>
 
-        {/* Right Shared So Far */}
         <div className="space-y-4">
           <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3">
             <h3 className="text-sm font-bold text-slate-900">Shared so far</h3>
@@ -134,7 +131,7 @@ export default function UploadMaterial() {
             </div>
           </div>
 
-          {/* Storage Used Card */}
+       
           <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-2">
             <div className="flex justify-between text-xs">
               <span className="font-bold text-slate-900">Storage</span>
