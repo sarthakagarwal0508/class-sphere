@@ -10,7 +10,7 @@ export default function ClassAnalytics() {
   ];
 
   return (
-    <div className="space-y-6">git add .
+    <div className="space-y-6">
 
       <div>
         <h1 className="text-xl font-bold text-slate-900">Class analytics</h1>
@@ -25,7 +25,7 @@ export default function ClassAnalytics() {
           <div className="pt-2">
             <button className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-900 text-xs font-bold">
               Download report
-            </button>
+            </button>s
           </div>
         </div>
 
