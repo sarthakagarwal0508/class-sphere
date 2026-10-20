@@ -1,42 +1,73 @@
-import { createContext, useContext, useState } from "react";
-import { loginRequest, registerRequest, googleAuthRequest } from "../services/authService";
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  loginRequest,
+  googleAuthRequest,
+  fetchMe,
+  logoutRequest,
+} from "../services/authService";
+import { tokenStorage, AUTH_EXPIRED_EVENT } from "../services/tokenStorage";
 
 const AuthContext = createContext(null);
-const STORAGE_KEY = "classsphere_auth";
-
-function readStored() {
-  try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY));
-  } catch {
-    return null;
-  }
-}
 
 export function AuthProvider({ children }) {
-  // auth = { user, token } ya null (logged out)
-  const [auth, setAuth] = useState(readStored);
+  const [user, setUser] = useState(null);
+  
+  const [initializing, setInitializing] = useState(() => Boolean(tokenStorage.get()));
 
-  const save = (data) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    setAuth(data);
-    return data.user;
+
+  useEffect(() => {
+    if (!tokenStorage.get()) return undefined;
+
+    let ignore = false;
+    fetchMe()
+      .then((me) => {
+        if (!ignore) setUser(me);
+      })
+      .catch(() => {
+        tokenStorage.clear();
+      })
+      .finally(() => {
+        if (!ignore) setInitializing(false);
+      });
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+
+  useEffect(() => {
+    const onExpired = () => setUser(null);
+    window.addEventListener(AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  const startSession = ({ user: nextUser, tokens }) => {
+    tokenStorage.set(tokens);
+    setUser(nextUser);
+    return nextUser;
   };
 
-  const login = async (credentials) => save(await loginRequest(credentials));
-  const register = async (details) => save(await registerRequest(details));
-  const loginWithGoogle = async (role) => save(await googleAuthRequest(role));
+  const login = async (credentials) => startSession(await loginRequest(credentials));
+  const loginWithGoogle = async (idToken, role) =>
+    startSession(await googleAuthRequest(idToken, role));
 
-  const logout = () => {
-    localStorage.removeItem(STORAGE_KEY);
-    setAuth(null);
+  const logout = async () => {
+    const tokens = tokenStorage.get();
+    try {
+      if (tokens?.refreshToken) await logoutRequest(tokens.refreshToken);
+    } catch {
+    
+    }
+    tokenStorage.clear();
+    setUser(null);
   };
 
   const value = {
-    user: auth?.user ?? null,
-    token: auth?.token ?? null,
-    isAuthenticated: Boolean(auth),
+    user,
+    initializing,
+    isAuthenticated: Boolean(user),
     login,
-    register,
     loginWithGoogle,
     logout,
   };

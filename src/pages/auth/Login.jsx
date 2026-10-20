@@ -1,20 +1,31 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import AuthLayout from "../../layouts/AuthLayout";
 import FormField from "../../components/FormField";
 import RoleToggle from "../../components/RoleToggle";
 import GoogleButton from "../../components/GoogleButton";
+import ServerWakeHint from "../../components/ServerWakeHint";
 import { useAuth } from "../../context/AuthContext";
 import { getHomePath } from "../../utils/roleHome";
 import { isValidEmail } from "../../utils/validators";
 
+// Backend ka error code ya message "verify" jaisa ho to user ko OTP page pe bhejo.
+// Backend ke asli code ke hisaab se is function ko adjust kar sakte ho.
+const needsVerification = (error) =>
+  /verif/i.test(error.code || "") ||
+  (error.status === 403 && /verif/i.test(error.message || ""));
+
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, loginWithGoogle } = useAuth();
 
+  // OTP verify karke aaye ho to email bhar do aur hara message dikhao
+  const justVerified = Boolean(location.state?.verified);
+
   const [role, setRole] = useState("student");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(location.state?.email ?? "");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
@@ -33,23 +44,33 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const user = await login({ email: email.trim(), password, role });
+      const user = await login({ email: email.trim(), password });
+      // Redirect account ke asli role se hota hai, toggle se nahi
       navigate(getHomePath(user.role), { replace: true });
     } catch (err) {
-      setFormError(err.message || "Could not log in. Please try again.");
+      if (needsVerification(err)) {
+        navigate("/verify-otp", { state: { email: email.trim() } });
+        return;
+      }
+      setFormError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogleSuccess = async ({ credential }) => {
+    if (!credential) {
+      setFormError("Google did not return an ID token. Please try again.");
+      return;
+    }
+
     setFormError("");
     setLoading(true);
     try {
-      const user = await loginWithGoogle(role);
+      const user = await loginWithGoogle(credential, role);
       navigate(getHomePath(user.role), { replace: true });
     } catch (err) {
-      setFormError(err.message || "Google sign-in failed. Please try again.");
+      setFormError(err.message);
     } finally {
       setLoading(false);
     }
@@ -60,8 +81,21 @@ export default function Login() {
       <h1 className="text-2xl font-extrabold">Welcome back</h1>
       <p className="mt-1 text-sm text-muted">Login to your ClassSphere account</p>
 
+      {justVerified && (
+        <p
+          role="status"
+          className="mt-4 rounded-xl bg-tone-green px-3 py-2 text-xs font-semibold text-tone-green-fg"
+        >
+          Email verified. You can login now.
+        </p>
+      )}
+
       <div className="mt-5">
         <RoleToggle value={role} onChange={setRole} />
+        <p className="mt-2 text-xs text-muted">
+          Login uses your account&apos;s saved role. This selection only applies to a new Google
+          account.
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} noValidate className="mt-4 space-y-3.5">
@@ -98,6 +132,7 @@ export default function Login() {
         >
           {loading ? "Logging in..." : `Login as ${role}`}
         </button>
+        <ServerWakeHint active={loading} />
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs text-muted">
@@ -106,7 +141,12 @@ export default function Login() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <GoogleButton label="Continue with Google" onClick={handleGoogle} disabled={loading} />
+      <GoogleButton
+        mode="continue_with"
+        onSuccess={handleGoogleSuccess}
+        onError={() => setFormError("Google sign-in failed. Please try again.")}
+        disabled={loading}
+      />
 
       <p className="mt-5 text-center text-xs text-muted">
         New here?{" "}

@@ -5,15 +5,17 @@ import AuthLayout from "../../layouts/AuthLayout";
 import FormField from "../../components/FormField";
 import RoleToggle from "../../components/RoleToggle";
 import GoogleButton from "../../components/GoogleButton";
+import ServerWakeHint from "../../components/ServerWakeHint";
 import { useAuth } from "../../context/AuthContext";
 import { getHomePath } from "../../utils/roleHome";
+import { registerRequest } from "../../services/authService";
 import { isValidEmail } from "../../utils/validators";
 
 const MIN_PASSWORD = 8;
 
 export default function Register() {
   const navigate = useNavigate();
-  const { register, loginWithGoogle } = useAuth();
+  const { loginWithGoogle } = useAuth();
 
   const [role, setRole] = useState("student");
   const [name, setName] = useState("");
@@ -22,6 +24,7 @@ export default function Register() {
   const [confirm, setConfirm] = useState("");
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
+  const [showNextSteps, setShowNextSteps] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -37,27 +40,37 @@ export default function Register() {
 
     setErrors(next);
     setFormError("");
+    setShowNextSteps(false);
     if (Object.keys(next).length > 0) return;
 
     setLoading(true);
     try {
-      const user = await register({ name: name.trim(), email: email.trim(), password, role });
-      navigate(getHomePath(user.role), { replace: true });
+      await registerRequest({ name: name.trim(), email: email.trim(), password, role });
+      // Register ke baad OTP verify karna hai, phir login
+      navigate("/verify-otp", { state: { email: email.trim(), justSent: true } });
     } catch (err) {
-      setFormError(err.message || "Could not create your account. Please try again.");
+      setFormError(err.message);
+      // 409 = email pehle se hai. Status na ho = server ka jawab hi nahi aaya (timeout/network),
+      // aur ho sakta hai account ban chuka ho. Dono case mein user ko aage ka rasta dikhao.
+      setShowNextSteps(err.status === 409 || !err.status);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogleSuccess = async ({ credential }) => {
+    if (!credential) {
+      setFormError("Google did not return an ID token. Please try again.");
+      return;
+    }
+
     setFormError("");
     setLoading(true);
     try {
-      const user = await loginWithGoogle(role);
+      const user = await loginWithGoogle(credential, role);
       navigate(getHomePath(user.role), { replace: true });
     } catch (err) {
-      setFormError(err.message || "Google sign-up failed. Please try again.");
+      setFormError(err.message);
     } finally {
       setLoading(false);
     }
@@ -119,6 +132,34 @@ export default function Register() {
           </p>
         )}
 
+        {showNextSteps && (
+          <div className="space-y-1 text-xs text-muted">
+            <p>
+              The account may have been created even though the request timed out. Check your spam
+              folder, then{" "}
+              <Link
+                to="/verify-otp"
+                state={{ email: email.trim() }}
+                className="font-bold text-ink hover:underline"
+              >
+                verify your email or resend the code
+              </Link>
+              . Avoid submitting registration again.
+            </p>
+            <p>
+              Already verified?{" "}
+              <Link
+                to="/login"
+                state={{ email: email.trim() }}
+                className="font-bold text-ink hover:underline"
+              >
+                Login
+              </Link>
+              .
+            </p>
+          </div>
+        )}
+
         <button
           type="submit"
           disabled={loading}
@@ -126,6 +167,7 @@ export default function Register() {
         >
           {loading ? "Creating account..." : `Create ${role} account`}
         </button>
+        <ServerWakeHint active={loading} />
       </form>
 
       <div className="my-4 flex items-center gap-3 text-xs text-muted">
@@ -134,7 +176,15 @@ export default function Register() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <GoogleButton label="Sign up with Google" onClick={handleGoogle} disabled={loading} />
+      <GoogleButton
+        mode="signup_with"
+        onSuccess={handleGoogleSuccess}
+        onError={() => setFormError("Google sign-up failed. Please try again.")}
+        disabled={loading}
+      />
+      <p className="mt-2 text-center text-xs text-muted">
+        New Google accounts use the selected role. Existing accounts keep their saved role.
+      </p>
 
       <p className="mt-5 text-center text-xs text-muted">
         Already have an account?{" "}
