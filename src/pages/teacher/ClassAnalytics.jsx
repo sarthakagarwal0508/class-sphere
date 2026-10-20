@@ -25,7 +25,7 @@ export default function ClassAnalytics() {
           <div className="pt-2">
             <button className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-900 text-xs font-bold">
               Download report
-            </button>s
+            </button>
           </div>
         </div>
 

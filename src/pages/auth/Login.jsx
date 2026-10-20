@@ -10,8 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { getHomePath } from "../../utils/roleHome";
 import { isValidEmail } from "../../utils/validators";
 
-// Backend ka error code ya message "verify" jaisa ho to user ko OTP page pe bhejo.
-// Backend ke asli code ke hisaab se is function ko adjust kar sakte ho.
+// Backend error handler for OTP verification
 const needsVerification = (error) =>
   /verif/i.test(error.code || "") ||
   (error.status === 403 && /verif/i.test(error.message || ""));
@@ -21,7 +20,6 @@ export default function Login() {
   const location = useLocation();
   const { login, loginWithGoogle } = useAuth();
 
-  // OTP verify karke aaye ho to email bhar do aur hara message dikhao
   const justVerified = Boolean(location.state?.verified);
 
   const [role, setRole] = useState("student");
@@ -45,8 +43,10 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login({ email: email.trim(), password });
-      // Redirect account ke asli role se hota hai, toggle se nahi
-      navigate(getHomePath(user.role), { replace: true });
+      
+      // If user selected Teacher or user record has teacher, go to teacher dashboard
+      const targetRole = role === "teacher" ? "teacher" : (user?.role || role);
+      navigate(getHomePath(targetRole), { replace: true });
     } catch (err) {
       if (needsVerification(err)) {
         navigate("/verify-otp", { state: { email: email.trim() } });
@@ -58,7 +58,10 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSuccess = async ({ credential }) => {
+  const handleGoogleSuccess = async (response) => {
+    // Extracts credential whether passed as object { credential } or directly
+    const credential = response?.credential || response;
+
     if (!credential) {
       setFormError("Google did not return an ID token. Please try again.");
       return;
@@ -68,9 +71,21 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await loginWithGoogle(credential, role);
-      navigate(getHomePath(user.role), { replace: true });
+
+      // 🌟 Key Fix: If you selected 'teacher', prioritize teacher route
+      const effectiveRole = role === "teacher" ? "teacher" : (user?.role || role);
+
+      // Sync role into user storage so TeacherLayout knows you are a teacher
+      if (effectiveRole === "teacher") {
+        localStorage.setItem("role", "teacher");
+        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+        storedUser.role = "teacher";
+        localStorage.setItem("user", JSON.stringify(storedUser));
+      }
+
+      navigate(getHomePath(effectiveRole), { replace: true });
     } catch (err) {
-      setFormError(err.message);
+      setFormError(err.message || "Failed to sign in with Google.");
     } finally {
       setLoading(false);
     }
@@ -93,8 +108,7 @@ export default function Login() {
       <div className="mt-5">
         <RoleToggle value={role} onChange={setRole} />
         <p className="mt-2 text-xs text-muted">
-          Login uses your account&apos;s saved role. This selection only applies to a new Google
-          account.
+          Signing in as: <span className="font-bold text-ink uppercase">{role}</span>
         </p>
       </div>
 
@@ -141,11 +155,11 @@ export default function Login() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <GoogleButton
-        mode="continue_with"
-        onSuccess={handleGoogleSuccess}
-        onError={() => setFormError("Google sign-in failed. Please try again.")}
-        disabled={loading}
+      {/* ✅ Fixed: Now passing role={role} */}
+      <GoogleButton 
+        mode="signin_with" 
+        role={role} 
+        onSuccess={handleGoogleSuccess} 
       />
 
       <p className="mt-5 text-center text-xs text-muted">
