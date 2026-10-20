@@ -71,19 +71,7 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await loginWithGoogle(credential, role);
-
-      // 🌟 Key Fix: If you selected 'teacher', prioritize teacher route
-      const effectiveRole = role === "teacher" ? "teacher" : (user?.role || role);
-
-      // Sync role into user storage so TeacherLayout knows you are a teacher
-      if (effectiveRole === "teacher") {
-        localStorage.setItem("role", "teacher");
-        const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-        storedUser.role = "teacher";
-        localStorage.setItem("user", JSON.stringify(storedUser));
-      }
-
-      navigate(getHomePath(effectiveRole), { replace: true });
+      navigate(getHomePath(user.role), { replace: true });
     } catch (err) {
       setFormError(err.message || "Failed to sign in with Google.");
     } finally {
@@ -108,7 +96,8 @@ export default function Login() {
       <div className="mt-5">
         <RoleToggle value={role} onChange={setRole} />
         <p className="mt-2 text-xs text-muted">
-          Signing in as: <span className="font-bold text-ink uppercase">{role}</span>
+          Existing accounts use their saved role. For a new Google account, selected role:{" "}
+          <span className="font-bold text-ink uppercase">{role}</span>.
         </p>
       </div>
 
@@ -155,11 +144,11 @@ export default function Login() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      {/* ✅ Fixed: Now passing role={role} */}
-      <GoogleButton 
-        mode="signin_with" 
-        role={role} 
-        onSuccess={handleGoogleSuccess} 
+      <GoogleButton
+        mode="signin_with"
+        onSuccess={handleGoogleSuccess}
+        onError={() => setFormError("Google sign-in failed. Please try again.")}
+        disabled={loading}
       />
 
       <p className="mt-5 text-center text-xs text-muted">
