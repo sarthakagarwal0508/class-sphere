@@ -1,9 +1,7 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import VerifyOTP from "./pages/auth/VerifyOTP";
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudyMaterial from "./pages/student/StudyMaterial";
@@ -17,15 +15,12 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-
         <Route path="/student" element={<StudentLayout />}>
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="materials" element={<StudyMaterial />} />
           <Route path="assignments" element={<Assignments />} />
           <Route path="quizzes" element={<Quizzes />} />
         </Route>
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

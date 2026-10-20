@@ -41,18 +41,10 @@ export default function Register() {
 
     setLoading(true);
     try {
-      await register({
-  name: name.trim(),
-  email: email.trim(),
-  password,
-  role,
-});
-
-navigate("/verify-otp", {
-  state: { email: email.trim() },
-});
+      const user = await register({ name: name.trim(), email: email.trim(), password, role });
+      navigate(getHomePath(user.role), { replace: true });
     } catch (err) {
-      setFormError(err.message || " Please try again.");
+      setFormError(err.message || "Could not create your account. Please try again.");
     } finally {
       setLoading(false);
     }
