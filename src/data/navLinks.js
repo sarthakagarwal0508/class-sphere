@@ -13,7 +13,7 @@ export const studentLinks = [
   { label: "Flashcards", to: "/student/flashcards", icon: Layers },
   { label: "My Grades", to: "/student/grades", icon: Award },
   { label: "Progress", to: "/student/progress", icon: BarChart3 },
-  { label: "Announcements", to: "/announcements", icon: Megaphone },
+  { label: "Announcements", to: "/student/announcements", icon: Megaphone },
   { label: "Doubt Forum", to: "/doubts", icon: MessageSquare },
 ];
 
