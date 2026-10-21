@@ -14,6 +14,7 @@ import Quizzes from "./pages/student/Quizzes";
 import AttemptQuiz from "./pages/student/AttemptQuiz";
 import NotesAI from "./pages/student/NotesAI";
 import Flashcards from "./pages/student/Flashcards";
+import Grades from "./pages/student/Grades";
 
 export default function App() {
   return (
@@ -53,6 +54,12 @@ export default function App() {
             path="flashcards"
             element={<Flashcards />}
           />
+
+        <Route
+         path="grades" 
+         element={<Grades />} 
+         />
+
         </Route>
 
         <Route
