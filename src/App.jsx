@@ -35,13 +35,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* 🌐 Public & Auth Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
 
-        {/* 🎓 Student Routes */}
+        {/* 🎓 Student Portal Routes */}
         <Route path="/student" element={<StudentLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
@@ -54,11 +54,15 @@ export default function App() {
           <Route path="grades" element={<Grades />} />
         </Route>
 
-        {/* 🍎 Teacher Routes */}
+        {/* 🍎 Teacher Portal Routes */}
         <Route path="/teacher" element={<TeacherLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
+          
+          {/* Create Classroom (Supports both URLs) */}
           <Route path="create-class" element={<CreateClassroom />} />
+          <Route path="create-classroom" element={<CreateClassroom />} />
+          
           <Route path="members" element={<ManageMembers />} />
           <Route path="upload-material" element={<UploadMaterial />} />
           <Route path="create-assignment" element={<CreateAssignment />} />
@@ -67,10 +71,14 @@ export default function App() {
           <Route path="quiz-results" element={<QuizResults />} />
           <Route path="analytics" element={<ClassAnalytics />} />
           <Route path="announcements" element={<Announcements />} />
+          
+          {/* Doubt Forum (Supports /doubts, /doubt-forum, and /doubtforum) */}
           <Route path="doubts" element={<DoubtForum />} />
+          <Route path="doubt-forum" element={<DoubtForum />} />
+          <Route path="doubtforum" element={<DoubtForum />} />
         </Route>
 
-        {/* Catch-all Fallback */}
+        {/* Catch-all Wildcard: Redirects unknown URLs back to Landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
