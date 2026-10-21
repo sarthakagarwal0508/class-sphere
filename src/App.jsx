@@ -1,5 +1,10 @@
 
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import LandingPage from "./LandingPage";
 import Login from "./pages/auth/Login";
@@ -15,6 +20,8 @@ import AttemptQuiz from "./pages/student/AttemptQuiz";
 import NotesAI from "./pages/student/NotesAI";
 import Flashcards from "./pages/student/Flashcards";
 import Grades from "./pages/student/Grades";
+import Progress from "./pages/student/Progress";
+import Announcements from "./pages/student/Announcements";
 
 export default function App() {
   return (
@@ -24,41 +31,61 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route
+          path="/announcements"
+          element={<Navigate to="/student/announcements" replace />}
+        />
 
         <Route path="/student" element={<StudentLayout />}>
           <Route
             path="dashboard"
             element={<StudentDashboard />}
           />
+
           <Route
             path="materials"
             element={<StudyMaterial />}
           />
+
           <Route
             path="assignments"
             element={<Assignments />}
           />
+
           <Route
             path="quizzes"
             element={<Quizzes />}
           />
+
           <Route
             path="quizzes/:quizId"
             element={<AttemptQuiz />}
           />
+
           <Route
             path="notes-ai"
             element={<NotesAI />}
           />
+
           <Route
             path="flashcards"
             element={<Flashcards />}
           />
 
-        <Route
-         path="grades" 
-         element={<Grades />} 
-         />
+          <Route
+            path="grades"
+            element={<Grades />}
+          />
+
+          <Route
+            path="progress"
+            element={<Progress />}
+          />
+
+          <Route 
+          path="announcements" 
+          element={<Announcements />} 
+          />
 
         </Route>
 
