@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FileText, BookOpen, Download, Layers } from "lucide-react";
 
 import Topbar from "../../components/Topbar";
@@ -21,6 +22,7 @@ const badges = {
 const findCourse = (id) => courses.find((c) => c.id === id);
 
 export default function StudyMaterial() {
+  const navigate = useNavigate();
   const [courseId, setCourseId] = useState("all");
   const filtersRef = useRef(null);
 
@@ -66,7 +68,14 @@ export default function StudyMaterial() {
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visible.map((m) => (
-          <MaterialCard key={m.id} material={m} course={findCourse(m.courseId)} />
+          <MaterialCard
+            key={m.id}
+            material={m}
+            course={findCourse(m.courseId)}
+            onSummarize={(material) =>
+              navigate("/student/notes-ai", { state: { materialId: material.id } })
+            }
+          />
         ))}
       </div>
 
