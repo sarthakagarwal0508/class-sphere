@@ -10,15 +10,14 @@ import { useAuth } from "../../context/AuthContext";
 import { getHomePath } from "../../utils/roleHome";
 import { isValidEmail } from "../../utils/validators";
 
-// Backend error handler for OTP verification
 const needsVerification = (error) =>
-  /verif/i.test(error.code || "") ||
-  (error.status === 403 && /verif/i.test(error.message || ""));
+  /verif/i.test(error?.code || "") ||
+  (error?.status === 403 && /verif/i.test(error?.message || ""));
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, loginWithGoogle } = useAuth();
+  const { login, loginWithGoogle, setUser } = useAuth();
 
   const justVerified = Boolean(location.state?.verified);
 
@@ -29,6 +28,25 @@ export default function Login() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Helper to persist role and navigate safely
+  const completeLoginAndRedirect = (userData, chosenRole) => {
+    const finalRole = chosenRole || userData?.role || "student";
+    
+    // Save updated role so route guards don't kick the user out
+    localStorage.setItem("role", finalRole);
+    
+    const userToSave = { ...(userData || {}), role: finalRole };
+    localStorage.setItem("user", JSON.stringify(userToSave));
+    
+    if (typeof setUser === "function") {
+      setUser(userToSave);
+    }
+
+    const destination = getHomePath(finalRole);
+    navigate(destination, { replace: true });
+  };
+
+  // 1. Handle Email & Password Login
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -43,23 +61,20 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await login({ email: email.trim(), password });
-      
-      // If user selected Teacher or user record has teacher, go to teacher dashboard
-      const targetRole = role === "teacher" ? "teacher" : (user?.role || role);
-      navigate(getHomePath(targetRole), { replace: true });
+      completeLoginAndRedirect(user, role);
     } catch (err) {
       if (needsVerification(err)) {
         navigate("/verify-otp", { state: { email: email.trim() } });
         return;
       }
-      setFormError(err.message);
+      setFormError(err.message || "Failed to login.");
     } finally {
       setLoading(false);
     }
   };
 
+  // 2. Handle Google Sign-In
   const handleGoogleSuccess = async (response) => {
-    // Extracts credential whether passed as object { credential } or directly
     const credential = response?.credential || response;
 
     if (!credential) {
@@ -71,7 +86,7 @@ export default function Login() {
     setLoading(true);
     try {
       const user = await loginWithGoogle(credential, role);
-      navigate(getHomePath(user.role), { replace: true });
+      completeLoginAndRedirect(user, role);
     } catch (err) {
       setFormError(err.message || "Failed to sign in with Google.");
     } finally {
@@ -93,11 +108,11 @@ export default function Login() {
         </p>
       )}
 
+      {/* Role Toggle for Student vs Teacher */}
       <div className="mt-5">
         <RoleToggle value={role} onChange={setRole} />
         <p className="mt-2 text-xs text-muted">
-          Existing accounts use their saved role. For a new Google account, selected role:{" "}
-          <span className="font-bold text-ink uppercase">{role}</span>.
+          Logging in as: <span className="font-bold text-ink uppercase">{role}</span>
         </p>
       </div>
 
@@ -144,11 +159,11 @@ export default function Login() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      <GoogleButton
-        mode="signin_with"
-        onSuccess={handleGoogleSuccess}
-        onError={() => setFormError("Google sign-in failed. Please try again.")}
-        disabled={loading}
+      {/* Google Login with Selected Role Passed */}
+      <GoogleButton 
+        mode="signin_with" 
+        role={role} 
+        onSuccess={handleGoogleSuccess} 
       />
 
       <p className="mt-5 text-center text-xs text-muted">
