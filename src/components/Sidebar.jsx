@@ -1,7 +1,8 @@
 import { useEffect } from "react";
-import { NavLink } from "react-router-dom";
-import { X } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { LogOut, X } from "lucide-react";
 import { linksByRole } from "../data/navLinks";
+import { useAuth } from "../context/AuthContext";
 
 function Brand() {
   return (
@@ -49,6 +50,14 @@ function HelpCenter() {
 
 export default function Sidebar({ role = "student", mobileOpen = false, onMobileClose }) {
   const links = linksByRole[role] ?? [];
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    onMobileClose?.();
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   useEffect(() => {
     if (!mobileOpen) return undefined;
@@ -72,6 +81,14 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
         <Brand />
         <NavigationLinks links={links} />
         <HelpCenter />
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+        >
+          <LogOut size={16} />
+          Logout
+        </button>
       </aside>
 
       {mobileOpen && (
@@ -102,6 +119,14 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
             </div>
             <NavigationLinks links={links} onNavigate={onMobileClose} />
             <HelpCenter />
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+            >
+              <LogOut size={16} />
+              Logout
+            </button>
           </aside>
         </div>
       )}

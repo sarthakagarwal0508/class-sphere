@@ -51,7 +51,10 @@ export default function Announcements() {
 
   return (
     <div className="min-h-screen">
-      <Topbar />
+      <Topbar
+        title="Announcements"
+        subtitle="Important updates and messages from your teachers"
+      />
 
       <main className="mx-auto max-w-7xl space-y-6 p-4 md:p-8">
         <HeroBanner

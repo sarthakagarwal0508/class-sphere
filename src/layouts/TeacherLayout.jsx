@@ -1,14 +1,22 @@
-﻿import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Plus, Users, Upload, FileText, FileCheck2, HelpCircle,
+  LayoutDashboard, LogOut, Plus, Users, Upload, FileText, FileCheck2, HelpCircle,
   Award, BarChart2, Bell, MessageSquare, Search, Menu, X, Sun, Moon
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import PortalBackButton from '../components/PortalBackButton';
 
 export default function TeacherLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark' ||
@@ -74,6 +82,14 @@ export default function TeacherLayout() {
           <button onClick={() => alert('Support chat opened!')} className="w-full py-2.5 px-3 rounded-xl bg-[#f1f3f9] hover:bg-white text-slate-900 text-xs font-bold shadow-sm transition-colors mt-1">
             Go to help center
           </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-red-700"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -99,6 +115,9 @@ export default function TeacherLayout() {
         </header>
 
         <main className="p-6 md:p-8 max-w-6xl w-full mx-auto dashboard-stagger">
+          <div className="mb-4">
+            <PortalBackButton fallbackPath="/teacher/dashboard" />
+          </div>
           <Outlet />
         </main>
       </div>

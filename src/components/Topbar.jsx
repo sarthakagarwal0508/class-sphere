@@ -1,12 +1,20 @@
 import { Search, Bell } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
+import PortalBackButton from "./PortalBackButton";
 
-export default function Topbar({ title, subtitle }) {
+export default function Topbar({
+  title,
+  subtitle,
+  backFallbackPath = "/student/dashboard",
+}) {
   return (
     <header className="flex items-start justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-extrabold leading-tight">{title}</h1>
-        {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+      <div className="flex min-w-0 items-start gap-3">
+        <PortalBackButton fallbackPath={backFallbackPath} />
+        <div className="min-w-0">
+          {title && <h1 className="text-2xl font-extrabold leading-tight">{title}</h1>}
+          {subtitle && <p className="text-xs text-muted">{subtitle}</p>}
+        </div>
       </div>
 
       <div className="flex items-center gap-2.5">

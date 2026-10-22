@@ -14,7 +14,7 @@ export const studentLinks = [
   { label: "My Grades", to: "/student/grades", icon: Award },
   { label: "Progress", to: "/student/progress", icon: BarChart3 },
   { label: "Announcements", to: "/student/announcements", icon: Megaphone },
-  { label: "Doubt Forum", to: "/doubts", icon: MessageSquare },
+  { label: "Doubt Forum", to: "/student/doubts", icon: MessageSquare },
 ];
 
 export const teacherLinks = []; // teammate yahan teacher ke links bharega

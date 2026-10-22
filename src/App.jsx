@@ -16,6 +16,9 @@ import Flashcards from "./pages/student/Flashcards";
 import Grades from "./pages/student/Grades";
 import Progress from "./pages/student/Progress";
 import StudentAnnouncements from "./pages/student/Announcements";
+import StudentDoubtForum from "./pages/student/DoubtForum";
+import MyClasses from "./pages/student/MyClasses";
+import ClassDetails from "./pages/student/ClassDetails";
 
 import TeacherLayout from "./layouts/TeacherLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
@@ -55,6 +58,9 @@ export default function App() {
           <Route path="grades" element={<Grades />} />
           <Route path="progress" element={<Progress />} />
           <Route path="announcements" element={<StudentAnnouncements />} />
+          <Route path="doubts" element={<StudentDoubtForum />} />
+          <Route path="classes" element={<MyClasses />} />
+          <Route path="classes/:classId" element={<ClassDetails />} />
         </Route>
 
         <Route path="/teacher" element={<TeacherLayout />}>
