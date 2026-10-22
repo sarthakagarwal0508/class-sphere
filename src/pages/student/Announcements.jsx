@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Megaphone, Search, CalendarDays } from "lucide-react";
+import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
 import Card from "../../components/Card";
@@ -9,7 +10,7 @@ export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -20,7 +21,7 @@ export default function Announcements() {
       })
       .catch((err) => {
         if (active) {
-          setError(err.message || "Failed to load announcements.");
+          setError(err);
         }
       })
       .finally(() => {
@@ -77,7 +78,21 @@ export default function Announcements() {
           </p>
         ) : error ? (
           <Card>
-            <p className="p-6 text-center text-red-600">{error}</p>
+            <div className="space-y-3 p-6 text-center">
+              <p className="text-red-600">
+                {error.status === 401
+                  ? "Please sign in to view announcements."
+                  : error.message || "Failed to load announcements."}
+              </p>
+              {error.status === 401 && (
+                <Link
+                  to="/login"
+                  className="inline-block rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-on-brand"
+                >
+                  Sign in
+                </Link>
+              )}
+            </div>
           </Card>
         ) : filtered.length === 0 ? (
           <Card>

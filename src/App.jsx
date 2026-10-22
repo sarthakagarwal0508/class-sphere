@@ -82,9 +82,9 @@ export default function App() {
             element={<Progress />}
           />
 
-          <Route 
-          path="announcements" 
-          element={<Announcements />} 
+          <Route
+            path="announcements"
+            element={<Announcements />}
           />
 
         </Route>
