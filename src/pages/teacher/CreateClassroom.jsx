@@ -74,33 +74,35 @@ export default function CreateClassroom() {
         </p>
       </div>
 
-      {/* Yellow Hero Banner */}
-      <div className="bg-[#fde047] rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm relative overflow-hidden text-slate-900">
-        <div className="space-y-2 max-w-md z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/10 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" /> Classroom Creator
-          </div>
-          <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+            {/* Dark Navy Hero with Yellow Accent (Images 4 & 5 Style) */}
+      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
+        <div className="space-y-2 z-10 max-w-md">
+          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
+            CLASSROOM CREATOR
+          </p>
+          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
             Start a new classroom
           </h2>
-          <p className="text-xs font-medium text-slate-800 leading-relaxed">
+          <p className="text-xs text-slate-300 leading-relaxed font-medium">
             Create your cohort, share the 6-character join code, and enrolled students can access your course notes & assignments instantly.
           </p>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3 z-10">
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <BookOpen className="w-6 h-6 text-slate-900" />
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <Users className="w-6 h-6 text-slate-900" />
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <Plus className="w-6 h-6 text-slate-900" />
+        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
+          <div className="relative z-10 flex items-center gap-2">
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <Plus className="w-5 h-5" />
+            </div>
           </div>
         </div>
       </div>
-
       {/* Error Alert */}
       {error && (
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">

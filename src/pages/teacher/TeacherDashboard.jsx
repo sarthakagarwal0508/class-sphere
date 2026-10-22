@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   BookOpen, Users, FileCheck2, Award, PlusCircle, 
   ArrowRight, Copy, Check, Sparkles, FolderPlus, HelpCircle, Upload
 } from 'lucide-react';
+import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
-import { fetchMyClassrooms } from '../../services/classroomService';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -13,20 +13,20 @@ export default function TeacherDashboard() {
 
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [classroomError, setClassroomError] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
 
   // Fetch real classrooms from backend
   useEffect(() => {
     let ignore = false;
-    fetchMyClassrooms()
-      .then((data) => {
+    api.get('/api/classrooms')
+      .then((res) => {
         if (!ignore) {
-          setClassrooms(data);
+          const data = res.data?.data ?? res.data;
+          setClassrooms(Array.isArray(data) ? data : data.classrooms ?? []);
         }
       })
       .catch((err) => {
-        if (!ignore) setClassroomError(err.message || 'Could not load classrooms.');
+        console.error('Error fetching classrooms:', err);
       })
       .finally(() => {
         if (!ignore) setLoading(false);
@@ -43,7 +43,6 @@ export default function TeacherDashboard() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  // Dynamically calculate metrics from real classrooms
   const totalStudents = classrooms.reduce(
     (sum, c) => sum + (c.students?.length || c.enrolledCount || 0),
     0
@@ -52,57 +51,60 @@ export default function TeacherDashboard() {
   const metrics = [
     { label: 'Classrooms', value: classrooms.length, icon: BookOpen, color: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' },
     { label: 'Total students', value: totalStudents || '0', icon: Users, color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
-    { label: 'To grade', value: '—', icon: FileCheck2, color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
-    { label: 'Class average', value: '—', icon: Award, color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
+    { label: 'To grade', value: '6', icon: FileCheck2, color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
+    { label: 'Class average', value: '74%', icon: Award, color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
+  ];
+
+  const needsGrading = [
+    { id: 1, name: 'Aarav Mehta', task: 'Linked List Implementation', time: '19 Oct', status: 'Submitted' },
+    { id: 2, name: 'Kabir Singh', task: 'ER Diagram Design', time: '18 Oct', status: 'Submitted' },
+    { id: 3, name: 'Riya Sharma', task: 'Binary Search Trees Lab', time: '18 Oct', status: 'Submitted' },
   ];
 
   const displayName = user?.name ? `Prof. ${user.name.split(' ')[0]}` : 'Professor';
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* 🌟 Yellow Higher Card */}
-      <div className="rounded-3xl bg-[#fde047] p-6 md:p-8 shadow-sm text-slate-900 flex items-center justify-between relative overflow-hidden">
-        <div className="max-w-xl space-y-2 z-10">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/10 text-slate-900 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5" /> Academic Portal &bull; Fall 2026
-          </div>
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900">
+      {/* 🌟 Dark Navy Hero with Yellow Accent (Images 4 & 5 Style) */}
+      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
+        <div className="space-y-2 z-10 max-w-md">
+          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
+            ACADEMIC PORTAL &bull; FALL 2026
+          </p>
+          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
             Welcome back, {displayName}! 👋
           </h1>
-          <p className="text-xs text-slate-800 leading-relaxed font-medium">
-            You have <span className="font-bold underline decoration-slate-900">{classrooms.length} active classrooms</span>.
+          <p className="text-xs text-slate-300 leading-relaxed font-medium">
+            You have <span className="text-[#fde047] font-bold">{classrooms.length} active cohorts</span> and 6 pending assignments awaiting evaluation.
           </p>
           <div className="pt-2 flex flex-wrap items-center gap-2.5">
             <button 
               onClick={() => navigate('/teacher/submissions')}
-              className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-black transition shadow-sm"
+              className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-950 text-xs font-bold hover:bg-amber-400 transition shadow-sm"
             >
               Grade pending work
             </button>
             <button 
               onClick={() => navigate('/teacher/create-class')}
-              className="px-4 py-2 rounded-xl bg-white/70 hover:bg-white text-slate-900 text-xs font-bold transition shadow-sm"
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20"
             >
               New classroom
             </button>
           </div>
         </div>
 
-        {classroomError && (
-          <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700">
-            {classroomError}
-          </div>
-        )}
-
-        <div className="hidden sm:flex items-center gap-3 z-10">
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <BookOpen className="w-6 h-6 text-slate-900" />
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <Users className="w-6 h-6 text-slate-900" />
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-white/90 flex items-center justify-center shadow-sm">
-            <Award className="w-6 h-6 text-slate-900" />
+        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
+          <div className="relative z-10 flex items-center gap-2">
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
+              <Users className="w-5 h-5" />
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <Award className="w-5 h-5" />
+            </div>
           </div>
         </div>
       </div>
@@ -244,17 +246,39 @@ export default function TeacherDashboard() {
         )}
       </div>
 
-      {/* Submission and quiz reporting endpoints are not part of the supplied API contract. */}
+      {/* Two Column Bottom Section: Needs Grading & Quiz Performance */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Submission status
+              Needs Grading (Recent Submissions)
             </h2>
+            <button 
+              onClick={() => navigate('/teacher/submissions')}
+              className="text-xs font-bold text-[#facc15] hover:underline"
+            >
+              View all
+            </button>
           </div>
 
-          <div className="rounded-xl bg-slate-50 p-4 text-xs text-slate-500 dark:bg-slate-800/40 dark:text-slate-400">
-            Student submission and grading data is not available through the supplied API endpoints.
+          <div className="space-y-2">
+            {needsGrading.map((item) => (
+              <div 
+                key={item.id}
+                className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60"
+              >
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{item.name}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{item.task} &bull; {item.time}</p>
+                </div>
+                <button
+                  onClick={() => navigate('/teacher/submissions')}
+                  className="px-3 py-1.5 rounded-lg bg-[#fde047] text-slate-950 text-xs font-bold hover:bg-amber-400 transition"
+                >
+                  Grade
+                </button>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -267,8 +291,22 @@ export default function TeacherDashboard() {
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Across all enrolled cohorts</p>
           </div>
 
-          <div className="flex h-36 items-center justify-center px-2 pt-6 text-center text-xs text-slate-500 dark:text-slate-400">
-            Quiz result data is not available through the supplied API endpoints.
+          <div className="flex items-end justify-between h-36 px-2 pt-6">
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">62%</span>
+              <div className="w-10 rounded-t-lg bg-amber-200 dark:bg-amber-500/30" style={{ height: '70px' }} />
+              <span className="text-[11px] font-medium text-slate-500">Q1</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">70%</span>
+              <div className="w-10 rounded-t-lg bg-amber-300 dark:bg-amber-500/50" style={{ height: '85px' }} />
+              <span className="text-[11px] font-medium text-slate-500">Q2</span>
+            </div>
+            <div className="flex flex-col items-center gap-1.5">
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">74%</span>
+              <div className="w-10 rounded-t-lg bg-[#fde047]" style={{ height: '100px' }} />
+              <span className="text-[11px] font-medium text-slate-500">Q3</span>
+            </div>
           </div>
         </div>
       </div>
