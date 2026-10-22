@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-
 :root {
   color-scheme: light;
   --bg: #fafafa;
@@ -25,7 +24,6 @@
   --tone-red-fg: #ef4444;
 }
 
-
 .dark {
   color-scheme: dark;
   --bg: #0b0b0c;
@@ -48,7 +46,6 @@
   --tone-red: rgba(248, 113, 113, 0.18);
   --tone-red-fg: #fca5a5;
 }
-
 
 @theme inline {
   --font-sans: "Manrope", sans-serif;
@@ -77,7 +74,6 @@
   --color-tone-red-fg: var(--tone-red-fg);
 }
 
-
 html {
   font-size: 15px;
   scroll-behavior: smooth;
@@ -103,7 +99,6 @@ html {
   background: color-mix(in srgb, var(--muted) 65%, transparent);
 }
 
-
 body {
   @apply bg-surface text-ink font-sans transition-colors duration-200;
   background-image:
@@ -127,7 +122,58 @@ body {
   background-attachment: fixed;
 }
 
-/*Glassmorphism Sidebar*/
+/* 🌟 UNIVERSAL DARK MODE CONTRAST SAFEGUARDS 🌟 */
+/* Automatically inverts any hardcoded white cards in dark mode */
+.dark .bg-white {
+  background-color: #161618 !important;
+  border-color: #2a2a2f !important;
+  color: #f4f4f5 !important;
+}
+
+/* Automatically makes input fields readable and dark-themed */
+.dark input,
+.dark textarea,
+.dark select {
+  color: #f4f4f5 !important;
+  background-color: #202024 !important;
+  border-color: #2a2a2f !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #71717a !important;
+}
+
+/* Fixes hardcoded slate-900 text becoming invisible on dark background */
+.dark .text-slate-900 {
+  color: #f4f4f5 !important;
+}
+
+.dark .text-slate-800 {
+  color: #e4e4e7 !important;
+}
+
+.dark .text-slate-700 {
+  color: #d4d4d8 !important;
+}
+
+.dark .text-slate-600 {
+  color: #a1a1aa !important;
+}
+
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+/* Inverts off-white inputs/containers */
+.dark .bg-\[\#fbfbf9\],
+.dark .bg-\[\#f8f9fa\] {
+  background-color: #202024 !important;
+  border-color: #2a2a2f !important;
+  color: #f4f4f5 !important;
+}
+
+/* Glassmorphism Sidebar */
 .glass-sidebar {
   background: linear-gradient(145deg, rgb(18 18 40 / 96%), rgb(30 30 63 / 90%));
   border: 1px solid rgb(255 255 255 / 25%);
@@ -152,7 +198,7 @@ body {
     inset 1px 0 rgb(255 255 255 / 10%);
 }
 
-/*Stagger Animations */
+/* Stagger Animations */
 @keyframes dashboard-reveal {
   from {
     opacity: 0;

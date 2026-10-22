@@ -3,4 +3,10 @@ export const homeByRole = {
   teacher: "/teacher/dashboard",
 };
 
-export const getHomePath = (role) => homeByRole[role] ?? "/";
+export const getHomePath = (role) => {
+  const normalized = String(role || "").trim().toLowerCase();
+  if (normalized === "teacher") {
+    return "/teacher/dashboard";
+  }
+  return "/student/dashboard";
+};

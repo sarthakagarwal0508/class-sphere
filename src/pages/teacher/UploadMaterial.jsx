@@ -1,148 +1,331 @@
-import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { 
+  Upload, FileText, Trash2, Download, AlertCircle, 
+  CheckCircle2, HardDrive, Sparkles, FolderOpen 
+} from 'lucide-react';
+import api from '../../services/api';
 
 export default function UploadMaterial() {
-  const [materialType, setMaterialType] = useState('PDF');
-  const [allowAi, setAllowAi] = useState(true);
+  const [classrooms, setClassrooms] = useState([]);
+  const [selectedClassId, setSelectedClassId] = useState('');
+  const [materials, setMaterials] = useState([]);
 
-  const sharedFiles = [
-    { id: 1, title: 'Linked Lists: Complete Notes', meta: 'Linked List, PDF, 1.2 MB, 10 Oct', views: '58 views' },
-    { id: 2, title: 'Stack and Queue Cheat Sheet', meta: 'Stack and Queue, Notes, 12 Oct', views: '51 views' },
-    { id: 3, title: 'Normalization Explained', meta: 'Database Systems, PDF, 8 Oct', views: '47 views' },
-    { id: 4, title: 'Responsive Design Guide', meta: 'Web Development, PDF, 2 Oct', views: '60 views' },
-  ];
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [file, setFile] = useState(null);
+
+  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // 1. Fetch classrooms for the dropdown
+  useEffect(() => {
+    api.get('/api/classrooms')
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        const classList = Array.isArray(data) ? data : data.classrooms ?? [];
+        setClassrooms(classList);
+        if (classList.length > 0) {
+          setSelectedClassId(classList[0]._id || classList[0].id);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load classrooms:', err);
+      });
+  }, []);
+
+  // 2. Fetch materials whenever selected classroom changes
+  useEffect(() => {
+    if (!selectedClassId) return;
+
+    setFetchLoading(true);
+    api.get(`/api/classrooms/${selectedClassId}/materials`)
+      .then((res) => {
+        const data = res.data?.data ?? res.data;
+        setMaterials(Array.isArray(data) ? data : data.materials ?? []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch materials:', err);
+        setMaterials([]);
+      })
+      .finally(() => {
+        setFetchLoading(false);
+      });
+  }, [selectedClassId]);
+
+  // 3. Handle File Upload
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    if (!selectedClassId) {
+      setErrorMsg('Please select a classroom first.');
+      return;
+    }
+    if (!title.trim()) {
+      setErrorMsg('Please provide a title for the document.');
+      return;
+    }
+    if (!file) {
+      setErrorMsg('Please select a PDF file to upload.');
+      return;
+    }
+    if (file.type !== 'application/pdf') {
+      setErrorMsg('Only PDF files are allowed.');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setErrorMsg('File size exceeds the 10 MB limit.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title.trim());
+      if (description) formData.append('description', description.trim());
+
+      const res = await api.post(`/api/classrooms/${selectedClassId}/materials`, formData);
+      const newMaterial = res.data?.data ?? res.data;
+
+      setSuccessMsg('PDF uploaded successfully!');
+      setTitle('');
+      setDescription('');
+      setFile(null);
+
+      // Prepend newly uploaded material to list
+      setMaterials((prev) => [newMaterial, ...prev]);
+    } catch (err) {
+      setErrorMsg(
+        err.response?.data?.message || err.message || 'Failed to upload document.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 4. Handle Delete Material
+  const handleDelete = async (materialId) => {
+    if (!window.confirm('Are you sure you want to delete this resource?')) return;
+
+    try {
+      await api.delete(`/api/materials/${materialId}`);
+      setMaterials((prev) => prev.filter((m) => (m._id || m.id) !== materialId));
+      setSuccessMsg('Resource removed.');
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to delete resource.');
+    }
+  };
+
+  const getDownloadUrl = (materialId) => {
+    const root = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    return `${root.replace(/\/+$/, '')}/api/materials/${materialId}/download`;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
+      {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-slate-900">Upload material</h1>
-        <p className="text-xs text-slate-500">Share notes, PDFs and links topic-wise</p>
+        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100">
+          Upload Study Material
+        </h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Share lecture slides, reference PDFs, and notes with your enrolled students.
+        </p>
       </div>
 
-     
-      <div className="bg-[#fde047] rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black text-slate-900">Share learning material</h2>
-          <p className="text-xs text-slate-800">Upload by topic so students can find, download and summarize it.</p>
-          <div className="pt-2">
-            <button className="px-4 py-2 rounded-xl bg-[#181829] text-white text-xs font-semibold">
-              Browse library
-            </button>
-          </div>
+      {/* Notifications */}
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMsg}</span>
         </div>
+      )}
 
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-            <Upload className="w-5 h-5 text-slate-800" />
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
-            <FileText className="w-5 h-5 text-slate-800" />
-          </div>
+      {successMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{successMsg}</span>
         </div>
-      </div>
+      )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      
-        <div className="bg-white border border-[#eceee8] rounded-2xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">New material</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Upload Form (2 Columns) */}
+        <form
+          onSubmit={handleUpload}
+          className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm"
+        >
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Resource Details
+          </h2>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 mb-1">Title</label>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Target Classroom <span className="text-rose-500">*</span>
+            </label>
+            <select
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+            >
+              {classrooms.length === 0 ? (
+                <option value="">No classrooms available. Create one first.</option>
+              ) : (
+                classrooms.map((c) => (
+                  <option key={c._id || c.id} value={c._id || c.id}>
+                    {c.name} ({c.classCode || c.code})
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Document Title <span className="text-rose-500">*</span>
+            </label>
             <input
               type="text"
-              placeholder="Trees: Traversals Explained"
-              className="w-full bg-[#fbfbf9] border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none"
+              required
+              placeholder="e.g. Unit 3: Graph Traversal & Dijkstra's Algorithm"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#fde047]"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Class</label>
-              <select className="w-full bg-[#fbfbf9] border border-slate-200 rounded-xl px-3 py-2 text-xs">
-                <option>Data Structures</option>
-                <option>Database Systems</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-slate-600 mb-1">Topic</label>
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Description / Topic (Optional)
+            </label>
+            <textarea
+              rows="2"
+              placeholder="e.g. Recommended reading before Friday's lab session."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+            />
+          </div>
+
+          {/* Drag & Drop File Zone */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Upload PDF File (Max 10 MB) <span className="text-rose-500">*</span>
+            </label>
+            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center hover:border-[#fde047] transition bg-[#f8f9fa] dark:bg-slate-800/30">
+              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
               <input
-                type="text"
-                placeholder="Trees"
-                className="w-full bg-[#fbfbf9] border border-slate-200 rounded-xl px-3 py-2 text-xs"
+                type="file"
+                id="pdf-upload"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={(e) => setFile(e.target.files[0])}
               />
+              <label
+                htmlFor="pdf-upload"
+                className="cursor-pointer text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-amber-500"
+              >
+                {file ? file.name : 'Click to select PDF or drag and drop'}
+              </label>
+              <p className="text-[11px] text-slate-400 mt-1">PDF documents only &bull; Up to 10 MB</p>
             </div>
           </div>
 
-          <div className="flex gap-2 pt-1">
-            {['PDF', 'Notes', 'Link'].map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setMaterialType(t)}
-                className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border ${
-                  materialType === t
-                    ? 'bg-[#fde047] border-[#fde047] text-slate-900'
-                    : 'bg-white border-slate-200 text-slate-600'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
-
-          <div className="border border-dashed border-slate-300 rounded-xl p-6 text-center bg-[#fbfbf9] cursor-pointer">
-            <p className="text-xs font-semibold text-slate-800">Drop a PDF here or browse</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Max 20 MB</p>
-          </div>
-
-          <label className="flex items-center gap-2 cursor-pointer pt-1">
-            <input
-              type="checkbox"
-              checked={allowAi}
-              onChange={(e) => setAllowAi(e.target.checked)}
-              className="rounded text-amber-500 focus:ring-amber-400"
-            />
-            <span className="text-xs text-slate-700">Allow students to use Notes AI on this file</span>
-          </label>
-
-          <button className="w-full py-2.5 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-semibold transition-colors">
-            Upload and notify students
+          <button
+            type="submit"
+            disabled={loading || !selectedClassId}
+            className="px-6 py-3 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-bold transition shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Uploading PDF...' : 'Upload Resource'}
           </button>
+        </form>
+
+        {/* Sidebar Info & Storage */}
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <HardDrive className="w-4 h-4 text-slate-600 dark:text-slate-400" />
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
+                Cloud Storage Quota
+              </h3>
+            </div>
+            <div>
+              <div className="flex justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+                <span>Used for PDFs</span>
+                <span className="font-bold text-slate-900 dark:text-slate-100">{materials.length} files</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                <div className="h-full bg-[#fde047] rounded-full" style={{ width: `${Math.min(materials.length * 5, 100)}%` }} />
+              </div>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Files uploaded here are instantly visible to students enrolled in the selected cohort.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Shared Documents Library */}
+      <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-6 space-y-4 shadow-sm">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            Shared Documents ({materials.length})
+          </h2>
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3">
-            <h3 className="text-sm font-bold text-slate-900">Shared so far</h3>
-            <div className="divide-y divide-slate-100">
-              {sharedFiles.map((f) => (
-                <div key={f.id} className="py-2.5 flex items-center justify-between">
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">{f.title}</h4>
-                    <p className="text-[11px] text-slate-400">{f.meta}</p>
+        {fetchLoading ? (
+          <p className="text-xs text-slate-400 py-4 text-center">Loading resources...</p>
+        ) : materials.length === 0 ? (
+          <div className="text-center py-8 space-y-2">
+            <FolderOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
+            <p className="text-xs text-slate-500">No resources uploaded for this classroom yet.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {materials.map((m) => {
+              const id = m._id || m.id;
+              return (
+                <div key={id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4 text-amber-800 dark:text-amber-300" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        {m.title}
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {m.description || 'Lecture Notes'} &bull; PDF
+                      </p>
+                    </div>
                   </div>
+
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-600">
-                      {f.views}
-                    </span>
-                    <button className="text-xs text-slate-400 hover:text-slate-900 font-medium">Edit</button>
+                    <a
+                      href={getDownloadUrl(id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                      title="Download PDF"
+                    >
+                      <Download className="w-4 h-4" />
+                    </a>
+                    <button
+                      onClick={() => handleDelete(id)}
+                      className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 transition"
+                      title="Delete resource"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-
-       
-          <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="font-bold text-slate-900">Storage</span>
-              <span className="font-semibold text-slate-500">1.2 GB of 5 GB used (24%)</span>
-            </div>
-            <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div className="bg-[#181829] h-full rounded-full" style={{ width: '24%' }} />
-            </div>
-            <p className="text-[11px] text-slate-400">PDFs, notes and links count toward storage.</p>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
