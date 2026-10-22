@@ -1,15 +1,27 @@
-
 const crypto = require("crypto");
+const mongoose = require("mongoose");
 const Classroom = require("../models/Classroom");
+const Assignment = require("../models/Assignment");
+const Submission = require("../models/Submission");
+const Announcement = require("../models/Announcement");
+const Notification = require("../models/Notification");
+const StudyMaterial = require("../models/StudyMaterial");
+const cloudinary = require("../config/cloudinary");
 
+// Generate a six-character hexadecimal join code.
 const generateClassCode = () => {
-  return crypto.randomBytes(4).toString("hex").toUpperCase();
+  return crypto.randomBytes(3).toString("hex").toUpperCase();
 };
 
-  // create classroom
+// Create classroom
 const createClassroom = async (req, res) => {
   try {
-    const { name, description = "" } = req.body;
+    const {
+      name,
+      description = "",
+      subject = "",
+      semesterSection = "",
+    } = req.body;
 
     if (typeof name !== "string" || name.trim().length < 3) {
       return res.status(400).json({
@@ -35,14 +47,64 @@ const createClassroom = async (req, res) => {
       });
     }
 
-    const classCode = generateClassCode();
+    if (
+      typeof subject !== "string" ||
+      subject.trim().length > 100
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject must be a string of at most 100 characters.",
+      });
+    }
 
-    const classroom = await Classroom.create({
-      name: name.trim(),
-      description: description.trim(),
-      classCode,
-      teacher: req.user._id,
-    });
+    if (
+      typeof semesterSection !== "string" ||
+      semesterSection.trim().length > 50
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Semester/Section must be a string of at most 50 characters.",
+      });
+    }
+
+    // Retry if a generated code already exists.
+    let classroom = null;
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const classCode = generateClassCode();
+
+      try {
+        classroom = await Classroom.create({
+          name: name.trim(),
+          description: description.trim(),
+          subject: subject.trim(),
+          semesterSection: semesterSection.trim(),
+          classCode,
+          teacher: req.user._id,
+        });
+
+        break;
+      } catch (error) {
+        const isClassCodeCollision =
+          error.code === 11000 &&
+          (error.keyPattern?.classCode ||
+            String(error.message).includes("classCode"));
+
+        if (isClassCodeCollision) {
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    if (!classroom) {
+      return res.status(503).json({
+        success: false,
+        message: "Could not generate a unique class code. Please try again.",
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -60,8 +122,8 @@ const createClassroom = async (req, res) => {
     });
   }
 };
- // grt classroom
 
+// Get classrooms belonging to the current teacher or student.
 const getMyClassrooms = async (req, res) => {
   try {
     let classrooms;
@@ -98,9 +160,8 @@ const getMyClassrooms = async (req, res) => {
     });
   }
 };
-  // join classroom
 
-  
+// Join classroom using its code.
 const joinClassroom = async (req, res) => {
   try {
     const { classCode } = req.body;
@@ -160,13 +221,13 @@ const joinClassroom = async (req, res) => {
     });
   }
 };
-  // get a classroom by id
-  
+
+// Get classroom details by ID.
 const getClassroomById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
@@ -213,24 +274,30 @@ const getClassroomById = async (req, res) => {
     });
   }
 };
- // update classroom details - only teacher 
- 
+
+// Update classroom details.
 const updateClassroom = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, description } = req.body;
+    const { name, description, subject, semesterSection } = req.body;
 
-    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
       });
     }
 
-    if (name === undefined && description === undefined) {
+    if (
+      name === undefined &&
+      description === undefined &&
+      subject === undefined &&
+      semesterSection === undefined
+    ) {
       return res.status(400).json({
         success: false,
-        message: "Provide a name or description to update.",
+        message:
+          "Provide a name, description, subject or semester/section to update.",
       });
     }
 
@@ -254,6 +321,28 @@ const updateClassroom = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Description must be a string of at most 500 characters.",
+      });
+    }
+
+    if (
+      subject !== undefined &&
+      (typeof subject !== "string" || subject.trim().length > 100)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Subject must be a string of at most 100 characters.",
+      });
+    }
+
+    if (
+      semesterSection !== undefined &&
+      (typeof semesterSection !== "string" ||
+        semesterSection.trim().length > 50)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Semester/Section must be a string of at most 50 characters.",
       });
     }
 
@@ -281,6 +370,14 @@ const updateClassroom = async (req, res) => {
       classroom.description = description.trim();
     }
 
+    if (subject !== undefined) {
+      classroom.subject = subject.trim();
+    }
+
+    if (semesterSection !== undefined) {
+      classroom.semesterSection = semesterSection.trim();
+    }
+
     await classroom.save();
 
     return res.status(200).json({
@@ -299,16 +396,16 @@ const updateClassroom = async (req, res) => {
     });
   }
 };
- // remove student - teacher
 
- 
+// Remove a student from a classroom.
+// Their previous submissions are preserved.
 const removeStudent = async (req, res) => {
   try {
     const { id, studentId } = req.params;
 
     if (
-      !/^[a-fA-F0-9]{24}$/.test(id) ||
-      !/^[a-fA-F0-9]{24}$/.test(studentId)
+      !mongoose.isValidObjectId(id) ||
+      !mongoose.isValidObjectId(studentId)
     ) {
       return res.status(400).json({
         success: false,
@@ -333,7 +430,8 @@ const removeStudent = async (req, res) => {
     }
 
     const isMember = classroom.students.some(
-      (id) => id.toString() === studentId
+      (currentStudentId) =>
+        currentStudentId.toString() === studentId
     );
 
     if (!isMember) {
@@ -344,7 +442,8 @@ const removeStudent = async (req, res) => {
     }
 
     classroom.students = classroom.students.filter(
-      (id) => id.toString() !== studentId
+      (currentStudentId) =>
+        currentStudentId.toString() !== studentId
     );
 
     await classroom.save();
@@ -362,13 +461,13 @@ const removeStudent = async (req, res) => {
     });
   }
 };
- // leave classroom - student 
 
+// A student leaves a classroom. Previous submissions are preserved.
 const leaveClassroom = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
@@ -414,13 +513,14 @@ const leaveClassroom = async (req, res) => {
     });
   }
 };
- // delete classroom 
- 
+
+// Delete classroom and related records.
+// IMPORTANT: This is a permanent operation.
 const deleteClassroom = async (req, res) => {
   try {
     const { id } = req.params;
 
-    if (!/^[a-fA-F0-9]{24}$/.test(id)) {
+    if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
@@ -443,18 +543,76 @@ const deleteClassroom = async (req, res) => {
       });
     }
 
-    await Classroom.deleteOne({ _id: classroom._id });
+    // Find assignments belonging to this classroom.
+    const assignments = await Assignment.find({
+      classroom: classroom._id,
+    }).select("_id");
+
+    const assignmentIds = assignments.map(
+      (assignment) => assignment._id
+    );
+
+    // Find study materials before deleting their database records.
+    const materials = await StudyMaterial.find({
+      classroom: classroom._id,
+    });
+
+    // Delete authenticated PDFs from Cloudinary.
+    for (const material of materials) {
+      const cloudResult = await cloudinary.uploader.destroy(
+        material.cloudinaryPublicId,
+        {
+          resource_type: "raw",
+          type: "authenticated",
+        }
+      );
+
+      if (
+        cloudResult.result !== "ok" &&
+        cloudResult.result !== "not found"
+      ) {
+        throw new Error(
+          `Cloudinary could not delete material ${material._id}`
+        );
+      }
+    }
+
+    // Remove dependent database records.
+    await Notification.deleteMany({
+      classroom: classroom._id,
+    });
+
+    await Announcement.deleteMany({
+      classroom: classroom._id,
+    });
+
+    await Submission.deleteMany({
+      assignment: { $in: assignmentIds },
+    });
+
+    await Assignment.deleteMany({
+      classroom: classroom._id,
+    });
+
+    await StudyMaterial.deleteMany({
+      classroom: classroom._id,
+    });
+
+    await Classroom.deleteOne({
+      _id: classroom._id,
+    });
 
     return res.status(200).json({
       success: true,
-      message: "Classroom deleted successfully.",
+      message: "Classroom and its related records deleted successfully.",
     });
   } catch (error) {
     console.error("Delete classroom error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: "Internal server error.",
+      message:
+        "Classroom deletion/cleanup failed. Check server logs before retrying.",
     });
   }
 };

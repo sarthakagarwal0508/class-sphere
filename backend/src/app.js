@@ -23,7 +23,7 @@ app.use("/api/classrooms", classroomRoutes);
 app.use("/api", assignmentRoutes);
 app.use("/api", studyMaterialRoutes);
 app.use("/api", announcementRoutes);
-app.use("/api", notificationRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 

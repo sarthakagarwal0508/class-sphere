@@ -16,6 +16,19 @@ const classroomSchema = new mongoose.Schema(
       maxlength: 500,
       default: "",
     },
+    subject: {
+  type: String,
+  trim: true,
+  maxlength: 100,
+  default: "",
+},
+
+semesterSection: {
+  type: String,
+  trim: true,
+  maxlength: 50,
+  default: "",
+},
 
     classCode: {
       type: String,
@@ -42,6 +55,7 @@ const classroomSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
 
 classroomSchema.index({ teacher: 1 });
 classroomSchema.index({ students: 1 });
