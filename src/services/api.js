@@ -8,10 +8,9 @@ export const API_URL = `${ROOT}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 60000, // free hosting par server so jata hai, pehli request dheere aa sakti hai
+  timeout: 60000,
 });
 
-// 1) Har request ke saath access token lagao
 api.interceptors.request.use((config) => {
   const tokens = tokenStorage.get();
   if (tokens?.accessToken) {
@@ -20,9 +19,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 2) Access token expire ho jaye to refresh karke wahi request dobara bhejo.
-//    Refresh token rotation hai, isliye dono naye token save hote hain.
-//    Ek saath kai requests fail hon to refresh sirf ek baar chalta hai.
 let refreshPromise = null;
 
 function refreshTokens() {

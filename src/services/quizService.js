@@ -1,12 +1,11 @@
-// MOCK service. Backend ready hone par sirf is file ke andar ka code badlega,
-// Quizzes aur AttemptQuiz pages waise hi rahenge.
+
+
 import { quizzesData } from "../data/quizzesData";
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Mock "database"
 const store = quizzesData.map((q) => ({ ...q }));
-// quizId -> attempt ka end time (server tay karta hai, refresh se timer reset nahi hota)
+
 const attempts = new Map();
 
 const find = (quizId) => store.find((q) => String(q.id) === String(quizId));
@@ -30,13 +29,13 @@ function toSummary(q) {
 
 export async function getQuizzes() {
   await delay(500);
-  // Real: const { data } = await api.get("/quizzes"); return data;
+
   return store.map(toSummary);
 }
 
 export async function startQuiz(quizId) {
   await delay(500);
-  // Real: const { data } = await api.post(`/quizzes/${quizId}/start`); return data;
+
   const quiz = find(quizId);
   if (!quiz) throw new Error("Quiz not found.");
   if (quiz.status === "completed") throw new Error("You have already completed this quiz.");
@@ -52,14 +51,14 @@ export async function startQuiz(quizId) {
     topic: quiz.topic,
     durationMin: quiz.durationMin,
     endsAt: attempts.get(quiz.id),
-    // correct answer yahan se bahar nahi jata
+
     questions: quiz.questions.map(({ id, text, options }) => ({ id, text, options })),
   };
 }
 
 export async function submitQuiz({ quizId, answers }) {
   await delay(700);
-  // Real: const { data } = await api.post(`/quizzes/${quizId}/submit`, { answers }); return data;
+
   const quiz = find(quizId);
   if (!quiz) throw new Error("Quiz not found.");
   if (quiz.status === "completed") throw new Error("This quiz was already submitted.");

@@ -10,7 +10,7 @@ import { tokenStorage, AUTH_EXPIRED_EVENT } from "../services/tokenStorage";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  // Initialize user from localStorage so there's no flicker on reload
+
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem("user");
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
     fetchMe()
       .then((me) => {
         if (!ignore && me) {
-          // Preserve the selected role from localStorage so backend doesn't overwrite teacher with student
+
           const persistedRole = localStorage.getItem("role") || me.role || "student";
           const updatedUser = { ...me, role: persistedRole };
           setUser(updatedUser);
@@ -65,8 +65,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onExpired);
   }, []);
 
-  // 🌟 Key Fix: Accepts requestedRole and persists it
-  const startSession = (authData, requestedRole) => {
+const startSession = (authData, requestedRole) => {
     const nextUser = authData?.user || authData;
     const tokens = authData?.tokens;
 
@@ -74,8 +73,7 @@ export function AuthProvider({ children }) {
       tokenStorage.set(tokens);
     }
 
-    // Prioritize explicitly requested role (e.g. 'teacher' or 'student')
-    const effectiveRole = requestedRole || nextUser?.role || localStorage.getItem("role") || "student";
+const effectiveRole = requestedRole || nextUser?.role || localStorage.getItem("role") || "student";
     const userWithRole = { ...nextUser, role: effectiveRole };
 
     localStorage.setItem("role", effectiveRole);
@@ -99,8 +97,8 @@ export function AuthProvider({ children }) {
     const tokens = tokenStorage.get();
     try {
       if (tokens?.refreshToken) await logoutRequest(tokens.refreshToken);
-    } catch {
-      // ignore
+    } catch (error) {
+      console.warn("Could not notify the server about logout:", error);
     }
     tokenStorage.clear();
     localStorage.removeItem("user");

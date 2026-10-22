@@ -38,7 +38,7 @@ export default function CreateClassroom() {
     setError('');
 
     try {
-    
+
       const fullDescription = [
         formData.subject ? `Subject: ${formData.subject}` : '',
         formData.semester ? `Semester: ${formData.semester}` : '',
@@ -64,7 +64,7 @@ export default function CreateClassroom() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* Header */}
+
       <div>
         <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100">
           Create Classroom
@@ -74,8 +74,7 @@ export default function CreateClassroom() {
         </p>
       </div>
 
-            {/* Dark Navy Hero with Yellow Accent (Images 4 & 5 Style) */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
+<div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
         <div className="space-y-2 z-10 max-w-md">
           <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
             CLASSROOM CREATOR
@@ -103,7 +102,7 @@ export default function CreateClassroom() {
           </div>
         </div>
       </div>
-      {/* Error Alert */}
+
       {error && (
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
@@ -111,8 +110,7 @@ export default function CreateClassroom() {
         </div>
       )}
 
-      {/* Success Banner when Classroom is Created */}
-      {createdClass && (
+{createdClass && (
         <div className="p-5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
@@ -131,9 +129,8 @@ export default function CreateClassroom() {
         </div>
       )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form Container */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         <form
           onSubmit={handleSubmit}
           className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm"
@@ -208,8 +205,7 @@ export default function CreateClassroom() {
           </div>
         </form>
 
-        {/* Right Sidebar: Join Code Display */}
-        <div className="space-y-4">
+<div className="space-y-4">
           <div className="bg-[#181829] text-white rounded-2xl p-6 text-center space-y-3 shadow-sm border border-slate-800">
             <p className="text-xs text-slate-400 font-medium">
               {createdClass ? 'Active Classroom Join Code' : 'Join Code (Generated on submit)'}
@@ -235,8 +231,7 @@ export default function CreateClassroom() {
             </button>
           </div>
 
-          {/* How Students Join Guide */}
-          <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-5 space-y-3">
+<div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-5 space-y-3">
             <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wider">
               How Students Join
             </h4>

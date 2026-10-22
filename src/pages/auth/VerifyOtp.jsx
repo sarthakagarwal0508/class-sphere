@@ -7,7 +7,7 @@ import ServerWakeHint from "../../components/ServerWakeHint";
 import { verifyOtpRequest, resendOtpRequest } from "../../services/authService";
 import { isValidEmail } from "../../utils/validators";
 
-const OTP_LENGTH = 6; // backend 4 digit bheje to yahan badlo
+const OTP_LENGTH = 6;
 const RESEND_SECONDS = 60;
 const STORAGE_KEY = "classsphere_pending_email";
 
@@ -15,8 +15,7 @@ export default function VerifyOtp() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Email state se aati hai; refresh ke baad bhi na jaye isliye sessionStorage mein bhi rakhte hain
-  const [email, setEmail] = useState(
+const [email, setEmail] = useState(
     () => location.state?.email ?? sessionStorage.getItem(STORAGE_KEY) ?? ""
   );
   const hasEmail = Boolean(location.state?.email ?? sessionStorage.getItem(STORAGE_KEY));
@@ -34,8 +33,7 @@ export default function VerifyOtp() {
     if (email) sessionStorage.setItem(STORAGE_KEY, email);
   }, [email]);
 
-  // Resend ka countdown
-  useEffect(() => {
+useEffect(() => {
     if (cooldown <= 0) return undefined;
     const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
     return () => clearTimeout(id);

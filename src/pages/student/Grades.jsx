@@ -137,8 +137,7 @@ export default function Grades() {
         icons={[Award, TrendingUp, BookOpen]}
       />
 
-      {/* Overall performance */}
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+<section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted">Overall score</p>
@@ -192,8 +191,7 @@ export default function Grades() {
         </Card>
       </section>
 
-      {/* Course-wise grades */}
-      <section>
+<section>
         <h2 className="text-lg font-extrabold">
           Course performance
         </h2>
@@ -241,8 +239,7 @@ export default function Grades() {
         </div>
       </section>
 
-      {/* Results list */}
-      <section>
+<section>
         <h2 className="text-lg font-extrabold">
           Grade history
         </h2>

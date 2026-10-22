@@ -105,8 +105,8 @@ function QuizRunner({ quiz }) {
   const total = questions.length;
 
   const [current, setCurrent] = useState(0);
-  const [answers, setAnswers] = useState({}); // { [questionId]: optionIndex }
-  const [flagged, setFlagged] = useState({}); // { [questionId]: true/false }
+  const [answers, setAnswers] = useState({});
+  const [flagged, setFlagged] = useState({});
   const [now, setNow] = useState(() => Date.now());
   const [result, setResult] = useState(null);
   const [confirming, setConfirming] = useState(false);
@@ -114,8 +114,7 @@ function QuizRunner({ quiz }) {
   const [submitError, setSubmitError] = useState("");
   const submitRef = useRef(null);
 
-  // Timer: server ne end time diya hai, har second "ab kitne baje" se bacha hua time nikalte hain
-  const secondsLeft = Math.max(
+const secondsLeft = Math.max(
     0,
     Math.min(quiz.durationMin * 60, Math.ceil((quiz.endsAt - now) / 1000))
   );
@@ -142,13 +141,11 @@ function QuizRunner({ quiz }) {
     }
   };
 
-  // Timer ka interval hamesha taza submit function use kare, isliye ref mein rakha
-  useEffect(() => {
+useEffect(() => {
     submitRef.current = submit;
   });
 
-  // Har second ghadi chalao; time khatam hote hi apne aap submit
-  useEffect(() => {
+useEffect(() => {
     if (result) return undefined;
 
     const id = setInterval(() => {
@@ -163,8 +160,7 @@ function QuizRunner({ quiz }) {
     return () => clearInterval(id);
   }, [quiz.endsAt, result]);
 
-  // Quiz ke beech tab band/refresh karne par browser warning de
-  useEffect(() => {
+useEffect(() => {
     if (result) return undefined;
 
     const warn = (e) => {
@@ -195,7 +191,7 @@ function QuizRunner({ quiz }) {
       />
 
       <div className="grid gap-5 min-[1100px]:grid-cols-[minmax(0,1fr)_16rem]">
-        {/* Left: question */}
+
         <Card className="p-5">
           <div className="h-1.5 rounded-full bg-soft">
             <div
@@ -271,8 +267,7 @@ function QuizRunner({ quiz }) {
           </div>
         </Card>
 
-        {/* Right: timer + question navigator */}
-        <aside className="space-y-4 min-[1100px]:self-start">
+<aside className="space-y-4 min-[1100px]:self-start">
           <div
             className={`rounded-2xl p-5 text-center text-white ${lowTime ? "bg-red-600" : "bg-panel"}`}
           >

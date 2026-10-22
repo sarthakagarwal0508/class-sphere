@@ -122,7 +122,6 @@ body {
   background-attachment: fixed;
 }
 
-
 .dark .bg-white {
   background-color: #161618 !important;
   border-color: #2a2a2f !important;
@@ -141,7 +140,6 @@ body {
 .dark textarea::placeholder {
   color: #71717a !important;
 }
-
 
 .dark .text-slate-900 {
   color: #f4f4f5 !important;
@@ -163,7 +161,6 @@ body {
   color: #94a3b8 !important;
 }
 
-/* Inverts off-white inputs/containers */
 .dark .bg-\[\#fbfbf9\],
 .dark .bg-\[\#f8f9fa\] {
   background-color: #202024 !important;
@@ -194,7 +191,6 @@ body {
     inset 0 1px rgb(255 255 255 / 24%),
     inset 1px 0 rgb(255 255 255 / 10%);
 }
-
 
 @keyframes dashboard-reveal {
   from {

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { 
-  FileCheck2, Users, Award, Clock, Download, 
+import {
+  FileCheck2, Users, Award, Clock, Download,
   CheckCircle2, AlertCircle, Save, Sparkles, Filter, ChevronRight
 } from 'lucide-react';
 
 export default function StudentSubmissions() {
-  const [filter, setFilter] = useState('pending'); // 'pending' or 'graded'
+  const [filter, setFilter] = useState('pending');
   const [selectedId, setSelectedId] = useState(1);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -125,7 +125,7 @@ ListNode* reverseList(ListNode* head) {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* Header */}
+
       <div>
         <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
           Student Submissions
@@ -135,8 +135,7 @@ ListNode* reverseList(ListNode* head) {
         </p>
       </div>
 
-      {/*  Dark Navy Hero Banner with Yellow Accent (Images 4 & 5 Design System) */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
+<div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
         <div className="space-y-2 z-10 max-w-md">
           <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
             EVALUATION WORKSPACE
@@ -170,9 +169,8 @@ ListNode* reverseList(ListNode* head) {
         </div>
       </div>
 
-      {/* Main Grid: Queue on Left, Evaluation on Right */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Submissions Queue */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
         <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
             <button
@@ -233,11 +231,10 @@ ListNode* reverseList(ListNode* head) {
           </div>
         </div>
 
-        {/* Selected Submission Workspace (2 Columns) */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-6">
+<div className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-6">
           {selectedSub ? (
             <>
-              {/* Header Info */}
+
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
                 <div>
                   <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -252,13 +249,12 @@ ListNode* reverseList(ListNode* head) {
                 </div>
               </div>
 
-              {/* Code Inspection Window */}
-              <div className="space-y-2">
+<div className="space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-bold text-slate-900 dark:text-white">
                     Code Submission Preview ({selectedSub.fileName})
                   </span>
-                  <button 
+                  <button
                     onClick={() => alert(`Downloading ${selectedSub.fileName}...`)}
                     className="text-amber-500 hover:text-amber-600 font-bold flex items-center gap-1 text-[11px]"
                   >
@@ -271,8 +267,7 @@ ListNode* reverseList(ListNode* head) {
                 </pre>
               </div>
 
-              {/* Grading Form */}
-              <form onSubmit={handleSaveGrade} className="space-y-4 pt-2">
+<form onSubmit={handleSaveGrade} className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">

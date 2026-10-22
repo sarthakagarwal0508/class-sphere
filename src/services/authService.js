@@ -3,7 +3,6 @@ import { toApiError } from "./apiError";
 
 const AUTH_REQUEST_TIMEOUT = 120_000;
 
-// Backend ka data kabhi { data: {...} } ke andar hota hai, kabhi seedha. Dono chalega.
 const unwrap = (response) => response.data?.data ?? response.data;
 
 async function call(request) {
@@ -14,7 +13,6 @@ async function call(request) {
   }
 }
 
-// Backend ke user ko app ke format mein badalna. Field ke naam alag hon to sirf yahan badlo.
 function normalizeUser(raw = {}) {
   return {
     id: raw.id ?? raw._id,

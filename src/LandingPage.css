@@ -512,7 +512,6 @@
   color: rgb(255 255 255 / 55%);
 }
 
-
 .cs-sun {
   top: 34px;
   right: 9%;
@@ -522,7 +521,6 @@
   box-shadow: 0 0 0 15px rgb(255 255 255 / 20%);
   animation: cs-sun-pulse 4s ease-in-out infinite;
 }
-
 
 .cs-cloud {
   position: absolute;
@@ -577,7 +575,6 @@
   animation-delay: -7s;
 }
 
-
 .cs-hill {
   position: absolute;
   z-index: 1;
@@ -600,7 +597,6 @@
   background: #c7e8dc;
   transform: rotate(3deg);
 }
-
 
 .cs-tree {
   position: absolute;
@@ -656,7 +652,6 @@
   top: 34px;
   left: -2px;
 }
-
 
 .cs-road {
   z-index: 3;
@@ -752,7 +747,6 @@
   background: #e7a923;
 }
 
-
 .cs-wheel {
   position: absolute;
   bottom: -19px;
@@ -780,7 +774,6 @@
   right: 29px;
 }
 
-
 .cs-sparkle {
   position: absolute;
   z-index: 2;
@@ -800,7 +793,6 @@
   animation-delay: -1s;
 }
 
-
 .cs-scene-caption {
   position: absolute;
   z-index: 6;
@@ -812,7 +804,6 @@
   font-weight: 900;
   letter-spacing: 2px;
 }
-
 
 @keyframes cs-bus-drive {
   from {
@@ -869,7 +860,6 @@
   }
 }
 
-/* Mobile */
 @media (max-width: 640px) {
   .landing-nav-link {
     padding: 0.55rem 0.625rem;
@@ -940,30 +930,3 @@
     margin-top: 0.75rem;
   }
 }
-
-
-/* @media (prefers-reduced-motion: reduce) {
-  .landing-feature-card,
-  .landing-faq-item {
-    transition: none;
-  }
-
-  .landing-feature-card:hover,
-  .landing-faq-item:hover,
-  .landing-faq-item[open] {
-    transform: none;
-  }
-
-  .cs-bus,
-  .cs-cloud,
-  .cs-tree,
-  .cs-sun,
-  .cs-sparkle {
-    animation: none;
-  }
-
-  .cs-bus {
-    left: 20px;
-    transform: none;
-  }
-} */

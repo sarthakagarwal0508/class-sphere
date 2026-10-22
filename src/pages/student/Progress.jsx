@@ -65,8 +65,7 @@ export default function Progress() {
         icons={[TrendingUp, Target, BookOpen]}
       />
 
-      {/* Overall progress */}
-      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+<section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <Card className="p-4">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm text-muted">Overall progress</p>
@@ -131,8 +130,7 @@ export default function Progress() {
         </Card>
       </section>
 
-      {/* Course progress */}
-      <section>
+<section>
         <div className="mb-3">
           <h2 className="text-lg font-extrabold">
             Course-wise progress
@@ -207,8 +205,7 @@ export default function Progress() {
         </div>
       </section>
 
-      {/* Current learning */}
-      <section>
+<section>
         <h2 className="mb-3 text-lg font-extrabold">
           Learning in progress
         </h2>
@@ -247,8 +244,7 @@ export default function Progress() {
         </Card>
       </section>
 
-      {/* Assignment overview */}
-      <section>
+<section>
         <h2 className="mb-3 text-lg font-extrabold">
           Assignment overview
         </h2>

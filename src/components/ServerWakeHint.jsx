@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-// Free hosting par server so jata hai. Request 4 second se zyada lage to
-// user ko batao ki wait karna normal hai.
 export default function ServerWakeHint({ active, delay = 4000 }) {
   const [slow, setSlow] = useState(false);
 

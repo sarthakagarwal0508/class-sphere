@@ -17,8 +17,7 @@ export default function ClassAnalytics() {
         <p className="text-xs text-slate-500">Averages, quiz trends and submission completion</p>
       </div>
 
-      {/* Dark Navy Hero Banner */}
-      <div className="bg-[#181829] text-white rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
+<div className="bg-[#181829] text-white rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
         <div className="space-y-2">
           <h2 className="text-2xl font-black">Understand your classes</h2>
           <p className="text-xs text-slate-300">Trends, weak topics and students who may need support.</p>
@@ -39,8 +38,7 @@ export default function ClassAnalytics() {
         </div>
       </div>
 
-      {/* Stat Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map((s) => (
           <div key={s.label} className="bg-white border border-[#eceee8] rounded-2xl p-4 flex items-center gap-3">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${s.color}`}>
@@ -55,7 +53,7 @@ export default function ClassAnalytics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Trend Visual */}
+
         <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">Quiz average trend</h3>
           <div className="flex items-end justify-between h-40 pt-4 px-2">
@@ -75,8 +73,7 @@ export default function ClassAnalytics() {
           </div>
         </div>
 
-        {/* Weak Topics */}
-        <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
+<div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
           <h3 className="text-sm font-bold text-slate-900">Weak topics in class</h3>
           <div className="space-y-3">
             {[
@@ -99,8 +96,7 @@ export default function ClassAnalytics() {
         </div>
       </div>
 
-      {/* At-Risk Students */}
-      <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3">
+<div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3">
         <h3 className="text-sm font-bold text-slate-900">Students who may need support</h3>
         <p className="text-xs text-slate-500">Estimated by the ML model from past assessments. Use it to offer revision help.</p>
 

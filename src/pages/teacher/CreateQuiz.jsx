@@ -53,7 +53,7 @@ export default function CreateQuiz() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* High-Contrast Header */}
+
       <div>
         <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
           Create Quiz
@@ -63,8 +63,7 @@ export default function CreateQuiz() {
         </p>
       </div>
 
- 
-      <div className="bg-[#181829] border border-slate-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm relative overflow-hidden text-white">
+<div className="bg-[#181829] border border-slate-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm relative overflow-hidden text-white">
         <div className="space-y-2 max-w-md z-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#fde047] text-xs font-bold">
             <Sparkles className="w-3.5 h-3.5" /> Assessment Builder
@@ -79,9 +78,9 @@ export default function CreateQuiz() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Quiz Details & Question Builder */}
+
         <div className="lg:col-span-2 space-y-6">
-          {/* Metadata Card */}
+
           <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               Quiz Details
@@ -130,8 +129,7 @@ export default function CreateQuiz() {
             </div>
           </div>
 
-          {/* Add Question Form */}
-          <form
+<form
             onSubmit={handleAddQuestion}
             className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm"
           >
@@ -190,8 +188,7 @@ export default function CreateQuiz() {
           </form>
         </div>
 
-        {/* Right Column: Question Palette */}
-        <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
+<div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
           <div className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               Questions ({questions.length})

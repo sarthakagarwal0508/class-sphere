@@ -38,7 +38,7 @@ export default function NotesAI() {
   const [request, setRequest] = useState(
     incomingMaterial ? { key: 1, text: "", material: incomingMaterial } : null
   );
-  const [status, setStatus] = useState(incomingMaterial ? "loading" : "idle"); // idle | loading | ready | error
+  const [status, setStatus] = useState(incomingMaterial ? "loading" : "idle");
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
@@ -163,7 +163,7 @@ export default function NotesAI() {
       )}
 
       <div className="grid gap-5 min-[1100px]:grid-cols-2">
-        {/* Left: input */}
+
         <Card className="p-5 min-[1100px]:self-start">
           <h2 className="text-lg font-extrabold">Your notes</h2>
 
@@ -231,8 +231,7 @@ export default function NotesAI() {
           </div>
         </Card>
 
-        {/* Right: results */}
-        <div className="space-y-4" aria-live="polite">
+<div className="space-y-4" aria-live="polite">
           <KeyPointsCard items={result?.keyPoints ?? []} status={status} />
           <FlashcardsCard
             cards={result?.flashcards ?? []}

@@ -32,8 +32,6 @@ const tabs = [
   { key: "completed", label: "Completed" },
 ];
 
-// Dashboard overview: one assignment of each status (like the design).
-// With the real API this becomes "3 most recent".
 const dashboardAssignments = ["pending", "submitted", "graded"]
   .map((s) => assignments.find((a) => a.status === s))
   .filter(Boolean);
@@ -45,7 +43,7 @@ export default function StudentDashboard() {
 
   return (
     <div className="grid gap-6 min-[1100px]:grid-cols-[minmax(0,1fr)_20rem]">
-      {/* Left: main content */}
+
       <div className="dashboard-stagger space-y-5">
         <Topbar
           title={`Hello, ${student.firstName}` }
@@ -120,8 +118,7 @@ export default function StudentDashboard() {
         </section>
       </div>
 
-      {/* Right: panel */}
-      <aside className="dashboard-stagger space-y-5 [scrollbar-width:thin] min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:max-h-[calc(100vh-3rem)] min-[1100px]:self-start min-[1100px]:overflow-y-auto">
+<aside className="dashboard-stagger space-y-5 [scrollbar-width:thin] min-[1100px]:sticky min-[1100px]:top-6 min-[1100px]:max-h-[calc(100vh-3rem)] min-[1100px]:self-start min-[1100px]:overflow-y-auto">
         <ProfilePanel name={student.name} email={student.email} />
         <CalendarCard />
         <ScheduleCard items={schedule} />
