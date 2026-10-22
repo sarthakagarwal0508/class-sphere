@@ -1,22 +1,13 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import {
-  LayoutDashboard, Plus, Users, Upload, FileText, FileCheck2, HelpCircle,
-  Award, BarChart2, Bell, MessageSquare, Search, Menu, X, Sun, Moon
+  Search, Menu, Sun, Moon
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import Sidebar from '../components/Sidebar';
 import PortalBackButton from '../components/PortalBackButton';
 
 export default function TeacherLayout() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuth();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login', { replace: true });
-  };
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark' ||
@@ -36,61 +27,14 @@ export default function TeacherLayout() {
 
   const toggleTheme = () => setIsDark(prev => !prev);
 
-  const navLinks = [
-    { name: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard },
-    { name: 'Create Classroom', path: '/teacher/create-classroom', icon: Plus },
-    { name: 'Members', path: '/teacher/members', icon: Users },
-    { name: 'Upload Material', path: '/teacher/upload-material', icon: Upload },
-    { name: 'Create Assignment', path: '/teacher/create-assignment', icon: FileText },
-    { name: 'Submissions', path: '/teacher/submissions', icon: FileCheck2 },
-    { name: 'Create Quiz', path: '/teacher/create-quiz', icon: HelpCircle },
-    { name: 'Quiz Results', path: '/teacher/quiz-results', icon: Award },
-    { name: 'Analytics', path: '/teacher/analytics', icon: BarChart2 },
-    { name: 'Announcements', path: '/teacher/announcements', icon: Bell },
-    { name: 'Doubt Forum', path: '/teacher/doubt-forum', icon: MessageSquare },
-  ];
-
   return (
     <div className="min-h-screen bg-surface text-ink flex font-sans antialiased selection:bg-amber-300 transition-colors duration-200">
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[#1c1a32] border-r border-[#262344] flex flex-col justify-between p-5 text-white transition-transform duration-200 ease-in-out lg:static lg:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div>
-          <div className="flex items-center justify-between mb-8 px-2">
-            <div onClick={() => navigate('/teacher/dashboard')} className="flex items-center gap-1 cursor-pointer font-extrabold text-2xl tracking-tight text-white">
-              <span>Class<span className="text-[#fde047]">Sphere</span></span>
-            </div>
-            <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden p-1 rounded-md text-slate-400 hover:bg-white/10">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <nav className="space-y-1.5">
-            {navLinks.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
-              return (
-                <NavLink key={item.name} to={item.path} onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3.5 px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all ${isActive ? 'bg-[#fde047] text-slate-900 shadow-md shadow-amber-500/20' : 'text-slate-300 hover:text-white hover:bg-white/10'}`}>
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
-                  <span>{item.name}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-        <div className="bg-[#262344]/80 border border-white/10 rounded-2xl p-4 text-center space-y-2 mt-6">
-          <p className="text-xs font-bold text-white">Help center</p>
-          <p className="text-[11px] text-slate-300 leading-tight">Have a problem? Send us a message.</p>
-          <button onClick={() => alert('Support chat opened!')} className="w-full py-2.5 px-3 rounded-xl bg-[#f1f3f9] hover:bg-white text-slate-900 text-xs font-bold shadow-sm transition-colors mt-1">
-            Go to help center
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="w-full rounded-xl px-3 py-2.5 text-xs font-bold text-red-400 transition hover:bg-white/10 hover:text-red-300"
-          >
-            Logout
-          </button>
-        </div>
-      </aside>
+      <Sidebar
+        role="teacher"
+        mobileOpen={mobileMenuOpen}
+        onMobileClose={() => setMobileMenuOpen(false)}
+        onHelpClick={() => window.alert('Support chat opened!')}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto scroll-smooth">
         <header className="h-16 bg-surface/80 backdrop-blur-md border-b border-line px-6 flex items-center justify-between sticky top-0 z-40 transition-colors">

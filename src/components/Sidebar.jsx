@@ -36,19 +36,28 @@ function NavigationLinks({ links, onNavigate }) {
   );
 }
 
-function HelpCenter() {
+function HelpCenter({ onHelpClick }) {
   return (
     <div className="mt-3 shrink-0 rounded-2xl border border-white/15 bg-white/[0.08] p-3 text-center">
       <p className="text-xs font-bold">Help center</p>
       <p className="mt-0.5 text-xs text-white/65">Have a problem? Send us a message.</p>
-      <button className="mt-2 w-full rounded-lg bg-white/90 py-1.5 text-xs font-bold text-on-brand transition hover:bg-white">
+      <button
+        type="button"
+        onClick={onHelpClick}
+        className="mt-2 w-full rounded-lg bg-white/90 py-1.5 text-xs font-bold text-on-brand transition hover:bg-white"
+      >
         Go to help center
       </button>
     </div>
   );
 }
 
-export default function Sidebar({ role = "student", mobileOpen = false, onMobileClose }) {
+export default function Sidebar({
+  role = "student",
+  mobileOpen = false,
+  onMobileClose,
+  onHelpClick,
+}) {
   const links = linksByRole[role] ?? [];
   const navigate = useNavigate();
   const { logout } = useAuth();
@@ -56,7 +65,7 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
   const handleLogout = async () => {
     onMobileClose?.();
     await logout();
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   useEffect(() => {
@@ -80,7 +89,7 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
       <aside className="glass-sidebar sticky top-3 mx-3 my-3 hidden h-[calc(100vh-1.5rem)] w-64 shrink-0 flex-col rounded-3xl p-3 text-white lg:flex">
         <Brand />
         <NavigationLinks links={links} />
-        <HelpCenter />
+        <HelpCenter onHelpClick={onHelpClick} />
         <button
           type="button"
           onClick={handleLogout}
@@ -117,7 +126,7 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
               </button>
             </div>
             <NavigationLinks links={links} onNavigate={onMobileClose} />
-            <HelpCenter />
+            <HelpCenter onHelpClick={onHelpClick} />
             <button
               type="button"
               onClick={handleLogout}

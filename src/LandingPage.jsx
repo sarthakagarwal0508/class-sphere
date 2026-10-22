@@ -90,7 +90,6 @@ export default function LandingPage() {
 
           <nav aria-label="Main navigation" className="landing-nav order-3 flex w-full items-center gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:justify-center">
             <a href="#home" className="landing-nav-link">Home</a>
-            <Link to="/student/dashboard" className="landing-nav-link">Dashboard</Link>
             <a href="#features" className="landing-nav-link">Features</a>
             <a href="#faq" className="landing-nav-link">FAQ</a>
             <a href="#contact" className="landing-nav-link">Contact Us</a>
@@ -162,14 +161,39 @@ export default function LandingPage() {
               <p className="mt-2 leading-6 text-slate-600">Keep class resources and study materials organized and easy to revisit when it is time to learn.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">✅</span>
-              <h3 className="mt-4 text-lg font-bold">Assignments & progress</h3>
-              <p className="mt-2 leading-6 text-slate-600">See your learning tasks and progress in one place, so the next step always feels clear.</p>
+              <span className="landing-feature-icon" aria-hidden="true">📝</span>
+              <h3 className="mt-4 text-lg font-bold">Assignments & deadlines</h3>
+              <p className="mt-2 leading-6 text-slate-600">Keep track of classroom assignments and due dates so you can plan your work with confidence.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">🗓️</span>
-              <h3 className="mt-4 text-lg font-bold">A calmer study routine</h3>
-              <p className="mt-2 leading-6 text-slate-600">Bring your learning plans together and build steady habits one small step at a time.</p>
+              <span className="landing-feature-icon" aria-hidden="true">🧠</span>
+              <h3 className="mt-4 text-lg font-bold">Flashcards for revision</h3>
+              <p className="mt-2 leading-6 text-slate-600">Review important ideas with quick flashcard sessions that help reinforce what you have learned.</p>
+            </article>
+            <article className="landing-feature-card">
+              <span className="landing-feature-icon" aria-hidden="true">✨</span>
+              <h3 className="mt-4 text-lg font-bold">Notes summaries</h3>
+              <p className="mt-2 leading-6 text-slate-600">Turn shared study notes into concise key points and revision material to make review easier.</p>
+            </article>
+            <article className="landing-feature-card">
+              <span className="landing-feature-icon" aria-hidden="true">📈</span>
+              <h3 className="mt-4 text-lg font-bold">Progress reports</h3>
+              <p className="mt-2 leading-6 text-slate-600">See your learning activity, assignment status, and course progress together in one place.</p>
+            </article>
+            <article className="landing-feature-card">
+              <span className="landing-feature-icon" aria-hidden="true">💬</span>
+              <h3 className="mt-4 text-lg font-bold">Doubt forum</h3>
+              <p className="mt-2 leading-6 text-slate-600">Ask questions, share explanations, and get help from classmates and teachers.</p>
+            </article>
+            <article className="landing-feature-card">
+              <span className="landing-feature-icon" aria-hidden="true">🎯</span>
+              <h3 className="mt-4 text-lg font-bold">Quizzes & practice</h3>
+              <p className="mt-2 leading-6 text-slate-600">Practice course topics with quizzes and check your understanding as you learn.</p>
+            </article>
+            <article className="landing-feature-card">
+              <span className="landing-feature-icon" aria-hidden="true">🔔</span>
+              <h3 className="mt-4 text-lg font-bold">Class announcements</h3>
+              <p className="mt-2 leading-6 text-slate-600">Stay up to date with classroom news, reminders, and updates from your teachers.</p>
             </article>
           </div>
         </div>
@@ -193,7 +217,7 @@ export default function LandingPage() {
             </details>
             <details className="landing-faq-item">
               <summary>How do I get started?</summary>
-              <p>Use the Register button to create an account, or choose Dashboard to explore the student learning space.</p>
+              <p>Use the Register button to create an account, then log in to open your learning space.</p>
             </details>
             <details className="landing-faq-item">
               <summary>Where can I get help?</summary>
@@ -219,7 +243,6 @@ export default function LandingPage() {
             <h3 className="font-bold">Explore</h3>
             <div className="landing-footer-links mt-3 flex flex-col items-start gap-2 text-sm">
               <a href="#home">Home</a>
-              <Link to="/student/dashboard">Dashboard</Link>
               <a href="#features">Features</a>
               <a href="#faq">FAQ</a>
             </div>
