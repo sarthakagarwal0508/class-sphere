@@ -1,12 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// Public & Auth Pages
 import LandingPage from "./LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 
-// Student Portal
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudyMaterial from "./pages/student/StudyMaterial";
@@ -16,8 +14,9 @@ import AttemptQuiz from "./pages/student/AttemptQuiz";
 import NotesAI from "./pages/student/NotesAI";
 import Flashcards from "./pages/student/Flashcards";
 import Grades from "./pages/student/Grades";
+import Progress from "./pages/student/Progress";
+import StudentAnnouncements from "./pages/student/Announcements";
 
-// Teacher Portal
 import TeacherLayout from "./layouts/TeacherLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import CreateClassroom from "./pages/teacher/CreateClassroom";
@@ -28,20 +27,22 @@ import StudentSubmissions from "./pages/teacher/StudentSubmissions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
 import QuizResults from "./pages/teacher/QuizResults";
 import ClassAnalytics from "./pages/teacher/ClassAnalytics";
-import Announcements from "./pages/teacher/Announcements";
+import TeacherAnnouncements from "./pages/teacher/Announcements";
 import DoubtForum from "./pages/teacher/DoubtForum";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 🌐 Public & Auth Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route
+          path="/announcements"
+          element={<Navigate to="/student/announcements" replace />}
+        />
 
-        {/* 🎓 Student Portal Routes */}
         <Route path="/student" element={<StudentLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
@@ -52,31 +53,28 @@ export default function App() {
           <Route path="notes-ai" element={<NotesAI />} />
           <Route path="flashcards" element={<Flashcards />} />
           <Route path="grades" element={<Grades />} />
+          <Route path="progress" element={<Progress />} />
+          <Route path="announcements" element={<StudentAnnouncements />} />
         </Route>
 
-          <Route
-            path="flashcards"
-            element={<Flashcards />}
-          />
-
-          <Route
-            path="grades"
-            element={<Grades />}
-          />
-
-          <Route
-            path="progress"
-            element={<Progress />}
-          />
-
-          <Route 
-          path="announcements" 
-          element={<Announcements />} 
-          />
-
+        <Route path="/teacher" element={<TeacherLayout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<TeacherDashboard />} />
+          <Route path="create-class" element={<CreateClassroom />} />
+          <Route path="create-classroom" element={<CreateClassroom />} />
+          <Route path="members" element={<ManageMembers />} />
+          <Route path="upload-material" element={<UploadMaterial />} />
+          <Route path="create-assignment" element={<CreateAssignment />} />
+          <Route path="submissions" element={<StudentSubmissions />} />
+          <Route path="create-quiz" element={<CreateQuiz />} />
+          <Route path="quiz-results" element={<QuizResults />} />
+          <Route path="analytics" element={<ClassAnalytics />} />
+          <Route path="announcements" element={<TeacherAnnouncements />} />
+          <Route path="doubts" element={<DoubtForum />} />
+          <Route path="doubt-forum" element={<DoubtForum />} />
+          <Route path="doubtforum" element={<DoubtForum />} />
         </Route>
 
-        {/* Catch-all Wildcard: Redirects unknown URLs back to Landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
