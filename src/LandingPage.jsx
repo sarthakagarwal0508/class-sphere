@@ -1,5 +1,6 @@
 
 import { Link } from "react-router-dom";
+import ThemeToggle from "./components/ThemeToggle";
 import "./LandingPage.css";
 
 export default function LandingPage() {
@@ -96,9 +97,10 @@ export default function LandingPage() {
           </nav>
 
           <div className="ml-auto flex items-center gap-1 sm:ml-0 sm:gap-2">
+            <ThemeToggle className="landing-theme-toggle" />
             <Link
               to="/login"
-              className="rounded-xl border border-white/10 bg-[#45436A] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#57547D] sm:px-4"
+              className="landing-login rounded-xl border border-white/10 bg-[#45436A] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#57547D] sm:px-4"
             >
               Login
             </Link>
@@ -203,42 +205,42 @@ export default function LandingPage() {
 
     
 
-      <footer className="landing-footer px-5 py-10 text-white sm:px-8 lg:px-12">
+      <footer className="landing-footer px-5 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/"
-            className="text-2xl font-extrabold tracking-tight text-white"
+            className="landing-footer-brand text-2xl font-extrabold tracking-tight"
           >
             Class<span className="text-[#FFDF59]">Sphere</span>
-            <span className="mt-3 block max-w-xs text-sm font-normal leading-6 text-white/65">Your all-in-one space to stay organized, learn at your own pace, and make every small step count.</span>
+            <span className="landing-footer-muted mt-3 block max-w-xs text-sm font-normal leading-6">Your all-in-one space to stay organized, learn at your own pace, and make every small step count.</span>
           </Link>
 
           <div>
             <h3 className="font-bold">Explore</h3>
-            <div className="mt-3 flex flex-col items-start gap-2 text-sm text-white/70">
-              <a href="#home" className="hover:text-white">Home</a>
-              <Link to="/student/dashboard" className="hover:text-white">Dashboard</Link>
-              <a href="#features" className="hover:text-white">Features</a>
-              <a href="#faq" className="hover:text-white">FAQ</a>
+            <div className="landing-footer-links mt-3 flex flex-col items-start gap-2 text-sm">
+              <a href="#home">Home</a>
+              <Link to="/student/dashboard">Dashboard</Link>
+              <a href="#features">Features</a>
+              <a href="#faq">FAQ</a>
             </div>
           </div>
 
           <div>
             <h3 className="font-bold">Your account</h3>
-            <div className="mt-3 flex flex-col items-start gap-2 text-sm text-white/70">
-              <Link to="/login" className="hover:text-white">Login</Link>
-              <Link to="/register" className="hover:text-white">Register</Link>
+            <div className="landing-footer-links mt-3 flex flex-col items-start gap-2 text-sm">
+              <Link to="/login">Login</Link>
+              <Link to="/register">Register</Link>
             </div>
           </div>
 
           <div>
             <h3 className="font-bold">Need a hand?</h3>
-            <p className="mt-3 text-sm leading-6 text-white/70">For help with a class or course, contact your teacher or course team.</p>
+            <p className="landing-footer-muted mt-3 text-sm leading-6">For help with a class or course, contact your teacher or course team.</p>
             <a href="#contact" className="mt-2 inline-block text-sm font-semibold text-[#FFDF59] hover:underline">Contact us</a>
           </div>
         </div>
 
-        <div className="mx-auto mt-8 flex max-w-6xl flex-col items-center justify-between gap-3 border-t border-white/15 pt-5 text-center text-xs text-white/55 sm:flex-row sm:text-left">
+        <div className="landing-footer-copy mx-auto mt-8 flex max-w-6xl flex-col items-center justify-between gap-3 border-t pt-5 text-center text-xs sm:flex-row sm:text-left">
           <p>Learn a little. Grow a lot.</p>
           <p>© {new Date().getFullYear()} ClassSphere. All rights reserved.</p>
         </div>

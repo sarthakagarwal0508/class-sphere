@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LogOut, X } from "lucide-react";
+import { X } from "lucide-react";
 import { linksByRole } from "../data/navLinks";
 import { useAuth } from "../context/AuthContext";
 
@@ -84,9 +84,8 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+          className="mt-3 flex w-full shrink-0 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-bold text-red-400 transition hover:bg-white/10 hover:text-red-300"
         >
-          <LogOut size={16} />
           Logout
         </button>
       </aside>
@@ -122,9 +121,8 @@ export default function Sidebar({ role = "student", mobileOpen = false, onMobile
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-3 flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-bold text-white transition hover:bg-red-700"
+              className="mt-3 flex w-full shrink-0 items-center justify-center rounded-xl px-3 py-2.5 text-sm font-bold text-red-400 transition hover:bg-white/10 hover:text-red-300"
             >
-              <LogOut size={16} />
               Logout
             </button>
           </aside>

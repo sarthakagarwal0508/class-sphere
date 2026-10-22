@@ -20,6 +20,7 @@
   min-height: 58px;
   border: 1px solid rgb(255 255 255 / 25%);
   background: #1f1d3d;
+  color: #fff;
   box-shadow: 0 12px 28px rgb(31 29 61 / 22%);
 }
 
@@ -47,6 +48,76 @@
   color: #fff;
 }
 
+.landing-navbar .landing-login {
+  border-color: rgb(255 255 255 / 10%);
+  background: #45436a;
+  color: #fff;
+}
+
+.landing-navbar .landing-login:hover {
+  background: #57547d;
+}
+
+.landing-navbar .landing-theme-toggle {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border-color: rgb(255 255 255 / 22%);
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+}
+
+.landing-navbar .landing-theme-toggle:hover {
+  background: rgb(255 255 255 / 20%);
+}
+
+.dark .landing-navbar {
+  border-color: rgb(255 255 255 / 18%);
+  background: linear-gradient(
+    145deg,
+    rgb(18 18 22 / 82%),
+    rgb(9 9 12 / 74%)
+  );
+  color: #fff;
+  box-shadow:
+    0 22px 55px -22px rgb(0 0 0 / 70%),
+    inset 0 1px rgb(255 255 255 / 18%),
+    inset 1px 0 rgb(255 255 255 / 8%);
+  -webkit-backdrop-filter: blur(30px) saturate(165%);
+  backdrop-filter: blur(30px) saturate(165%);
+}
+
+.dark .landing-navbar .landing-theme-toggle {
+  border-color: rgb(255 255 255 / 24%);
+  background: rgb(255 255 255 / 9%);
+  color: #fff;
+}
+
+.dark .landing-navbar .landing-theme-toggle:hover {
+  background: rgb(255 255 255 / 18%);
+}
+
+.dark .landing-nav-link {
+  color: rgb(255 255 255 / 75%);
+}
+
+.dark .landing-nav-link:hover,
+.dark .landing-nav-link:focus-visible {
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+}
+
+.dark .landing-navbar .landing-login {
+  border-color: rgb(255 255 255 / 10%);
+  background: #45436a;
+  color: #fff;
+}
+
+.dark .landing-navbar .landing-login:hover {
+  background: #57547d;
+}
+
 .cs-scene {
   position: absolute;
   z-index: 0;
@@ -59,6 +130,119 @@
     #ffe47b 76%,
     #f8db6c 100%
   );
+}
+
+.dark .landing-hero,
+.dark .cs-scene {
+  background:
+    radial-gradient(ellipse at 78% 20%, rgb(57 68 126 / 42%), transparent 38%),
+    linear-gradient(180deg, #10162f 0%, #171d3b 68%, #202743 100%);
+}
+
+.dark .cs-scene::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.dark .cs-scene::before {
+  background-image:
+    radial-gradient(2px 2px at 12% 17%, #fff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 24% 34%, #d8e4ff 98%, transparent),
+    radial-gradient(2px 2px at 39% 12%, #fff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 57% 28%, #d8e4ff 98%, transparent),
+    radial-gradient(2px 2px at 71% 14%, #fff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 89% 31%, #d8e4ff 98%, transparent),
+    radial-gradient(1.5px 1.5px at 93% 10%, #fff 98%, transparent);
+  opacity: 0.8;
+}
+
+.dark .cs-sun {
+  background: #f4edc8;
+  box-shadow:
+    0 0 0 12px rgb(244 237 200 / 9%),
+    0 0 46px 15px rgb(190 204 255 / 24%);
+  animation: none;
+}
+
+.dark .cs-sun::after {
+  position: absolute;
+  top: -12%;
+  left: 28%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #11172f;
+  content: "";
+}
+
+.dark .cs-cloud,
+.dark .cs-cloud::before,
+.dark .cs-cloud::after,
+.dark .cs-cloud span {
+  background: #7e8bae;
+  opacity: 0.48;
+}
+
+.dark .cs-hill-one {
+  background: #252f4c;
+}
+
+.dark .cs-hill-two {
+  background: #1d2844;
+}
+
+.dark .cs-tree::before {
+  background: #6b5360;
+}
+
+.dark .cs-tree span {
+  border-color: #234e54;
+  background: #28645f;
+}
+
+.dark .cs-road {
+  border-top-color: #58637b;
+  background: #171b28;
+}
+
+.dark .cs-road span {
+  background: #c1b881;
+}
+
+.dark .cs-sparkle {
+  color: #f2e8b5;
+  text-shadow: 0 0 12px rgb(242 232 181 / 70%);
+}
+
+.dark .landing-content > p:first-child {
+  color: #c3d5ff;
+}
+
+.dark .landing-content h1,
+.dark .landing-content h1 span {
+  color: #f5f6ff;
+}
+
+.dark .landing-content > p:nth-of-type(2) {
+  color: #c2c8d8;
+}
+
+.dark .landing-content > p:last-child {
+  color: #c0c7dc;
+}
+
+.dark .landing-content a {
+  border-color: #ffe873;
+  background: #ffdf59;
+  color: #17172b;
+}
+
+.dark .landing-content a:hover {
+  border-color: #fff0a3;
+  background: #ffe873;
 }
 
 .landing-content {
@@ -173,9 +357,159 @@
   color: #64748b;
 }
 
+.dark .landing-features {
+  color: #f4f4f5;
+  background-color: #121318;
+  background-image:
+    linear-gradient(90deg, transparent 0, transparent 3rem, rgb(248 113 113 / 12%) 3rem, rgb(248 113 113 / 12%) calc(3rem + 1px), transparent calc(3rem + 1px)),
+    repeating-linear-gradient(180deg, transparent 0, transparent 31px, rgb(148 163 184 / 10%) 31px, rgb(148 163 184 / 10%) 32px);
+}
+
+.dark .landing-features h2,
+.dark .landing-features h3 {
+  color: #f4f4f5;
+}
+
+.dark .landing-features .text-\[\#002152\] {
+  color: #93c5fd;
+}
+
+.dark .landing-features .text-slate-600 {
+  color: #a1a1aa;
+}
+
+.dark .landing-feature-card {
+  border-color: #30313a;
+  background: #1b1c22;
+  box-shadow: 0 14px 32px rgb(0 0 0 / 24%), inset 0 1px rgb(255 255 255 / 4%);
+}
+
+.dark .landing-feature-card:hover {
+  border-color: rgb(147 197 253 / 36%);
+  box-shadow: 0 20px 40px rgb(0 0 0 / 34%);
+}
+
+.dark .landing-feature-icon {
+  border-color: rgb(255 223 89 / 35%);
+  background: linear-gradient(145deg, #393324, #28251d);
+  box-shadow: 0 6px 14px rgb(0 0 0 / 24%);
+}
+
+.dark .landing-faq {
+  color: #f4f4f5;
+  background-color: #171820;
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0,
+    transparent 31px,
+    rgb(161 161 170 / 9%) 31px,
+    rgb(161 161 170 / 9%) 32px
+  );
+}
+
+.dark .landing-faq h2 {
+  color: #f4f4f5;
+}
+
+.dark .landing-faq-item {
+  border-color: #34353e;
+  background: #202127;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 22%), inset 0 1px rgb(255 255 255 / 3%);
+}
+
+.dark .landing-faq-item:hover,
+.dark .landing-faq-item[open] {
+  border-color: rgb(147 197 253 / 40%);
+  box-shadow: 0 12px 28px rgb(0 0 0 / 30%), inset 3px 0 #ffdf59;
+}
+
+.dark .landing-faq-item summary::after {
+  color: #93c5fd;
+}
+
+.dark .landing-faq-item[open] summary::after {
+  color: #f4f4f5;
+}
+
+.dark .landing-faq-item p {
+  color: #a1a1aa;
+}
+
 .landing-contact,
 .landing-footer {
   background: #1f1d3d;
+}
+
+.landing-footer {
+  color: #fff;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+}
+
+.landing-footer-brand,
+.landing-footer h3 {
+  color: #fff;
+}
+
+.landing-footer-muted {
+  color: rgb(255 255 255 / 65%);
+}
+
+.landing-footer-links {
+  color: rgb(255 255 255 / 70%);
+}
+
+.landing-footer-links a {
+  transition: color 160ms ease;
+}
+
+.landing-footer-links a:hover {
+  color: #fff;
+}
+
+.landing-footer-copy {
+  border-color: rgb(255 255 255 / 15%);
+  color: rgb(255 255 255 / 55%);
+}
+
+.dark .landing-contact,
+.dark .landing-footer {
+  background: linear-gradient(
+    145deg,
+    rgb(17 17 20 / 94%),
+    rgb(8 8 10 / 97%)
+  );
+  color: #fff;
+  -webkit-backdrop-filter: blur(30px) saturate(165%);
+  backdrop-filter: blur(30px) saturate(165%);
+}
+
+.dark .landing-footer {
+  border-top-color: rgb(255 255 255 / 16%);
+  box-shadow:
+    0 -18px 48px -28px rgb(0 0 0 / 70%),
+    inset 0 1px rgb(255 255 255 / 14%);
+}
+
+.dark .landing-footer-brand,
+.dark .landing-footer h3 {
+  color: #fff;
+}
+
+.dark .landing-footer-muted {
+  color: rgb(255 255 255 / 65%);
+}
+
+.dark .landing-footer-links {
+  color: rgb(255 255 255 / 70%);
+}
+
+.dark .landing-footer-links a:hover {
+  color: #fff;
+}
+
+.dark .landing-footer-copy {
+  border-color: rgb(255 255 255 / 15%);
+  color: rgb(255 255 255 / 55%);
 }
 
 
@@ -543,6 +877,13 @@
   }
 
   .cs-sun {
+    top: 25px;
+    right: 8%;
+    width: 55px;
+    height: 55px;
+  }
+
+  .dark .cs-sun {
     top: 25px;
     right: 8%;
     width: 55px;

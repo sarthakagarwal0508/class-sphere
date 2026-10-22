@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, LogOut, Plus, Users, Upload, FileText, FileCheck2, HelpCircle,
+  LayoutDashboard, Plus, Users, Upload, FileText, FileCheck2, HelpCircle,
   Award, BarChart2, Bell, MessageSquare, Search, Menu, X, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -85,9 +85,8 @@ export default function TeacherLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-red-700"
+            className="w-full rounded-xl px-3 py-2.5 text-xs font-bold text-red-400 transition hover:bg-white/10 hover:text-red-300"
           >
-            <LogOut className="h-4 w-4" />
             Logout
           </button>
         </div>
