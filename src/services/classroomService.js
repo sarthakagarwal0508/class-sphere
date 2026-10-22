@@ -18,7 +18,10 @@ export const fetchMyClassrooms = async () => {
 
 export const createClassroom = async ({ name, description }) => {
   try {
-    return unwrap(await api.post("/classrooms", { name, description }));
+    const classroom = unwrap(
+      await api.post("/classrooms", { name, description })
+    );
+    return classroom?.classroom ?? classroom;
   } catch (error) {
     throw toApiError(error);
   }

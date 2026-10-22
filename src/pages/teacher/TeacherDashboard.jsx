@@ -4,7 +4,7 @@ import {
   BookOpen, Users, FileCheck2, Award, PlusCircle, 
   ArrowRight, Copy, Check, Sparkles, FolderPlus, HelpCircle, Upload
 } from 'lucide-react';
-import api from '../../services/api';
+import { fetchMyClassrooms } from '../../services/classroomService';
 import { useAuth } from '../../context/AuthContext';
 
 export default function TeacherDashboard() {
@@ -13,20 +13,21 @@ export default function TeacherDashboard() {
 
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
 
-  // Fetch real classrooms from backend
   useEffect(() => {
     let ignore = false;
-    api.get('/api/classrooms')
-      .then((res) => {
+    fetchMyClassrooms()
+      .then((items) => {
         if (!ignore) {
-          const data = res.data?.data ?? res.data;
-          setClassrooms(Array.isArray(data) ? data : data.classrooms ?? []);
+          setClassrooms(items);
         }
       })
       .catch((err) => {
-        console.error('Error fetching classrooms:', err);
+        if (!ignore) {
+          setLoadError(err.message || 'Could not load your classrooms.');
+        }
       })
       .finally(() => {
         if (!ignore) setLoading(false);
@@ -185,6 +186,10 @@ export default function TeacherDashboard() {
 
         {loading ? (
           <div className="p-8 text-center text-xs text-slate-500">Loading your classrooms...</div>
+        ) : loadError ? (
+          <div className="rounded-2xl border border-rose-200 dark:border-rose-900 p-6 text-center bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-700 dark:text-rose-300">
+            {loadError}
+          </div>
         ) : classrooms.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-8 text-center bg-white dark:bg-[#121214] space-y-3">
             <FolderPlus className="w-10 h-10 text-slate-400 mx-auto" />
