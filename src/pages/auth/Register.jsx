@@ -46,13 +46,12 @@ export default function Register() {
     setLoading(true);
     try {
       await registerRequest({ name: name.trim(), email: email.trim(), password, role });
-      // Register ke baad OTP verify karna hai, phir login
+
       navigate("/verify-otp", { state: { email: email.trim(), justSent: true } });
     } catch (err) {
       setFormError(err.message);
-      // 409 = email pehle se hai. Status na ho = server ka jawab hi nahi aaya (timeout/network),
-      // aur ho sakta hai account ban chuka ho. Dono case mein user ko aage ka rasta dikhao.
-      setShowNextSteps(err.status === 409 || !err.status);
+
+setShowNextSteps(err.status === 409 || !err.status);
     } finally {
       setLoading(false);
     }

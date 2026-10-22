@@ -1,6 +1,5 @@
-// Quizzes ka mock data. Backend aane par ye file hat jayegi.
-// Dhyan do: asli backend mein "correct" answer attempt shuru hone par
-// student ko bheja hi nahi jata, sirf submit ke baad result mein aata hai.
+
+
 export const quizzesData = [
   {
     id: 1,

@@ -32,7 +32,6 @@ function wordFrequency(sentences) {
   return freq;
 }
 
-// Jin sentences mein zyada baar aane wale words hon, wo zyada zaroori maane jaate hain
 function pickKeyPoints(sentences, freq, count) {
   return sentences
     .map((sentence, index) => {
@@ -42,11 +41,10 @@ function pickKeyPoints(sentences, freq, count) {
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, count)
-    .sort((a, b) => a.index - b.index) // wapas original order
+    .sort((a, b) => a.index - b.index)
     .map((item) => item.sentence);
 }
 
-// "A stack is a linear structure..."  ->  Q: What is a stack?  A: A linear structure...
 const DEFINITION = /^(?:(?:a|an|the)\s+)?(.{2,50}?)\s+(is|are)\s+(.{8,})$/i;
 
 function definitionCard(sentence) {
@@ -58,8 +56,7 @@ function definitionCard(sentence) {
   const subjectWords = subject.split(" ");
   const lastWord = subjectWords[subjectWords.length - 1];
 
-  // Subject chhota aur saaf hona chahiye ("last element pushed" jaisa nahi)
-  if (/[,;:]/.test(subject) || subjectWords.length > 5 || /(ed|ing)$/i.test(lastWord)) return null;
+if (/[,;:]/.test(subject) || subjectWords.length > 5 || /(ed|ing)$/i.test(lastWord)) return null;
   if (rest.split(" ").length < 3) return null;
 
   const article = /^(a|an|the)\s/i.test(text) ? `${text.split(" ")[0].toLowerCase()} ` : "";
@@ -69,7 +66,6 @@ function definitionCard(sentence) {
   };
 }
 
-// Definition na mile to "fill in the blank" card: sabse zaroori word chhupa do
 function fallbackCard(sentence, freq) {
   const tokens = sentence.match(/[A-Za-z0-9]+/g) ?? [];
   const candidates = tokens.filter((t) => t.length > 3 && !STOP_WORDS.has(t.toLowerCase()));

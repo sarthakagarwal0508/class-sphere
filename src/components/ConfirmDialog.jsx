@@ -10,7 +10,7 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
-  // Escape dabane par band
+
   useEffect(() => {
     if (!open) return undefined;
 

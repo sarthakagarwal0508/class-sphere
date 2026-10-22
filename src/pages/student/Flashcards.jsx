@@ -158,8 +158,7 @@ export default function Flashcards() {
         icons={[Layers, RotateCw, Check]}
       />
 
-      {/* Subject filter and shuffle */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+<div className="flex flex-wrap items-center justify-between gap-3">
         <label className="flex items-center gap-2 text-sm font-semibold">
           <span className="text-muted">Subject</span>
 
@@ -194,8 +193,7 @@ export default function Flashcards() {
         </button>
       </div>
 
-      {/* Flashcard */}
-      {current ? (
+{current ? (
         <div className="mx-auto w-full max-w-2xl">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold text-muted">
             <span>{current.course || "Notes AI"}</span>
@@ -242,8 +240,7 @@ export default function Flashcards() {
             </div>
           </button>
 
-          {/* Navigation and revision controls */}
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+<div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             <button
               type="button"
               onClick={() => move(-1)}
@@ -295,8 +292,7 @@ export default function Flashcards() {
         </Card>
       )}
 
-      {/* Revision statistics */}
-      <div className="grid gap-3 sm:grid-cols-3">
+<div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
           <p className="text-sm text-muted">Total cards</p>
           <p className="mt-1 text-2xl font-extrabold">

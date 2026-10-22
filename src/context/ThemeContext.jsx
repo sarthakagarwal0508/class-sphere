@@ -9,11 +9,10 @@ function getInitialTheme() {
 }
 
 export function ThemeProvider({ children }) {
-  // useState(function): ye function sirf pehli baar chalta hai
+
   const [theme, setTheme] = useState(getInitialTheme);
 
-  // theme badalte hi <html> pe class lagao/hatao aur save karo
-  useEffect(() => {
+useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
     localStorage.setItem("theme", theme);
   }, [theme]);

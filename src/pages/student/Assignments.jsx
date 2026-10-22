@@ -50,7 +50,7 @@ function normalizeAssignment(assignment, classroom) {
 
 export default function Assignments() {
   const [items, setItems] = useState([]);
-  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [status, setStatus] = useState("loading");
   const [reloadKey, setReloadKey] = useState(0);
   const [tab, setTab] = useState("all");
   const [notice, setNotice] = useState("");
@@ -92,8 +92,7 @@ export default function Assignments() {
     setReloadKey((k) => k + 1);
   };
 
-  // Derived data: state mein alag se save nahi karte
-  const pending = items
+const pending = items
     .filter((a) => a.status === "pending")
     .sort((a, b) => {
       const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
@@ -131,7 +130,7 @@ export default function Assignments() {
 
       {status === "ready" && (
         <div className="grid gap-5 min-[1100px]:grid-cols-[minmax(0,1fr)_16rem]">
-          {/* Left: tabs, list, submit form */}
+
           <div className="space-y-4">
             <Tabs tabs={tabs} active={tab} onChange={setTab} />
 
@@ -150,8 +149,7 @@ export default function Assignments() {
             </Card>
           </div>
 
-          {/* Right: completion + upcoming deadlines */}
-          <aside className="space-y-4 min-[1100px]:self-start">
+<aside className="space-y-4 min-[1100px]:self-start">
             <Card className="p-4 text-center">
               <h2 className="text-base font-extrabold">Completion</h2>
               <div className="mt-3 flex justify-center">

@@ -1,5 +1,5 @@
-// Assignments page ka mock data. Backend aane par ye file hat jayegi
-// aur data services/assignmentService.js se API se aayega.
+
+
 export const assignmentsData = [
   {
     id: 1,

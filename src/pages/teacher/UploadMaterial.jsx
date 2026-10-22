@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { 
-  Upload, FileText, Trash2, Download, AlertCircle, 
+import {
+  Upload, FileText, Trash2, Download, AlertCircle,
   CheckCircle2, HardDrive, FolderOpen
 } from 'lucide-react';
 import { fetchMyClassrooms } from '../../services/classroomService';
@@ -25,8 +25,7 @@ export default function UploadMaterial() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  
-  useEffect(() => {
+useEffect(() => {
     fetchMyClassrooms()
       .then((classList) => {
         setClassrooms(classList);
@@ -43,8 +42,7 @@ export default function UploadMaterial() {
       });
   }, []);
 
-  
-  useEffect(() => {
+useEffect(() => {
     if (!selectedClassId) return;
 
     fetchClassroomMaterials(selectedClassId)
@@ -60,8 +58,7 @@ export default function UploadMaterial() {
       });
   }, [selectedClassId]);
 
- 
-  const handleUpload = async (e) => {
+const handleUpload = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
@@ -100,8 +97,7 @@ export default function UploadMaterial() {
       setDescription('');
       setFile(null);
 
-      
-      setMaterials((prev) => [newMaterial, ...prev]);
+setMaterials((prev) => [newMaterial, ...prev]);
     } catch (err) {
       setErrorMsg(
         err.response?.data?.message || err.message || 'Failed to upload document.'
@@ -111,8 +107,7 @@ export default function UploadMaterial() {
     }
   };
 
-
-  const handleDelete = async (materialId) => {
+const handleDelete = async (materialId) => {
     if (!window.confirm('Are you sure you want to delete this resource?')) return;
 
     try {
@@ -137,7 +132,7 @@ export default function UploadMaterial() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* Header */}
+
       <div>
         <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100">
           Upload Study Material
@@ -147,8 +142,7 @@ export default function UploadMaterial() {
         </p>
       </div>
 
-      {/* Notifications */}
-      {errorMsg && (
+{errorMsg && (
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMsg}</span>
@@ -163,7 +157,7 @@ export default function UploadMaterial() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upload Form (2 Columns) */}
+
         <form
           onSubmit={handleUpload}
           className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm"
@@ -224,8 +218,7 @@ export default function UploadMaterial() {
             />
           </div>
 
-          {/* Drag & Drop File Zone */}
-          <div>
+<div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Upload PDF File (Max 10 MB) <span className="text-rose-500">*</span>
             </label>
@@ -257,8 +250,7 @@ export default function UploadMaterial() {
           </button>
         </form>
 
-        {/* Sidebar Info & Storage */}
-        <div className="space-y-4">
+<div className="space-y-4">
           <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 shadow-sm space-y-3">
             <div className="flex items-center gap-2">
               <HardDrive className="w-4 h-4 text-slate-600 dark:text-slate-400" />
@@ -282,8 +274,7 @@ export default function UploadMaterial() {
         </div>
       </div>
 
-      {/* Shared Documents Library */}
-      <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-6 space-y-4 shadow-sm">
+<div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-6 space-y-4 shadow-sm">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
             Shared Documents ({materials.length})

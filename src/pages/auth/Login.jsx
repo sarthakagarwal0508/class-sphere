@@ -28,16 +28,14 @@ export default function Login() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Helper to persist role and navigate safely
-  const completeLoginAndRedirect = (userData, chosenRole) => {
+const completeLoginAndRedirect = (userData, chosenRole) => {
     const finalRole = chosenRole || userData?.role || "student";
-    
-    // Save updated role so route guards don't kick the user out
-    localStorage.setItem("role", finalRole);
-    
+
+localStorage.setItem("role", finalRole);
+
     const userToSave = { ...(userData || {}), role: finalRole };
     localStorage.setItem("user", JSON.stringify(userToSave));
-    
+
     if (typeof setUser === "function") {
       setUser(userToSave);
     }
@@ -46,8 +44,7 @@ export default function Login() {
     navigate(destination, { replace: true });
   };
 
-  // 1. Handle Email & Password Login
-  const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
 
     const next = {};
@@ -73,8 +70,7 @@ export default function Login() {
     }
   };
 
-  // 2. Handle Google Sign-In
-  const handleGoogleSuccess = async (response) => {
+const handleGoogleSuccess = async (response) => {
     const credential = response?.credential || response;
 
     if (!credential) {
@@ -108,8 +104,7 @@ export default function Login() {
         </p>
       )}
 
-      {/* Role Toggle for Student vs Teacher */}
-      <div className="mt-5">
+<div className="mt-5">
         <RoleToggle value={role} onChange={setRole} />
         <p className="mt-2 text-xs text-muted">
           Logging in as: <span className="font-bold text-ink uppercase">{role}</span>
@@ -159,11 +154,10 @@ export default function Login() {
         <span className="h-px flex-1 bg-line" />
       </div>
 
-      {/* Google Login with Selected Role Passed */}
-      <GoogleButton 
-        mode="signin_with" 
-        role={role} 
-        onSuccess={handleGoogleSuccess} 
+<GoogleButton
+        mode="signin_with"
+        role={role}
+        onSuccess={handleGoogleSuccess}
       />
 
       <p className="mt-5 text-center text-xs text-muted">

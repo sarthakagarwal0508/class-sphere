@@ -19,7 +19,6 @@ const styles = {
   },
 };
 
-// compact = dashboard version, full = Assignments page version
 function getSubtitle(a, compact) {
   if (compact) {
     if (a.status === "graded") return `${a.course}, graded`;

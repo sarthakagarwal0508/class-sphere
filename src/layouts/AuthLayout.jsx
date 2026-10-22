@@ -29,7 +29,7 @@ export default function AuthLayout({ role = "student", children }) {
 
   return (
     <div className="grid min-h-screen bg-card lg:grid-cols-2">
-      {/* Left: brand panel (sirf badi screen pe) */}
+
       <section className="relative hidden overflow-hidden bg-panel p-12 text-white lg:flex lg:flex-col">
         <Link to="/" className="relative z-10 text-2xl font-extrabold tracking-tight">
           Class<span className="text-brand">Sphere</span>
@@ -55,8 +55,7 @@ export default function AuthLayout({ role = "student", children }) {
         <div className="absolute bottom-24 right-40 h-36 w-36 rounded-full bg-panel-2" />
       </section>
 
-      {/* Right: form */}
-      <main className="relative flex items-center justify-center px-6 py-10">
+<main className="relative flex items-center justify-center px-6 py-10">
         <div className="absolute right-4 top-4">
           <ThemeToggle />
         </div>

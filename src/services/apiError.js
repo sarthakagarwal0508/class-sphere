@@ -1,7 +1,5 @@
-// Axios ke kisi bhi error ko ek saaf Error mein badalta hai:
-//   error.message = backend ka "message" (ya ek friendly fallback)
-//   error.code    = backend ka optional "code"
-//   error.status  = HTTP status
+
+
 export function toApiError(error) {
   const body = error?.response?.data;
 

@@ -1,7 +1,7 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  BookOpen, Users, FileCheck2, Award, PlusCircle, 
+import {
+  BookOpen, Users, FileCheck2, Award, PlusCircle,
   ArrowRight, Copy, Check, Sparkles, FolderPlus, HelpCircle, Upload
 } from 'lucide-react';
 import { fetchMyClassrooms } from '../../services/classroomService';
@@ -66,7 +66,7 @@ export default function TeacherDashboard() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* 🌟 Dark Navy Hero with Yellow Accent (Images 4 & 5 Style) */}
+
       <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
         <div className="space-y-2 z-10 max-w-md">
           <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
@@ -79,13 +79,13 @@ export default function TeacherDashboard() {
             You have <span className="text-[#fde047] font-bold">{classrooms.length} active cohorts</span> and 6 pending assignments awaiting evaluation.
           </p>
           <div className="pt-2 flex flex-wrap items-center gap-2.5">
-            <button 
+            <button
               onClick={() => navigate('/teacher/submissions')}
               className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-950 text-xs font-bold hover:bg-amber-400 transition shadow-sm"
             >
               Grade pending work
             </button>
-            <button 
+            <button
               onClick={() => navigate('/teacher/create-class')}
               className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20"
             >
@@ -110,13 +110,12 @@ export default function TeacherDashboard() {
         </div>
       </div>
 
-      {/* 4 Stat KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((m, i) => {
           const Icon = m.icon;
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-4 flex items-center gap-3 shadow-sm"
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${m.color}`}>
@@ -131,9 +130,8 @@ export default function TeacherDashboard() {
         })}
       </div>
 
-      {/* Quick Action Navigation Buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <button 
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
           onClick={() => navigate('/teacher/create-class')}
           className="p-3.5 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] hover:border-[#fde047] dark:hover:border-[#fde047] text-left transition group shadow-sm"
         >
@@ -142,7 +140,7 @@ export default function TeacherDashboard() {
           <p className="text-[11px] text-slate-500 dark:text-slate-400">Generate join code</p>
         </button>
 
-        <button 
+        <button
           onClick={() => navigate('/teacher/upload-material')}
           className="p-3.5 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] hover:border-[#fde047] dark:hover:border-[#fde047] text-left transition group shadow-sm"
         >
@@ -151,7 +149,7 @@ export default function TeacherDashboard() {
           <p className="text-[11px] text-slate-500 dark:text-slate-400">PDFs up to 10MB</p>
         </button>
 
-        <button 
+        <button
           onClick={() => navigate('/teacher/create-assignment')}
           className="p-3.5 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] hover:border-[#fde047] dark:hover:border-[#fde047] text-left transition group shadow-sm"
         >
@@ -160,7 +158,7 @@ export default function TeacherDashboard() {
           <p className="text-[11px] text-slate-500 dark:text-slate-400">Set rubrics & due date</p>
         </button>
 
-        <button 
+        <button
           onClick={() => navigate('/teacher/create-quiz')}
           className="p-3.5 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] hover:border-[#fde047] dark:hover:border-[#fde047] text-left transition group shadow-sm"
         >
@@ -170,13 +168,12 @@ export default function TeacherDashboard() {
         </button>
       </div>
 
-      {/* My Classrooms Cohorts Grid */}
-      <div className="space-y-3">
+<div className="space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
             My Classrooms ({classrooms.length})
           </h2>
-          <button 
+          <button
             onClick={() => navigate('/teacher/create-class')}
             className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
           >
@@ -251,14 +248,13 @@ export default function TeacherDashboard() {
         )}
       </div>
 
-      {/* Two Column Bottom Section: Needs Grading & Quiz Performance */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-3 shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               Needs Grading (Recent Submissions)
             </h2>
-            <button 
+            <button
               onClick={() => navigate('/teacher/submissions')}
               className="text-xs font-bold text-[#facc15] hover:underline"
             >
@@ -268,7 +264,7 @@ export default function TeacherDashboard() {
 
           <div className="space-y-2">
             {needsGrading.map((item) => (
-              <div 
+              <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60"
               >
@@ -287,8 +283,7 @@ export default function TeacherDashboard() {
           </div>
         </div>
 
-        {/* Quiz Averages Column */}
-        <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-4 shadow-sm flex flex-col justify-between">
+<div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-4 shadow-sm flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               Quiz Averages

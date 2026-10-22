@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-// fetcher ek async function hona chahiye jo stable ho
-// (file ke bahar likha hua ya useCallback ke andar).
 export default function useFetch(fetcher) {
   const [state, setState] = useState({ data: null, error: null, status: "loading" });
   const [reloadKey, setReloadKey] = useState(0);

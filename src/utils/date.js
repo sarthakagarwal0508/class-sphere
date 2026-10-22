@@ -1,6 +1,5 @@
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-// "2026-10-20" se aaj tak kitne din bache (negative = nikal gaya)
 export function daysLeft(isoDate) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -15,7 +14,6 @@ export function daysLeftLabel(days) {
   return `${days} days left`;
 }
 
-// Date -> "19 Oct"
 export function formatDayMonth(date = new Date()) {
   return `${date.getDate()} ${MONTHS[date.getMonth()]}`;
 }
