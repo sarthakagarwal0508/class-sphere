@@ -14,7 +14,34 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 
 app.use(helmet());
 
-app.use(cors({origin: process.env.FRONTEND_URL,}));
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://class-sphere-psi.vercel.app",
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      status: "OK",
+      service: "ClassSphere API",
+    },
+  });
+});
 
 app.use(express.json({ limit: "1mb" }));
 app.use("/api/auth", authRoutes);
@@ -27,13 +54,4 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    data: {
-      status: "OK",
-      service: "ClassSphere API",
-    },
-  });
-});
 module.exports = app;
