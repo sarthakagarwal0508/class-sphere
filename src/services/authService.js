@@ -25,11 +25,21 @@ function normalizeUser(raw = {}) {
 }
 
 function normalizeSession(payload) {
+  const tokenPayload = payload.tokens ?? payload.session?.tokens ?? payload;
+  const accessToken =
+    tokenPayload.accessToken ?? tokenPayload.access_token ?? tokenPayload.token;
+  const refreshToken =
+    tokenPayload.refreshToken ?? tokenPayload.refresh_token;
+
+  if (!accessToken) {
+    throw new Error("Login succeeded, but the server did not return an access token.");
+  }
+
   return {
-    user: normalizeUser(payload.user ?? payload),
+    user: normalizeUser(payload.user ?? payload.data?.user ?? payload),
     tokens: {
-      accessToken: payload.accessToken,
-      refreshToken: payload.refreshToken,
+      accessToken,
+      refreshToken,
     },
   };
 }

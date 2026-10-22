@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Upload, FileText, Trash2, Download, AlertCircle, 
-  CheckCircle2, HardDrive, Sparkles, FolderOpen 
+  CheckCircle2, HardDrive, FolderOpen
 } from 'lucide-react';
-import api from '../../services/api';
+import { fetchMyClassrooms } from '../../services/classroomService';
+import {
+  deleteMaterial,
+  downloadMaterial,
+  fetchClassroomMaterials,
+  uploadMaterial,
+} from '../../services/materialService';
 
 export default function UploadMaterial() {
   const [classrooms, setClassrooms] = useState([]);
@@ -21,17 +27,19 @@ export default function UploadMaterial() {
 
   // 1. Fetch classrooms for the dropdown
   useEffect(() => {
-    api.get('/api/classrooms')
-      .then((res) => {
-        const data = res.data?.data ?? res.data;
-        const classList = Array.isArray(data) ? data : data.classrooms ?? [];
+    fetchMyClassrooms()
+      .then((classList) => {
         setClassrooms(classList);
         if (classList.length > 0) {
           setSelectedClassId(classList[0]._id || classList[0].id);
+        } else {
+          setFetchLoading(false);
         }
       })
       .catch((err) => {
         console.error('Failed to load classrooms:', err);
+        setErrorMsg(err.message || 'Failed to load classrooms.');
+        setFetchLoading(false);
       });
   }, []);
 
@@ -39,14 +47,12 @@ export default function UploadMaterial() {
   useEffect(() => {
     if (!selectedClassId) return;
 
-    setFetchLoading(true);
-    api.get(`/api/classrooms/${selectedClassId}/materials`)
-      .then((res) => {
-        const data = res.data?.data ?? res.data;
+    fetchClassroomMaterials(selectedClassId)
+      .then((data) => {
         setMaterials(Array.isArray(data) ? data : data.materials ?? []);
       })
       .catch((err) => {
-        console.error('Failed to fetch materials:', err);
+        setErrorMsg(err.message || 'Failed to fetch classroom materials.');
         setMaterials([]);
       })
       .finally(() => {
@@ -83,13 +89,11 @@ export default function UploadMaterial() {
 
     setLoading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('title', title.trim());
-      if (description) formData.append('description', description.trim());
-
-      const res = await api.post(`/api/classrooms/${selectedClassId}/materials`, formData);
-      const newMaterial = res.data?.data ?? res.data;
+      const newMaterial = await uploadMaterial(selectedClassId, {
+        file,
+        title: title.trim(),
+        description: description.trim(),
+      });
 
       setSuccessMsg('PDF uploaded successfully!');
       setTitle('');
@@ -112,17 +116,23 @@ export default function UploadMaterial() {
     if (!window.confirm('Are you sure you want to delete this resource?')) return;
 
     try {
-      await api.delete(`/api/materials/${materialId}`);
+      await deleteMaterial(materialId);
       setMaterials((prev) => prev.filter((m) => (m._id || m.id) !== materialId));
       setSuccessMsg('Resource removed.');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to delete resource.');
+      setErrorMsg(err.message || 'Failed to delete resource.');
     }
   };
 
-  const getDownloadUrl = (materialId) => {
-    const root = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${root.replace(/\/+$/, '')}/api/materials/${materialId}/download`;
+  const handleDownload = async (material) => {
+    try {
+      await downloadMaterial(
+        material._id || material.id,
+        `${material.title || 'class-notes'}.pdf`
+      );
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to download resource.');
+    }
   };
 
   return (
@@ -168,7 +178,11 @@ export default function UploadMaterial() {
             </label>
             <select
               value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
+              onChange={(e) => {
+                setSelectedClassId(e.target.value);
+                setFetchLoading(true);
+                setErrorMsg('');
+              }}
               className="w-full bg-[#f8f9fa] dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-[#fde047]"
             >
               {classrooms.length === 0 ? (
@@ -304,15 +318,14 @@ export default function UploadMaterial() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <a
-                      href={getDownloadUrl(id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(m)}
                       className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
                       title="Download PDF"
                     >
                       <Download className="w-4 h-4" />
-                    </a>
+                    </button>
                     <button
                       onClick={() => handleDelete(id)}
                       className="p-2 rounded-lg bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900 text-rose-600 dark:text-rose-400 transition"

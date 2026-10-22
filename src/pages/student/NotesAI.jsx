@@ -8,37 +8,89 @@ import Card from "../../components/Card";
 import MaterialPicker from "../../components/MaterialPicker";
 import KeyPointsCard from "../../components/KeyPointsCard";
 import FlashcardsCard from "../../components/FlashcardsCard";
-import { courses, materials } from "../../data/mockData";
+import { fetchMyClassrooms } from "../../services/classroomService";
+import { fetchClassroomMaterials } from "../../services/materialService";
 import { generateStudyAid, MIN_CHARS, MAX_CHARS } from "../../services/notesAiService";
 
-// Link wale material se text nahi nikal sakte, isliye sirf PDF aur Notes
-const pickable = materials
-  .filter((m) => m.type !== "Link")
-  .map((m) => ({ ...m, courseName: courses.find((c) => c.id === m.courseId)?.name ?? "" }));
-
 const steps = [
-  "Paste your notes, or pick a PDF or notes file from Study Material.",
-  "Press Generate. The AI reads the text and finds the most important sentences.",
+  "Choose a PDF shared by your teacher, or paste your own notes.",
+  "The app extracts selectable text from the PDF and picks key sentences.",
   "Read the key points and use the flashcards to test yourself.",
 ];
 
+function unwrap(response) {
+  return response?.data?.data ?? response?.data ?? response;
+}
+
+function listFrom(response, key) {
+  const data = unwrap(response);
+  return Array.isArray(data) ? data : data?.[key] ?? [];
+}
+
 export default function NotesAI() {
   const location = useLocation();
-  const incomingId = location.state?.materialId ?? null;
+  const incomingMaterial = location.state?.material ?? null;
 
   const [text, setText] = useState("");
-  const [materialId, setMaterialId] = useState(incomingId);
-  // "Summarize" dabake aaye ho to turant generate shuru
+  const [material, setMaterial] = useState(incomingMaterial);
+  const [availableMaterials, setAvailableMaterials] = useState([]);
+  const [materialsError, setMaterialsError] = useState("");
   const [request, setRequest] = useState(
-    incomingId !== null ? { key: 1, text: "", materialId: incomingId } : null
+    incomingMaterial ? { key: 1, text: "", material: incomingMaterial } : null
   );
-  const [status, setStatus] = useState(incomingId !== null ? "loading" : "idle"); // idle | loading | ready | error
+  const [status, setStatus] = useState(incomingMaterial ? "loading" : "idle"); // idle | loading | ready | error
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
   const [reviseNote, setReviseNote] = useState("");
 
-  // Request badalte hi service ko bulao (purana jawab ignore karne ke liye flag)
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then((classrooms) =>
+        Promise.all(
+          classrooms.map(async (classroom) => {
+            const classroomId = classroom._id ?? classroom.id;
+            const response = await fetchClassroomMaterials(classroomId);
+            return listFrom(response, "materials")
+              .filter((item) => {
+                const type = String(
+                  item.type ?? item.mimeType ?? item.contentType ?? ""
+                ).toLowerCase();
+                const fileName = String(
+                  item.fileName ?? item.originalName ?? ""
+                ).toLowerCase();
+                return (
+                  !type.includes("link") &&
+                  (type.includes("pdf") ||
+                    fileName.endsWith(".pdf") ||
+                    (!type && !fileName))
+                );
+              })
+              .map((item) => ({
+                id: String(item._id ?? item.id),
+                classroomId,
+                title: item.title ?? item.originalName ?? item.fileName ?? "Study material",
+                courseName: classroom.name ?? classroom.title ?? "Classroom",
+              }));
+          })
+        )
+      )
+      .then((groups) => {
+        if (active) setAvailableMaterials(groups.flat());
+      })
+      .catch((loadError) => {
+        if (active) {
+          setMaterialsError(
+            loadError.message || "Could not load your classroom PDFs."
+          );
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (!request) return undefined;
 
@@ -61,10 +113,10 @@ export default function NotesAI() {
   }, [request]);
 
   const loading = status === "loading";
-  const hasInput = materialId !== null || text.trim().length > 0;
+  const hasInput = material !== null || text.trim().length > 0;
 
   const handleGenerate = () => {
-    if (materialId === null && text.trim().length < MIN_CHARS) {
+    if (material === null && text.trim().length < MIN_CHARS) {
       setError(`Add at least ${MIN_CHARS} characters of notes (you have ${text.trim().length}).`);
       setStatus("error");
       return;
@@ -73,12 +125,12 @@ export default function NotesAI() {
     setError("");
     setReviseNote("");
     setStatus("loading");
-    setRequest((prev) => ({ key: (prev?.key ?? 0) + 1, text, materialId }));
+    setRequest((prev) => ({ key: (prev?.key ?? 0) + 1, text, material }));
   };
 
   const handleClear = () => {
     setText("");
-    setMaterialId(null);
+    setMaterial(null);
     setRequest(null);
     setResult(null);
     setError("");
@@ -93,7 +145,7 @@ export default function NotesAI() {
       <HeroBanner
         variant="navy"
         title="Study smarter with Notes AI"
-        subtitle="Paste notes or pick a PDF. Get key points and flashcards in seconds."
+        subtitle="Summarize a teacher-shared PDF or paste notes to get key points and flashcards."
         buttonText={showHelp ? "Hide how it works" : "See how it works"}
         onButtonClick={() => setShowHelp((v) => !v)}
         icons={[Sparkles, FileText, Layers]}
@@ -123,20 +175,33 @@ export default function NotesAI() {
             rows={9}
             value={text}
             maxLength={MAX_CHARS}
-            disabled={materialId !== null}
             onChange={(e) => setText(e.target.value)}
             placeholder={
-              materialId !== null
-                ? "Using the selected material. Remove it to paste your own text."
+              material !== null
+                ? `Summarizing “${material.title}”. Remove it to paste your own text.`
                 : "Paste your class notes here..."
             }
+            disabled={material !== null}
             className="mt-1 w-full resize-none rounded-xl border border-line bg-card p-3 text-sm outline-none transition placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/30 disabled:cursor-not-allowed disabled:opacity-60"
           />
           <p className="mt-1 text-right text-xs text-muted">
             {text.length}/{MAX_CHARS}
           </p>
 
-          <MaterialPicker items={pickable} selectedId={materialId} onSelect={setMaterialId} />
+          {materialsError && (
+            <p role="alert" className="mt-3 text-xs text-tone-red-fg">
+              {materialsError}
+            </p>
+          )}
+          <MaterialPicker
+            items={availableMaterials}
+            selectedId={material?.id ?? null}
+            onSelect={(id) =>
+              setMaterial(
+                availableMaterials.find((item) => item.id === String(id)) ?? null
+              )
+            }
+          />
 
           {status === "error" && error && (
             <p role="alert" className="mt-3 text-xs font-semibold text-tone-red-fg">

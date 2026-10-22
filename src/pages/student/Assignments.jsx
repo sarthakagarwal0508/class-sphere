@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ClipboardList, Clock, Check } from "lucide-react";
 
 import Topbar from "../../components/Topbar";
@@ -6,10 +6,12 @@ import HeroBanner from "../../components/HeroBanner";
 import Tabs from "../../components/Tabs";
 import Card from "../../components/Card";
 import AssignmentCard from "../../components/AssignmentCard";
-import SubmitForm from "../../components/SubmitForm";
 import ProgressRing from "../../components/ProgressRing";
 import Loader from "../../components/Loader";
-import { getAssignments, submitAssignment } from "../../services/assignmentService";
+import {
+  fetchMyClassrooms,
+} from "../../services/classroomService";
+import { getClassroomAssignments } from "../../services/assignmentService";
 import { daysLeft, daysLeftLabel } from "../../utils/date";
 
 const tabs = [
@@ -19,27 +21,65 @@ const tabs = [
   { key: "graded", label: "Graded" },
 ];
 
+function normalizeAssignment(assignment, classroom) {
+  const dueDate = assignment.dueDate
+    ? new Date(assignment.dueDate)
+    : null;
+  const validDueDate =
+    dueDate && !Number.isNaN(dueDate.getTime()) ? dueDate : null;
+  const id = assignment._id ?? assignment.id;
+
+  return {
+    ...assignment,
+    id,
+    title: assignment.title ?? "Assignment",
+    shortTitle: assignment.shortTitle ?? assignment.title ?? "Assignment",
+    course:
+      classroom.name ?? classroom.title ?? assignment.classroom?.name ?? "Classroom",
+    description: assignment.description ?? assignment.instructions ?? "",
+    dueDate: validDueDate ? validDueDate.toISOString().slice(0, 10) : "",
+    due: validDueDate
+      ? `${new Intl.DateTimeFormat(undefined, { day: "numeric" }).format(validDueDate)} ${new Intl.DateTimeFormat(undefined, { month: "short" }).format(validDueDate)}`
+      : "No due date",
+    marks: assignment.maxMarks ?? assignment.marks ?? 0,
+    status: ["pending", "submitted", "graded"].includes(assignment.status)
+      ? assignment.status
+      : "pending",
+  };
+}
+
 export default function Assignments() {
   const [items, setItems] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [reloadKey, setReloadKey] = useState(0);
   const [tab, setTab] = useState("all");
-  const [selectedId, setSelectedId] = useState(null);
   const [notice, setNotice] = useState("");
-  const formRef = useRef(null);
 
-  // Data load: loading, error aur retry teeno handle
   useEffect(() => {
     let ignore = false;
 
-    getAssignments()
-      .then((data) => {
+    fetchMyClassrooms()
+      .then((classrooms) =>
+        Promise.all(
+          classrooms.map(async (classroom) => {
+            const classroomId = classroom._id ?? classroom.id;
+            const assignments = await getClassroomAssignments(classroomId);
+            return assignments.map((assignment) =>
+              normalizeAssignment(assignment, classroom)
+            );
+          })
+        )
+      )
+      .then((groups) => {
         if (ignore) return;
-        setItems(data);
+        setItems(groups.flat());
         setStatus("ready");
       })
-      .catch(() => {
-        if (!ignore) setStatus("error");
+      .catch((error) => {
+        if (!ignore) {
+          setStatus("error");
+          setNotice(error.message || "Could not load your assignments.");
+        }
       });
 
     return () => {
@@ -55,33 +95,22 @@ export default function Assignments() {
   // Derived data: state mein alag se save nahi karte
   const pending = items
     .filter((a) => a.status === "pending")
-    .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-  const active = pending.find((a) => a.id === selectedId) ?? pending[0] ?? null;
+    .sort((a, b) => {
+      const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Infinity;
+      const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Infinity;
+      return dateA - dateB;
+    });
   const visible = items.filter((a) => tab === "all" || a.status === tab);
   const done = items.length - pending.length;
 
-  const handleSelect = (assignment) => {
-    setSelectedId(assignment.id);
-    setNotice("");
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
-
-  const handleSubmit = async (payload) => {
-    const updated = await submitAssignment(payload);
-    // Immutable update: purani array badalte nahi, nayi banate hain
-    setItems((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
-    setSelectedId(null);
-    setNotice(`"${updated.title}" submitted successfully.`);
-  };
-
   return (
     <div className="space-y-5">
-      <Topbar title="Assignments" subtitle="Track deadlines, submissions and grades" />
+      <Topbar title="Assignments" subtitle="Review classroom work and due dates" />
 
       <HeroBanner
         variant="navy"
         title="Stay on top of deadlines"
-        subtitle="Submit work, track status and read feedback in one place."
+        subtitle="Review your class assignments and keep track of upcoming deadlines."
         buttonText="View calendar"
         icons={[ClipboardList, Clock, Check]}
       />
@@ -90,7 +119,7 @@ export default function Assignments() {
 
       {status === "error" && (
         <Card className="p-5 text-center">
-          <p className="text-sm font-semibold">Could not load your assignments.</p>
+          <p className="text-sm font-semibold">{notice || "Could not load your assignments."}</p>
           <button
             onClick={retry}
             className="mt-3 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-on-brand"
@@ -111,28 +140,14 @@ export default function Assignments() {
                 <p className="py-6 text-center text-sm text-muted">Nothing here yet.</p>
               )}
               {visible.map((a) => (
-                <AssignmentCard key={a.id} assignment={a} onSubmit={handleSelect} />
+                <AssignmentCard key={a.id} assignment={a} />
               ))}
             </div>
 
-            <div ref={formRef}>
-              {notice && (
-                <p
-                  role="status"
-                  className="mb-3 rounded-xl bg-tone-green px-4 py-2 text-sm font-semibold text-tone-green-fg"
-                >
-                  {notice}
-                </p>
-              )}
-
-              {active ? (
-                <SubmitForm key={active.id} assignment={active} onSubmit={handleSubmit} />
-              ) : (
-                <Card className="p-5 text-sm text-muted">
-                  You are all caught up. No pending assignments.
-                </Card>
-              )}
-            </div>
+            <Card className="p-4 text-sm text-muted">
+              Assignment submission is not connected yet; the provided API list
+              does not include a student submission endpoint.
+            </Card>
           </div>
 
           {/* Right: completion + upcoming deadlines */}
@@ -155,7 +170,7 @@ export default function Assignments() {
               <div className="mt-3 space-y-3">
                 {pending.map((a) => {
                   const [day, month] = a.due.split(" ");
-                  const days = daysLeft(a.dueDate);
+                  const days = a.dueDate ? daysLeft(a.dueDate) : null;
 
                   return (
                     <div key={a.id} className="flex items-start gap-3">
@@ -167,10 +182,12 @@ export default function Assignments() {
                         <p className="text-sm font-semibold leading-tight">{a.shortTitle}</p>
                         <p
                           className={`text-xs ${
-                            days < 0 ? "font-semibold text-tone-red-fg" : "text-muted"
+                            days !== null && days < 0
+                              ? "font-semibold text-tone-red-fg"
+                              : "text-muted"
                           }`}
                         >
-                          {daysLeftLabel(days)}
+                          {days === null ? "No due date" : daysLeftLabel(days)}
                         </p>
                       </div>
                     </div>

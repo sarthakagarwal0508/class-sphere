@@ -1,37 +1,77 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  BookOpen,
-  Calendar,
-  Clock,
-  Paperclip,
   CheckCircle,
   ArrowLeft,
   Sparkles,
-  AlertCircle
 } from 'lucide-react';
+import {
+  createAssignment,
+} from '../../services/assignmentService';
+import { fetchMyClassrooms } from '../../services/classroomService';
 
 export default function CreateAssignment() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
-    course: 'cls-1',
+    course: '',
     instructions: '',
     points: 100,
     dueDate: '',
     dueTime: '23:59',
-    allowLate: true,
   });
 
-  const [attachments, setAttachments] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+  const [loadingClassrooms, setLoadingClassrooms] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then((items) => {
+        if (!active) return;
+        setClassrooms(items);
+        if (items.length) {
+          setFormData((current) => ({
+            ...current,
+            course: String(items[0]._id ?? items[0].id),
+          }));
+        }
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || 'Could not load classrooms.');
+      })
+      .finally(() => {
+        if (active) setLoadingClassrooms(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSuccess(true);
-    setTimeout(() => {
-      navigate('/teacher/submissions');
-    }, 1800);
+    setError('');
+    setSubmitting(true);
+    try {
+      const dueDate = new Date(
+        `${formData.dueDate}T${formData.dueTime || '23:59'}`
+      ).toISOString();
+      await createAssignment(formData.course, {
+        title: formData.title.trim(),
+        description: formData.instructions.trim(),
+        dueDate,
+        maxMarks: formData.points,
+      });
+      setIsSuccess(true);
+    } catch (submitError) {
+      setError(submitError.message || 'Could not publish this assignment.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -53,7 +93,12 @@ export default function CreateAssignment() {
       {isSuccess && (
         <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-3 text-xs">
           <CheckCircle className="w-5 h-5 flex-shrink-0" />
-          <span>Assignment published! Redirecting to student submissions overview...</span>
+          <span>Assignment published successfully.</span>
+        </div>
+      )}
+      {error && (
+        <div role="alert" className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+          {error}
         </div>
       )}
 
@@ -81,11 +126,24 @@ export default function CreateAssignment() {
               <select
                 value={formData.course}
                 onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                required
+                disabled={loadingClassrooms || classrooms.length === 0}
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500"
               >
-                <option value="cls-1">CS-A: Algorithms</option>
-                <option value="cls-2">SE-3B: Web Eng.</option>
-                <option value="cls-3">AI-1A: Machine Learning</option>
+                {loadingClassrooms ? (
+                  <option value="">Loading classrooms...</option>
+                ) : classrooms.length === 0 ? (
+                  <option value="">Create a classroom first</option>
+                ) : (
+                  classrooms.map((classroom) => {
+                    const classroomId = classroom._id ?? classroom.id;
+                    return (
+                      <option key={classroomId} value={classroomId}>
+                        {classroom.name ?? classroom.title ?? 'Classroom'}
+                      </option>
+                    );
+                  })
+                )}
               </select>
             </div>
           </div>
@@ -145,42 +203,14 @@ export default function CreateAssignment() {
             </div>
           </div>
 
-          {/* Toggle for Late Submissions */}
-          <div className="flex items-center justify-between p-4 bg-slate-950/60 border border-slate-800 rounded-2xl">
-            <div>
-              <p className="text-sm font-semibold text-slate-200">Allow Late Submissions</p>
-              <p className="text-xs text-slate-400">Students can submit after the deadline with a "Late" timestamp flag</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.allowLate}
-                onChange={(e) => setFormData({ ...formData, allowLate: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-            </label>
-          </div>
-
-          {/* Attach Starter Files */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Attach Starter Code / Prompt Sheet (Optional)
-            </label>
-            <input
-              type="file"
-              onChange={(e) => setAttachments(Array.from(e.target.files))}
-              className="w-full text-xs text-slate-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-800 file:text-slate-200 hover:file:bg-slate-700 cursor-pointer"
-            />
-          </div>
-
           <div className="pt-3">
             <button
               type="submit"
-              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2"
+              disabled={submitting || loadingClassrooms || classrooms.length === 0}
+              className="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Sparkles className="w-4 h-4" />
-              <span>Publish Assignment</span>
+              <span>{submitting ? 'Publishing...' : 'Publish Assignment'}</span>
             </button>
           </div>
         </form>

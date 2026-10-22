@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
@@ -13,38 +13,91 @@ import {
 } from "lucide-react";
 import Card from "../../components/Card";
 import HeroBanner from "../../components/HeroBanner";
-import Tabs from "../../components/Tabs";
 import Topbar from "../../components/Topbar";
-import { classesData } from "../../data/classes";
+import {
+  fetchMyClassrooms,
+  joinClassroom,
+} from "../../services/classroomService";
 
-const filters = [
-  { key: "All", label: "All classes" },
-  { key: "In Progress", label: "In progress" },
-  { key: "Completed", label: "Completed" },
-];
+const idOf = (classroom) => classroom?._id ?? classroom?.id;
+const codeOf = (classroom) => classroom?.classCode ?? classroom?.code ?? "";
+const teacherOf = (classroom) =>
+  classroom?.teacher?.name ??
+  classroom?.owner?.name ??
+  classroom?.teacherName ??
+  classroom?.teacher ??
+  "Teacher";
 
 export default function MyClasses() {
   const navigate = useNavigate();
   const classListRef = useRef(null);
+  const [classrooms, setClassrooms] = useState([]);
+  const [reloadKey, setReloadKey] = useState(0);
+  const [loadState, setLoadState] = useState({
+    reloadKey: -1,
+    status: "loading",
+    error: "",
+  });
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("All");
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [joinCode, setJoinCode] = useState("");
-  const [joinNotice, setJoinNotice] = useState("");
+  const [joinError, setJoinError] = useState("");
+  const [joining, setJoining] = useState(false);
 
-  const filteredClasses = classesData.filter((item) => {
+  useEffect(() => {
+    let active = true;
+
+    fetchMyClassrooms()
+      .then((items) => {
+        if (active) {
+          setClassrooms(items);
+          setLoadState({ reloadKey, status: "ready", error: "" });
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setLoadState({
+            reloadKey,
+            status: "error",
+            error: error.message || "Could not load your classes.",
+          });
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [reloadKey]);
+  const loading =
+    loadState.reloadKey !== reloadKey || loadState.status === "loading";
+  const loadError =
+    loadState.reloadKey === reloadKey ? loadState.error : "";
+
+  const filteredClasses = useMemo(() => classrooms.filter((item) => {
     const matchesSearch =
-      `${item.name} ${item.teacher} ${item.code}`
+      `${item.name ?? item.title ?? ""} ${teacherOf(item)} ${codeOf(item)}`
         .toLowerCase()
         .includes(search.toLowerCase());
 
-    const matchesFilter =
-      filter === "All" ||
-      (filter === "In Progress" && item.progress < 100) ||
-      (filter === "Completed" && item.progress === 100);
+    return matchesSearch;
+  }), [classrooms, search]);
 
-    return matchesSearch && matchesFilter;
-  });
+  async function handleJoin(event) {
+    event.preventDefault();
+    setJoinError("");
+    setJoining(true);
+
+    try {
+      await joinClassroom(joinCode.trim());
+      setJoinCode("");
+      setJoinDialogOpen(false);
+      setReloadKey((key) => key + 1);
+    } catch (error) {
+      setJoinError(error.message || "Could not join this class.");
+    } finally {
+      setJoining(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -57,7 +110,7 @@ export default function MyClasses() {
         <button
           type="button"
           onClick={() => {
-            setJoinNotice("");
+            setJoinError("");
             setJoinDialogOpen(true);
           }}
           className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand shadow-sm transition hover:brightness-95"
@@ -121,15 +174,7 @@ export default function MyClasses() {
               </button>
             </div>
 
-            <form
-              className="mt-5 space-y-3"
-              onSubmit={(event) => {
-                event.preventDefault();
-                setJoinNotice(
-                  "The join-code API is not connected yet, so you have not been enrolled. Your code is ready to submit once the API is added."
-                );
-              }}
-            >
+            <form className="mt-5 space-y-3" onSubmit={handleJoin}>
               <label
                 htmlFor="class-join-code"
                 className="block text-xs font-bold text-ink"
@@ -141,16 +186,16 @@ export default function MyClasses() {
                 value={joinCode}
                 onChange={(event) => {
                   setJoinCode(event.target.value.toUpperCase());
-                  setJoinNotice("");
+                  setJoinError("");
                 }}
                 placeholder="e.g. WD101"
                 autoComplete="off"
                 required
                 className="w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-sm font-semibold uppercase tracking-wider text-ink outline-none transition placeholder:normal-case placeholder:tracking-normal placeholder:text-muted focus:border-brand"
               />
-              {joinNotice && (
-                <p role="status" className="rounded-xl bg-tone-yellow p-3 text-xs leading-5 text-tone-yellow-fg">
-                  {joinNotice}
+              {joinError && (
+                <p role="alert" className="rounded-xl bg-tone-red p-3 text-xs leading-5 text-tone-red-fg">
+                  {joinError}
                 </p>
               )}
               <div className="flex justify-end gap-2 pt-1">
@@ -163,11 +208,11 @@ export default function MyClasses() {
                 </button>
                 <button
                   type="submit"
-                  disabled={!joinCode.trim()}
+                  disabled={!joinCode.trim() || joining}
                   className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <KeyRound size={15} />
-                  Enter code
+                  {joining ? "Joining..." : "Enter code"}
                 </button>
               </div>
             </form>
@@ -181,7 +226,7 @@ export default function MyClasses() {
             <BookOpen size={19} />
           </div>
           <div>
-            <p className="text-lg font-extrabold text-ink">{classesData.length}</p>
+            <p className="text-lg font-extrabold text-ink">{classrooms.length}</p>
             <p className="text-xs text-muted">Enrolled classes</p>
           </div>
         </Card>
@@ -191,9 +236,12 @@ export default function MyClasses() {
           </div>
           <div>
             <p className="text-lg font-extrabold text-ink">
-              {classesData.filter((item) => item.progress < 100).length}
+              {classrooms.reduce(
+                (count, classroom) => count + (classroom.students?.length ?? classroom.enrolledCount ?? 0),
+                0
+              )}
             </p>
-            <p className="text-xs text-muted">In progress</p>
+            <p className="text-xs text-muted">Classmates</p>
           </div>
         </Card>
         <Card className="flex items-center gap-3 p-4">
@@ -202,9 +250,9 @@ export default function MyClasses() {
           </div>
           <div>
             <p className="text-lg font-extrabold text-ink">
-              {classesData.filter((item) => item.progress === 100).length}
+              {classrooms.filter((classroom) => classroom.status === "completed").length}
             </p>
-            <p className="text-xs text-muted">Completed</p>
+            <p className="text-xs text-muted">Completed classes</p>
           </div>
         </Card>
       </div>
@@ -225,9 +273,6 @@ export default function MyClasses() {
               className="w-full rounded-xl border border-line bg-surface py-2.5 pl-9 pr-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand"
             />
           </div>
-          <div className="overflow-x-auto">
-            <Tabs tabs={filters} active={filter} onChange={setFilter} />
-          </div>
         </div>
       </Card>
 
@@ -242,11 +287,24 @@ export default function MyClasses() {
           </div>
         </div>
 
-        {filteredClasses.length > 0 ? (
+        {loading ? (
+          <Card className="p-8 text-center text-sm text-muted">Loading your classes...</Card>
+        ) : loadError ? (
+          <Card className="p-8 text-center">
+            <p role="alert" className="text-sm font-semibold text-tone-red-fg">{loadError}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((key) => key + 1)}
+              className="mt-3 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-on-brand"
+            >
+              Try again
+            </button>
+          </Card>
+        ) : filteredClasses.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filteredClasses.map((item) => (
               <Card
-                key={item.id}
+                key={idOf(item)}
                 className="flex h-full flex-col p-4 transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -256,57 +314,33 @@ export default function MyClasses() {
                     </div>
                     <div className="min-w-0">
                       <h3 className="truncate font-extrabold text-ink">
-                        {item.name}
+                        {item.name ?? item.title ?? "Classroom"}
                       </h3>
                       <p className="mt-0.5 text-xs text-muted">
-                        {item.teacher}
+                        {teacherOf(item)}
                       </p>
                     </div>
                   </div>
                   <span className="shrink-0 rounded-lg bg-soft px-2.5 py-1 text-[11px] font-bold text-muted">
-                    {item.code}
+                    {codeOf(item) || "Class"}
                   </span>
-                </div>
-
-                <div className="mt-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs font-semibold text-muted">
-                      Course progress
-                    </p>
-                    <p className="text-xs font-extrabold text-ink">
-                      {item.progress}%
-                    </p>
-                  </div>
-                  <div
-                    className="mt-2 h-2 overflow-hidden rounded-full bg-soft"
-                    role="progressbar"
-                    aria-valuenow={item.progress}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`${item.name} progress`}
-                  >
-                    <div
-                      className="h-full rounded-full bg-brand transition-[width]"
-                      style={{ width: `${item.progress}%` }}
-                    />
-                  </div>
                 </div>
 
                 <div className="mt-4 flex items-center gap-2 rounded-xl bg-soft/70 px-3 py-2.5">
                   <CalendarDays size={15} className="shrink-0 text-muted" />
                   <div className="min-w-0">
                     <p className="text-[10px] font-bold uppercase tracking-wide text-muted">
-                      Next class
+                      Description
                     </p>
                     <p className="truncate text-xs font-semibold text-ink">
-                      {item.schedule}
+                      {item.description || "Class materials and assignments"}
                     </p>
                   </div>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => navigate(`/student/classes/${item.id}`)}
+                  onClick={() => navigate(`/student/classes/${idOf(item)}`)}
                   className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand transition hover:brightness-95"
                 >
                   View class

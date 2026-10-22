@@ -1,7 +1,7 @@
-﻿import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Plus, Copy, Check, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
-import api from '../../services/api';
+import { createClassroom } from '../../services/classroomService';
 
 export default function CreateClassroom() {
   const navigate = useNavigate();
@@ -46,13 +46,11 @@ export default function CreateClassroom() {
         formData.description || '',
       ].filter(Boolean).join(' • ');
 
-      // POST /api/classrooms
-      const response = await api.post('/api/classrooms', {
+      const classroomData = await createClassroom({
         name: formData.name.trim(),
         description: fullDescription || 'No description provided.',
       });
 
-      const classroomData = response.data?.data ?? response.data;
       setCreatedClass(classroomData);
     } catch (err) {
       setError(

@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
 import Card from "../../components/Card";
-import { getAnnouncements } from "../../services/announcementService";
+import { getClassroomAnnouncements } from "../../services/announcementService";
+import { fetchMyClassrooms } from "../../services/classroomService";
 
 export default function Announcements() {
   const [announcements, setAnnouncements] = useState([]);
@@ -15,9 +16,21 @@ export default function Announcements() {
   useEffect(() => {
     let active = true;
 
-    getAnnouncements()
-      .then((data) => {
-        if (active) setAnnouncements(data);
+    fetchMyClassrooms()
+      .then((classrooms) =>
+        Promise.all(
+          classrooms.map(async (classroom) => {
+            const classroomId = classroom._id ?? classroom.id;
+            const items = await getClassroomAnnouncements(classroomId);
+            return items.map((item) => ({
+              ...item,
+              classroom: item.classroom?.name ?? classroom.name ?? classroom.title,
+            }));
+          })
+        )
+      )
+      .then((groups) => {
+        if (active) setAnnouncements(groups.flat());
       })
       .catch((err) => {
         if (active) {
@@ -36,6 +49,7 @@ export default function Announcements() {
   const filtered = announcements.filter((item) => {
     const text = [
       item.title,
+      item.content,
       item.message,
       item.classroom,
       item.class,
@@ -124,8 +138,8 @@ export default function Announcements() {
                       </p>
                     )}
 
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600">
-                      {item.message}
+                    <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-600 dark:text-muted">
+                      {item.content ?? item.message}
                     </p>
 
                     <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-gray-500">

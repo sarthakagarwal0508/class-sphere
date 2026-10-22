@@ -1,35 +1,71 @@
 import api from "./api";
+import { toApiError } from "./apiError";
 
 export const uploadMaterial = async (classroomId, { file, title, description }) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("title", title);
-  if (description) formData.append("description", description);
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("title", title);
+    if (description) formData.append("description", description);
 
-  
-  const res = await api.post(`/api/classrooms/${classroomId}/materials`, formData);
-  return res.data;
+    const res = await api.post(`/classrooms/${classroomId}/materials`, formData);
+    return res.data?.data ?? res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
 
 export const fetchClassroomMaterials = async (classroomId) => {
-  const res = await api.get(`/api/classrooms/${classroomId}/materials`);
-  return res.data;
+  try {
+    const res = await api.get(`/classrooms/${classroomId}/materials`);
+    return res.data?.data ?? res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
-
-export const getDownloadMaterialUrl = (materialId) => {
-  const root = import.meta.env.VITE_API_URL || "http://localhost:5000";
-  return `${root.replace(/\/+$/, "")}/api/materials/${materialId}/download`;
+export const fetchMaterialFile = async (materialId) => {
+  try {
+    const response = await api.get(`/materials/${materialId}/download`, {
+      responseType: "blob",
+    });
+    return response.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
+export const downloadMaterial = async (materialId, filename = "class-notes.pdf") => {
+  try {
+    const file = await fetchMaterialFile(materialId);
+    const objectUrl = URL.createObjectURL(file);
+    const link = document.createElement("a");
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
 
 export const updateMaterial = async (materialId, { title, description }) => {
-  const res = await api.patch(`/api/materials/${materialId}`, { title, description });
-  return res.data;
+  try {
+    const res = await api.patch(`/materials/${materialId}`, { title, description });
+    return res.data?.data ?? res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
 export const deleteMaterial = async (materialId) => {
-  const res = await api.delete(`/api/materials/${materialId}`);
-  return res.data;
+  try {
+    const res = await api.delete(`/materials/${materialId}`);
+    return res.data?.data ?? res.data;
+  } catch (error) {
+    throw toApiError(error);
+  }
 };

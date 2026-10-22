@@ -4,7 +4,7 @@ import { toApiError } from "./apiError";
 
 export async function createAnnouncement(classroomId, { title, content }) {
   try {
-    const response = await api.post(`/api/classrooms/${classroomId}/announcements`, {
+    const response = await api.post(`/classrooms/${classroomId}/announcements`, {
       title,
       content,
     });
@@ -17,9 +17,9 @@ export async function createAnnouncement(classroomId, { title, content }) {
 
 export async function getClassroomAnnouncements(classroomId) {
   try {
-    const response = await api.get(`/api/classrooms/${classroomId}/announcements`);
+    const response = await api.get(`/classrooms/${classroomId}/announcements`);
     const payload = response.data?.data ?? response.data;
-    return Array.isArray(payload) ? payload : payload.announcements ?? [];
+    return Array.isArray(payload) ? payload : payload?.announcements ?? [];
   } catch (error) {
     throw toApiError(error);
   }
@@ -27,7 +27,7 @@ export async function getClassroomAnnouncements(classroomId) {
 
 export async function updateAnnouncement(announcementId, { title, content }) {
   try {
-    const response = await api.patch(`/api/announcements/${announcementId}`, {
+    const response = await api.patch(`/announcements/${announcementId}`, {
       title,
       content,
     });
@@ -40,19 +40,8 @@ export async function updateAnnouncement(announcementId, { title, content }) {
 
 export async function deleteAnnouncement(announcementId) {
   try {
-    const response = await api.delete(`/api/announcements/${announcementId}`);
+    const response = await api.delete(`/announcements/${announcementId}`);
     return response.data?.data ?? response.data;
-  } catch (error) {
-    throw toApiError(error);
-  }
-}
-
-
-export async function getAnnouncements() {
-  try {
-    const response = await api.get("/api/announcements");
-    const payload = response.data?.data ?? response.data;
-    return Array.isArray(payload) ? payload : payload.announcements ?? [];
   } catch (error) {
     throw toApiError(error);
   }
@@ -61,9 +50,9 @@ export async function getAnnouncements() {
 
 export async function getMyNotifications() {
   try {
-    const response = await api.get("/api/notifications");
+    const response = await api.get("/notifications");
     const payload = response.data?.data ?? response.data;
-    return Array.isArray(payload) ? payload : payload.notifications ?? [];
+    return Array.isArray(payload) ? payload : payload?.notifications ?? [];
   } catch (error) {
     throw toApiError(error);
   }
@@ -72,7 +61,7 @@ export async function getMyNotifications() {
 
 export async function markNotificationAsRead(notificationId) {
   try {
-    const response = await api.patch(`/api/notifications/${notificationId}/read`);
+    const response = await api.patch(`/notifications/${notificationId}/read`);
     return response.data?.data ?? response.data;
   } catch (error) {
     throw toApiError(error);

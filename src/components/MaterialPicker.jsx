@@ -3,7 +3,7 @@ import { FileText } from "lucide-react";
 
 export default function MaterialPicker({ items, selectedId, onSelect }) {
   const [open, setOpen] = useState(false);
-  const selected = items.find((m) => m.id === selectedId);
+  const selected = items.find((m) => String(m.id) === String(selectedId));
 
   return (
     <div className="mt-3">
@@ -28,7 +28,7 @@ export default function MaterialPicker({ items, selectedId, onSelect }) {
           aria-expanded={open}
           className="w-full rounded-xl border-2 border-dashed border-line px-4 py-4 text-center text-sm text-muted transition hover:border-muted hover:text-ink"
         >
-          Or pick a PDF from Study Material
+          Or pick a PDF shared by your teacher
         </button>
       )}
 

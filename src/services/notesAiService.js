@@ -1,12 +1,8 @@
-// MOCK service. ML teammate ka API aane par sirf generateStudyAid ke andar ka code badlega,
-// Notes AI page waisa hi rahega. Response ka shape ye rakho:
-//   { keyPoints: string[], flashcards: [{ question, answer }] }
-import { notesSamples } from "../data/notesSamples";
+import { fetchMaterialFile } from "./materialService";
 
 export const MIN_CHARS = 60;
 export const MAX_CHARS = 8000;
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const MAX_PDF_CHARS = 50000;
 
 const STOP_WORDS = new Set(
   (
@@ -87,21 +83,38 @@ function fallbackCard(sentence, freq) {
   return { question: `Fill in the blank: ${blanked}.`, answer };
 }
 
-export async function generateStudyAid({ text = "", materialId = null }) {
-  await delay(1200);
-  // Real: const { data } = await api.post("/notes-ai/generate", { text, materialId }); return data;
+async function extractPdfText(file) {
+  const pdfjs = await import("pdfjs-dist");
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url
+  ).toString();
 
-  let source = text;
-  if (materialId !== null && materialId !== undefined) {
-    source = notesSamples[materialId];
-    if (!source) {
-      throw new Error("This material cannot be summarized yet. Try a PDF or a notes file.");
-    }
+  const document = await pdfjs.getDocument({
+    data: await file.arrayBuffer(),
+  }).promise;
+  const pages = [];
+
+  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
+    const page = await document.getPage(pageNumber);
+    const content = await page.getTextContent();
+    const pageText = content.items
+      .map((item) => ("str" in item ? item.str : ""))
+      .filter(Boolean)
+      .join(" ");
+    pages.push(pageText);
   }
 
-  if (source.length > MAX_CHARS) {
-    throw new Error(`Please keep your notes under ${MAX_CHARS} characters.`);
+  const extracted = pages.join("\n").replace(/\s+/g, " ").trim();
+  if (!extracted) {
+    throw new Error(
+      "This PDF has no selectable text. Scanned/image-only PDFs cannot be summarized yet."
+    );
   }
+  return extracted.slice(0, MAX_PDF_CHARS);
+}
+
+function summarizeText(source) {
   if (source.trim().length < MIN_CHARS) {
     throw new Error(`Add at least ${MIN_CHARS} characters of notes to get a useful summary.`);
   }
@@ -132,4 +145,14 @@ export async function generateStudyAid({ text = "", materialId = null }) {
   });
 
   return { keyPoints, flashcards };
+}
+
+export async function generateStudyAid({ text = "", material = null }) {
+  const source = material
+    ? await extractPdfText(await fetchMaterialFile(material.id))
+    : text;
+  if (!material && source.length > MAX_CHARS) {
+    throw new Error(`Please keep your notes under ${MAX_CHARS} characters.`);
+  }
+  return summarizeText(source);
 }

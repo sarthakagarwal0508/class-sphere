@@ -1,36 +1,77 @@
 import api from "./api";
+import { toApiError } from "./apiError";
+
+const unwrap = (response) => response?.data?.data ?? response?.data;
+
+function asList(payload, key) {
+  const data = unwrap(payload);
+  return Array.isArray(data) ? data : data?.[key] ?? [];
+}
 
 export const fetchMyClassrooms = async () => {
-  const res = await api.get("/api/classrooms");
-  return res.data;
+  try {
+    return asList(await api.get("/classrooms"), "classrooms");
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
-
 
 export const createClassroom = async ({ name, description }) => {
-  const res = await api.post("/api/classrooms", { name, description });
-  return res.data;
+  try {
+    return unwrap(await api.post("/classrooms", { name, description }));
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
+export const joinClassroom = async (classCode) => {
+  try {
+    return unwrap(await api.post("/classrooms/join", { classCode }));
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
 
 export const fetchClassroomDetails = async (classroomId) => {
-  const res = await api.get(`/api/classrooms/${classroomId}`);
-  return res.data;
+  try {
+    return unwrap(await api.get(`/classrooms/${classroomId}`));
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
-
 
 export const updateClassroom = async (classroomId, data) => {
-  const res = await api.patch(`/api/classrooms/${classroomId}`, data);
-  return res.data;
+  try {
+    return unwrap(await api.patch(`/classrooms/${classroomId}`, data));
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
-
 
 export const removeStudentFromClassroom = async (classroomId, studentId) => {
-  const res = await api.delete(`/api/classrooms/${classroomId}/students/${studentId}`);
-  return res.data;
+  try {
+    return unwrap(
+      await api.delete(`/classrooms/${classroomId}/students/${studentId}`)
+    );
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
 
+export const leaveClassroom = async (classroomId) => {
+  try {
+    return unwrap(await api.post(`/classrooms/${classroomId}/leave`));
+  } catch (error) {
+    throw toApiError(error);
+  }
+};
 
 export const deleteClassroom = async (classroomId) => {
-  const res = await api.delete(`/api/classrooms/${classroomId}`);
-  return res.data;
+  try {
+    return unwrap(await api.delete(`/classrooms/${classroomId}`));
+  } catch (error) {
+    throw toApiError(error);
+  }
 };
+
+export { asList, unwrap };
