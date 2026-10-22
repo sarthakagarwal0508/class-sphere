@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Users, Plus, Copy, Check, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
 import { createClassroom } from '../../services/classroomService';
@@ -18,7 +18,6 @@ export default function CreateClassroom() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Fallback initial preview code before classroom creation
   const displayCode = createdClass?.classCode || createdClass?.code || '------';
 
   const handleCopy = () => {
@@ -39,7 +38,7 @@ export default function CreateClassroom() {
     setError('');
 
     try {
-      // Build descriptive details combining subject and semester if provided
+    
       const fullDescription = [
         formData.subject ? `Subject: ${formData.subject}` : '',
         formData.semester ? `Semester: ${formData.semester}` : '',

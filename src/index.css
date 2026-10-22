@@ -122,15 +122,13 @@ body {
   background-attachment: fixed;
 }
 
-/* 🌟 UNIVERSAL DARK MODE CONTRAST SAFEGUARDS 🌟 */
-/* Automatically inverts any hardcoded white cards in dark mode */
+
 .dark .bg-white {
   background-color: #161618 !important;
   border-color: #2a2a2f !important;
   color: #f4f4f5 !important;
 }
 
-/* Automatically makes input fields readable and dark-themed */
 .dark input,
 .dark textarea,
 .dark select {
@@ -144,7 +142,7 @@ body {
   color: #71717a !important;
 }
 
-/* Fixes hardcoded slate-900 text becoming invisible on dark background */
+
 .dark .text-slate-900 {
   color: #f4f4f5 !important;
 }
@@ -173,7 +171,6 @@ body {
   color: #f4f4f5 !important;
 }
 
-/* Glassmorphism Sidebar */
 .glass-sidebar {
   background: linear-gradient(145deg, rgb(18 18 40 / 96%), rgb(30 30 63 / 90%));
   border: 1px solid rgb(255 255 255 / 25%);
@@ -198,7 +195,7 @@ body {
     inset 1px 0 rgb(255 255 255 / 10%);
 }
 
-/* Stagger Animations */
+
 @keyframes dashboard-reveal {
   from {
     opacity: 0;
@@ -221,7 +218,6 @@ body {
 .dashboard-stagger > :nth-child(5) { animation-delay: 240ms; }
 .dashboard-stagger > :nth-child(6) { animation-delay: 290ms; }
 
-/* Smooth scroll container utility */
 .smooth-scroll {
   scroll-behavior: smooth;
   overflow-y: auto;

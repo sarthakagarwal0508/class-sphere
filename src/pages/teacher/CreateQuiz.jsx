@@ -63,7 +63,7 @@ export default function CreateQuiz() {
         </p>
       </div>
 
-      {/* Dark Navy Hero Banner */}
+ 
       <div className="bg-[#181829] border border-slate-800 rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm relative overflow-hidden text-white">
         <div className="space-y-2 max-w-md z-10">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-[#fde047] text-xs font-bold">

@@ -25,7 +25,7 @@ export default function UploadMaterial() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 1. Fetch classrooms for the dropdown
+  
   useEffect(() => {
     fetchMyClassrooms()
       .then((classList) => {
@@ -43,7 +43,7 @@ export default function UploadMaterial() {
       });
   }, []);
 
-  // 2. Fetch materials whenever selected classroom changes
+  
   useEffect(() => {
     if (!selectedClassId) return;
 
@@ -60,7 +60,7 @@ export default function UploadMaterial() {
       });
   }, [selectedClassId]);
 
-  // 3. Handle File Upload
+ 
   const handleUpload = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -100,7 +100,7 @@ export default function UploadMaterial() {
       setDescription('');
       setFile(null);
 
-      // Prepend newly uploaded material to list
+      
       setMaterials((prev) => [newMaterial, ...prev]);
     } catch (err) {
       setErrorMsg(
@@ -111,7 +111,7 @@ export default function UploadMaterial() {
     }
   };
 
-  // 4. Handle Delete Material
+
   const handleDelete = async (materialId) => {
     if (!window.confirm('Are you sure you want to delete this resource?')) return;
 
