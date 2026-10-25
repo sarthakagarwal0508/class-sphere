@@ -44,10 +44,13 @@ Base URL: `http://localhost:5000`. Use `Authorization: Bearer <ACCESS_TOKEN>` fo
 | GET | `/api/analytics/teacher/classrooms/:id/students` | Owning teacher | No body |
 | GET | `/api/analytics/teacher/classrooms/:id/risk-predictions` | Owning teacher | No body; runs configured students through the deployed ML service |
 | PUT | `/api/analytics/teacher/classrooms/:id/students/:studentId/risk-profile` | Owning teacher; student must be enrolled | Required model context/category/activity fields; see `ML-Performance-Insights.md` |
+| POST | `/api/ai/summarize` | Student or teacher | `multipart/form-data` PDF field `file`; returns summary and flashcards |
+| POST | `/api/ai/quizzes/generate` | Teacher | `{topic?,study_material?,num_questions?,difficulty?}`; returns MCQs including answer keys |
+| POST | `/api/ai/quizzes/generate-from-pdf` | Teacher | `multipart/form-data`: PDF `file`, optional `num_questions`, `difficulty`; returns MCQs including answer keys |
 
 ## Notes
 
 - `:id` means a path parameter, not a literal string. Replace it with the actual MongoDB ObjectId.
 - Notification paths require `notificationRoutes` to be mounted at `/api/notifications` in `src/app.js`.
 - ML prediction routes require `MODEL_API_URL` in the Node.js backend environment; see `ML-Performance-Insights.md`.
-- The latest available ZIP did not contain an AI quiz route/controller/model. No AI quiz endpoint is documented here because its actual contract has not been supplied/verified.
+- AI summarizer and quiz routes proxy to separately deployed services; configure `AI_SERVICE_URL` and `QUIZ_SERVICE_URL` before calling them. See `AI-Features.md`.

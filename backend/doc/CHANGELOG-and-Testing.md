@@ -1,68 +1,25 @@
-# Changelog and Postman Testing Checklist
+# Changelog and Testing
 
-## Updates captured in this documentation
+## ML and AI service integration update
 
-1. **Notifications route mount:** use `app.use("/api/notifications", notificationRoutes)` so the router's `GET /` and `PATCH /:id/read` become `/api/notifications` and `/api/notifications/:id/read`.
-2. **Classroom metadata:** added `subject` and `semesterSection` to the classroom schema and create/update API contract.
-3. **Six-character join code:** new codes use three random bytes encoded as uppercase hex. Existing codes remain unchanged.
-4. **Collision retry:** classroom creation retries a small number of times if the unique `classCode` index reports a collision.
-5. **Classroom deletion cleanup:** attempts to remove authenticated Cloudinary study-material files and related Notification, Announcement, Submission, Assignment and StudyMaterial records before deleting the Classroom.
-6. **Docs corrected:** assignment submission/grading endpoints now listed exactly as declared in `src/routes/assignmentRoutes.js`; analytics, notifications and Google sign-in documented.
+- Kept the existing Node.js/Express API, authentication, classroom, assignment, study-material, announcement, notification and analytics routes.
+- Kept the existing teacher-only at-risk prediction integration and documented its required model profile fields.
+- Added authenticated PDF notes summarization and flashcard generation through `AI_SERVICE_URL`.
+- Added teacher-only quiz generation from topic/study text and from PDF through `QUIZ_SERVICE_URL`; quiz endpoints are teacher-only because responses contain correct answers.
+- Added service URL validation, HTTPS enforcement for non-local URLs, 120-second timeouts, JSON response validation and consistent upstream errors.
+- Added `.env.example` and `doc/AI-Features.md`. No live `.env` or API keys are included.
+- No new npm dependencies were added; the project already includes `multer` and requires Node.js 18+ for built-in `fetch`, `FormData`, and `Blob`.
 
-## Before testing
+## Automated checks run for this archive
 
-- Use a local test database or disposable demo records.
-- Never test classroom deletion against real classes unless you intentionally want the data permanently deleted and have a backup.
-- Confirm the changed `Classroom.js`, `classroomController.js`, and `src/app.js` are the versions running locally.
-- Ensure environment variables for MongoDB, JWT, Gmail and Cloudinary are configured; never put secret values into documentation or Git.
+- `npm test`: 6 passing tests, 0 failures.
+- `node --check` run for every JavaScript file under `src/`: passed.
+- These checks cover client behavior and syntax; they do not prove that the remote summarizer/quiz services are deployed or that their environment URLs are configured correctly.
 
-## Suggested Postman test sequence
+## Before deployment
 
-1. `GET /api/health` — expect `200`.
-2. Register a test teacher: `POST /api/auth/register`.
-3. Verify OTP: `POST /api/auth/verify-otp`.
-4. Login as teacher: `POST /api/auth/login`; copy `data.accessToken`.
-5. `GET /api/auth/me` with the same token; verify `data.user.role` is `teacher`.
-6. Create classroom with `name`, `description`, `subject`, `semesterSection`; expect `201` and six-character `classCode`.
-7. `GET /api/classrooms`; verify classroom and new metadata are returned.
-8. `PATCH /api/classrooms/CLASSROOM_ID`; update subject or semester/section.
-9. Register/verify/login a student test account; join classroom with `POST /api/classrooms/join` and `classCode`.
-10. Create assignment, submit as student, view submissions as teacher, grade as teacher, and fetch the student's own submission.
-11. Upload a PDF as the teacher, list materials as teacher/student, download it with the access token, update metadata and delete a disposable material.
-12. Create an announcement; log in as the enrolled student and call `GET /api/notifications`; mark one notification read.
-13. Test the four analytics endpoints with the correct roles.
-14. Only after all prior tests, create a **disposable** classroom with dependent test records and exercise `DELETE /api/classrooms/CLASSROOM_ID`; verify MongoDB records and Cloudinary objects.
-
-## Common troubleshooting
-
-### “You do not have permission to access this resource.”
-
-A protected route's role middleware returned `403`. Call `GET /api/auth/me` using the exact bearer token the frontend is sending. Classroom creation requires a database user whose role is `teacher`. Do not remove role middleware to bypass the error.
-
-### `Cannot GET /api/notifications`
-
-Check the mount in `src/app.js`: `app.use("/api/notifications", notificationRoutes)`. Restart the server and redeploy the backend if needed.
-
-### Classroom subject/semester values missing
-
-Confirm frontend JSON keys are exactly `subject` and `semesterSection`, the schema includes both fields, controller reads/saves them, and frontend is calling the updated server. Old documents may not contain these fields.
-
-### A 6-character code is not shown
-
-Only newly created classrooms use the new generator. Old database codes remain their original length unless intentionally migrated.
-
-### Classroom deletion returns 500
-
-The cleanup performs operations across MongoDB and Cloudinary without a shared transaction. Check server logs, inspect which resources were deleted, and reconcile leftovers before retrying. Repeated deletion may encounter already-missing Cloudinary files or records.
-
-## Validation boundary
-
-These documents describe the route/controller/schema contracts reviewed from the available backend ZIP plus the changes discussed in this chat. Examples are illustrative; IDs, dates, array sizes and token values vary. The live deployed environment was not called from this documentation build, so run the checklist before treating every endpoint as production-verified.
-
-
-## ML-Based Performance Insights integration
-
-- Added a separate teacher-only risk-profile upsert endpoint and classroom risk-prediction endpoint under `/api/analytics/teacher/classrooms/:id/`.
-- Added `StudentRiskProfile`, a model-service client using Node.js built-in `fetch`, deployment configuration example, and focused client tests.
-- The integration derives assessment counts, graded score percentages, weighted score, and late submissions from existing assignment/submission records. Inputs not tracked in existing schemas are explicitly required in the risk profile rather than fabricated.
-- Validation run for this package: `node --check` on JavaScript files and `npm test` for the ML service client. Database-connected end-to-end prediction tests still require a running MongoDB database, a configured teacher/classroom/student, and the deployed model service.
+1. Keep the existing local `.env` unchanged and add the three service URLs if missing.
+2. In the Node.js backend Render service, configure `MODEL_API_URL`, `AI_SERVICE_URL`, and `QUIZ_SERVICE_URL` with the real public base URLs.
+3. Deploy the backend and test with a real teacher/student access token.
+4. Verify the quiz service's configured Gemini model ID is supported by its API key, as noted in the AI Quiz Generator guide.
+5. Use representative and appropriate student data for ML risk predictions. Model estimates must not be the sole basis for high-impact decisions.

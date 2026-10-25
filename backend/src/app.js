@@ -12,6 +12,7 @@ const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const mlPredictionRoutes = require("./routes/mlPredictionRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 
 app.use(helmet());
 
@@ -54,6 +55,7 @@ app.use("/api", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/analytics", mlPredictionRoutes);
+app.use("/api/ai", aiRoutes);
 
 
 module.exports = app;
