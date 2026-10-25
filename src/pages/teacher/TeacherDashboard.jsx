@@ -1,11 +1,16 @@
-﻿import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen, Users, FileCheck2, Award, PlusCircle,
-  ArrowRight, Copy, Check, Sparkles, FolderPlus, HelpCircle, Upload
+  ArrowRight, Copy, Check, FolderPlus, HelpCircle, Upload
 } from 'lucide-react';
 import { fetchMyClassrooms } from '../../services/classroomService';
 import { useAuth } from '../../context/AuthContext';
+import { getTeacherClassroomAnalytics } from '../../services/analyticsService';
+import {
+  getAssignmentSubmissions,
+  getClassroomAssignments,
+} from '../../services/assignmentService';
 
 export default function TeacherDashboard() {
   const navigate = useNavigate();
@@ -15,14 +20,70 @@ export default function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [copiedCode, setCopiedCode] = useState(null);
+  const [dashboardData, setDashboardData] = useState({
+    totalStudents: 0,
+    pendingGrading: [],
+    pendingGradingCount: 0,
+    averagePercentage: null,
+    classAverages: [],
+  });
 
   useEffect(() => {
     let ignore = false;
     fetchMyClassrooms()
-      .then((items) => {
-        if (!ignore) {
-          setClassrooms(items);
-        }
+      .then(async (items) => {
+        const results = await Promise.all(items.map(async (classroom) => {
+          const classroomId = classroom._id ?? classroom.id;
+          const [analytics, assignments] = await Promise.all([
+            getTeacherClassroomAnalytics(classroomId),
+            getClassroomAssignments(classroomId),
+          ]);
+          const submissionGroups = await Promise.all(assignments.map(async (assignment) => {
+            const submissions = await getAssignmentSubmissions(assignment._id ?? assignment.id);
+            return submissions
+              .filter((submission) => submission.status !== 'graded')
+              .map((submission) => ({
+                id: submission._id ?? submission.id,
+                name: submission.student?.name || 'Student',
+                task: assignment.title || 'Assignment',
+                submittedAt: submission.submittedAt,
+                time: submission.submittedAt
+                  ? new Date(submission.submittedAt).toLocaleDateString()
+                  : 'Recently submitted',
+              }));
+          }));
+          return { classroom, analytics, pendingGrading: submissionGroups.flat() };
+        }));
+        if (ignore) return;
+        setClassrooms(items);
+        const gradedCount = results.reduce(
+          (sum, result) => sum + (result.analytics.totalGradedSubmissions ?? 0),
+          0
+        );
+        const weightedAverage = gradedCount
+          ? results.reduce((sum, result) =>
+            sum + (result.analytics.averageGradedPercentage ?? 0)
+              * (result.analytics.totalGradedSubmissions ?? 0), 0
+          ) / gradedCount
+          : null;
+        setDashboardData({
+          totalStudents: results.reduce(
+            (sum, result) => sum + (result.analytics.totalStudents ?? 0), 0
+          ),
+          pendingGrading: results
+            .flatMap((result) => result.pendingGrading)
+            .sort((a, b) => new Date(b.submittedAt ?? 0) - new Date(a.submittedAt ?? 0))
+            .slice(0, 3),
+          pendingGradingCount: results.reduce(
+            (sum, result) => sum + result.pendingGrading.length, 0
+          ),
+          averagePercentage: weightedAverage == null ? null : Math.round(weightedAverage),
+          classAverages: results.map(({ classroom, analytics }) => ({
+            id: classroom._id ?? classroom.id,
+            name: classroom.name ?? classroom.title ?? 'Class',
+            average: analytics.averageGradedPercentage,
+          })),
+        });
       })
       .catch((err) => {
         if (!ignore) {
@@ -44,22 +105,11 @@ export default function TeacherDashboard() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const totalStudents = classrooms.reduce(
-    (sum, c) => sum + (c.students?.length || c.enrolledCount || 0),
-    0
-  );
-
   const metrics = [
     { label: 'Classrooms', value: classrooms.length, icon: BookOpen, color: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' },
-    { label: 'Total students', value: totalStudents || '0', icon: Users, color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
-    { label: 'To grade', value: '6', icon: FileCheck2, color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
-    { label: 'Class average', value: '74%', icon: Award, color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
-  ];
-
-  const needsGrading = [
-    { id: 1, name: 'Aarav Mehta', task: 'Linked List Implementation', time: '19 Oct', status: 'Submitted' },
-    { id: 2, name: 'Kabir Singh', task: 'ER Diagram Design', time: '18 Oct', status: 'Submitted' },
-    { id: 3, name: 'Riya Sharma', task: 'Binary Search Trees Lab', time: '18 Oct', status: 'Submitted' },
+    { label: 'Student enrollments', value: dashboardData.totalStudents, icon: Users, color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
+    { label: 'To grade', value: dashboardData.pendingGradingCount, icon: FileCheck2, color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
+    { label: 'Class average', value: dashboardData.averagePercentage == null ? '—' : `${dashboardData.averagePercentage}%`, icon: Award, color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
   ];
 
   const displayName = user?.name ? `Prof. ${user.name.split(' ')[0]}` : 'Professor';
@@ -70,13 +120,13 @@ export default function TeacherDashboard() {
       <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
         <div className="space-y-2 z-10 max-w-md">
           <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            ACADEMIC PORTAL &bull; FALL 2026
+            TEACHER PORTAL &bull; CLASS OVERVIEW
           </p>
           <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
             Welcome back, {displayName}! 👋
           </h1>
           <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            You have <span className="text-[#fde047] font-bold">{classrooms.length} active cohorts</span> and 6 pending assignments awaiting evaluation.
+            You have <span className="text-[#fde047] font-bold">{classrooms.length} active classrooms</span> and {dashboardData.pendingGradingCount} submissions awaiting grading.
           </p>
           <div className="pt-2 flex flex-wrap items-center gap-2.5">
             <button
@@ -263,7 +313,7 @@ export default function TeacherDashboard() {
           </div>
 
           <div className="space-y-2">
-            {needsGrading.map((item) => (
+            {dashboardData.pendingGrading.map((item) => (
               <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/60"
@@ -280,33 +330,40 @@ export default function TeacherDashboard() {
                 </button>
               </div>
             ))}
+            {!dashboardData.pendingGrading.length && !loading && (
+              <p className="py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+                No submissions are waiting to be graded.
+              </p>
+            )}
           </div>
         </div>
 
 <div className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-4 shadow-sm flex flex-col justify-between">
           <div>
             <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              Quiz Averages
+              Class Averages
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Across all enrolled cohorts</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Average graded assignment percentage</p>
           </div>
 
-          <div className="flex items-end justify-between h-36 px-2 pt-6">
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">62%</span>
-              <div className="w-10 rounded-t-lg bg-amber-200 dark:bg-amber-500/30" style={{ height: '70px' }} />
-              <span className="text-[11px] font-medium text-slate-500">Q1</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">70%</span>
-              <div className="w-10 rounded-t-lg bg-amber-300 dark:bg-amber-500/50" style={{ height: '85px' }} />
-              <span className="text-[11px] font-medium text-slate-500">Q2</span>
-            </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">74%</span>
-              <div className="w-10 rounded-t-lg bg-[#fde047]" style={{ height: '100px' }} />
-              <span className="text-[11px] font-medium text-slate-500">Q3</span>
-            </div>
+          <div className="space-y-3">
+            {dashboardData.classAverages.length ? dashboardData.classAverages.map((item) => (
+              <div key={item.id} className="space-y-1.5">
+                <div className="flex justify-between gap-3 text-xs">
+                  <span className="truncate font-semibold text-slate-700 dark:text-slate-300">{item.name}</span>
+                  <span className="font-bold text-slate-900 dark:text-white">
+                    {item.average == null ? '—' : `${item.average}%`}
+                  </span>
+                </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div className="h-full rounded-full bg-[#fde047]" style={{ width: `${item.average ?? 0}%` }} />
+                </div>
+              </div>
+            )) : (
+              <p className="py-8 text-center text-xs text-slate-500 dark:text-slate-400">
+                {loading ? 'Loading class results...' : 'No classrooms to report yet.'}
+              </p>
+            )}
           </div>
         </div>
       </div>

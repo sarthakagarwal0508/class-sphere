@@ -1,8 +1,8 @@
 import { fetchMaterialFile } from "./materialService";
+import { summarizePdf } from "./aiService";
 
 export const MIN_CHARS = 60;
 export const MAX_CHARS = 8000;
-const MAX_PDF_CHARS = 50000;
 
 const STOP_WORDS = new Set(
   (
@@ -79,37 +79,6 @@ function fallbackCard(sentence, freq) {
   return { question: `Fill in the blank: ${blanked}.`, answer };
 }
 
-async function extractPdfText(file) {
-  const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url
-  ).toString();
-
-  const document = await pdfjs.getDocument({
-    data: await file.arrayBuffer(),
-  }).promise;
-  const pages = [];
-
-  for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
-    const page = await document.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item) => ("str" in item ? item.str : ""))
-      .filter(Boolean)
-      .join(" ");
-    pages.push(pageText);
-  }
-
-  const extracted = pages.join("\n").replace(/\s+/g, " ").trim();
-  if (!extracted) {
-    throw new Error(
-      "This PDF has no selectable text. Scanned/image-only PDFs cannot be summarized yet."
-    );
-  }
-  return extracted.slice(0, MAX_PDF_CHARS);
-}
-
 function summarizeText(source) {
   if (source.trim().length < MIN_CHARS) {
     throw new Error(`Add at least ${MIN_CHARS} characters of notes to get a useful summary.`);
@@ -144,9 +113,22 @@ function summarizeText(source) {
 }
 
 export async function generateStudyAid({ text = "", material = null }) {
-  const source = material
-    ? await extractPdfText(await fetchMaterialFile(material.id))
-    : text;
+  if (material) {
+    const pdf = await fetchMaterialFile(material.id);
+    const filename = material.title?.toLowerCase().endsWith(".pdf")
+      ? material.title
+      : `${material.title || "study-material"}.pdf`;
+    const file = new File([pdf], filename, { type: "application/pdf" });
+    const response = await summarizePdf(file);
+    const summary = response?.summary ?? "";
+    const keyPoints = summary
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^\s*(?:[-*#]+\s*)/, "").trim())
+      .filter(Boolean);
+    return { keyPoints, flashcards: response?.flashcards ?? [] };
+  }
+
+  const source = text;
   if (!material && source.length > MAX_CHARS) {
     throw new Error(`Please keep your notes under ${MAX_CHARS} characters.`);
   }

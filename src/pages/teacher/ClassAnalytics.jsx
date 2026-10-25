@@ -1,115 +1,288 @@
-import React from 'react';
-import { BarChart2, CheckCircle2, Users, HelpCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from "react";
+import { BarChart2, CheckCircle2, Users, ShieldAlert, Download } from "lucide-react";
+import Card from "../../components/Card";
+import Topbar from "../../components/Topbar";
+import HeroBanner from "../../components/HeroBanner";
+import { fetchMyClassrooms } from "../../services/classroomService";
+import {
+  getTeacherClassroomAnalytics,
+  getTeacherClassroomStudents,
+  getTeacherRiskPredictions,
+} from "../../services/analyticsService";
+
+const classroomIdOf = (classroom) => classroom?._id ?? classroom?.id;
 
 export default function ClassAnalytics() {
-  const stats = [
-    { label: 'Class average', value: '74%', icon: BarChart2, color: 'text-emerald-600 bg-emerald-50' },
-    { label: 'Submission rate', value: '81%', icon: CheckCircle2, color: 'text-blue-600 bg-blue-50' },
-    { label: 'Active students', value: '58/62', icon: Users, color: 'text-amber-600 bg-amber-50' },
-    { label: 'Quizzes this month', value: '4', icon: HelpCircle, color: 'text-rose-600 bg-rose-50' },
-  ];
+  const [classrooms, setClassrooms] = useState([]);
+  const [classroomId, setClassroomId] = useState("");
+  const [analytics, setAnalytics] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [predictions, setPredictions] = useState([]);
+  const [status, setStatus] = useState("loading");
+  const [riskStatus, setRiskStatus] = useState("idle");
+  const [error, setError] = useState("");
+  const [riskError, setRiskError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then((items) => {
+        if (!active) return;
+        setClassrooms(items);
+        setClassroomId(String(classroomIdOf(items[0]) ?? ""));
+        if (!items.length) setStatus("ready");
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError.message || "Could not load classrooms.");
+          setStatus("error");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!classroomId) return undefined;
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        setStatus("loading");
+        setError("");
+        setPredictions([]);
+        setRiskStatus("idle");
+      })
+      .then(() => Promise.all([
+        getTeacherClassroomAnalytics(classroomId),
+        getTeacherClassroomStudents(classroomId),
+      ]))
+      .then(([classData, studentData]) => {
+        if (!active) return;
+        setAnalytics(classData);
+        setStudents(studentData?.students ?? []);
+        setStatus("ready");
+      })
+      .catch((loadError) => {
+        if (!active) return;
+        setError(loadError.message || "Could not load class analytics.");
+        setStatus("error");
+      });
+    return () => {
+      active = false;
+    };
+  }, [classroomId]);
+
+  const selectedClassroom = classrooms.find(
+    (classroom) => String(classroomIdOf(classroom)) === classroomId
+  );
+  const metrics = useMemo(() => [
+    {
+      label: "Class average",
+      value: analytics?.averageGradedPercentage == null
+        ? "—"
+        : `${analytics.averageGradedPercentage}%`,
+      icon: BarChart2,
+    },
+    {
+      label: "Submission rate",
+      value: analytics?.submissionRate == null ? "—" : `${analytics.submissionRate}%`,
+      icon: CheckCircle2,
+    },
+    {
+      label: "Students",
+      value: analytics?.totalStudents ?? 0,
+      icon: Users,
+    },
+    {
+      label: "Assignments",
+      value: analytics?.totalAssignments ?? 0,
+      icon: ShieldAlert,
+    },
+  ], [analytics]);
+
+  const loadPredictions = async () => {
+    setRiskStatus("loading");
+    setRiskError("");
+    try {
+      const response = await getTeacherRiskPredictions(classroomId);
+      setPredictions(Array.isArray(response)
+        ? response
+        : response?.predictions ?? response?.students ?? []);
+      setRiskStatus("ready");
+    } catch (loadError) {
+      setRiskError(loadError.message || "Could not load risk predictions.");
+      setRiskStatus("error");
+    }
+  };
+
+  const exportCsv = () => {
+    const rows = [
+      ["Student", "Email", "Assignments", "Submitted", "Graded", "Average percentage"],
+      ...students.map((row) => [
+        row.student?.name ?? "",
+        row.student?.email ?? "",
+        row.totalAssignments ?? 0,
+        row.submittedAssignments ?? 0,
+        row.gradedAssignments ?? 0,
+        row.averagePercentage ?? "",
+      ]),
+    ];
+    const csv = rows.map((row) => row.map((value) =>
+      `"${String(value).replaceAll('"', '""')}"`
+    ).join(",")).join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${selectedClassroom?.name ?? "class"}-analytics.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const predictionByStudent = new Map(
+    predictions.map((item) => [String(item.student?.id ?? item.student?._id), item])
+  );
 
   return (
     <div className="space-y-6">
+      <Topbar title="Class analytics" subtitle="Assignment performance and participation" />
+      <HeroBanner
+        variant="navy"
+        title="Understand your classes"
+        subtitle="Review assignment averages, submission progress, and students who may need support."
+        icons={[BarChart2, Users, CheckCircle2]}
+      />
 
-      <div>
-        <h1 className="text-xl font-bold text-slate-900">Class analytics</h1>
-        <p className="text-xs text-slate-500">Averages, quiz trends and submission completion</p>
-      </div>
+      <Card className="p-4">
+        <label htmlFor="analytics-classroom" className="mb-2 block text-xs font-bold">
+          Classroom
+        </label>
+        <select
+          id="analytics-classroom"
+          value={classroomId}
+          onChange={(event) => setClassroomId(event.target.value)}
+          disabled={!classrooms.length}
+          className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink sm:max-w-md"
+        >
+          {classrooms.length ? classrooms.map((classroom) => (
+            <option key={classroomIdOf(classroom)} value={classroomIdOf(classroom)}>
+              {classroom.name ?? classroom.title ?? "Classroom"}
+            </option>
+          )) : <option value="">No classrooms available</option>}
+        </select>
+      </Card>
 
-<div className="bg-[#181829] text-white rounded-3xl p-6 md:p-8 flex items-center justify-between shadow-sm">
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black">Understand your classes</h2>
-          <p className="text-xs text-slate-300">Trends, weak topics and students who may need support.</p>
-          <div className="pt-2">
-            <button className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-900 text-xs font-bold">
-              Download report
+      {error && <Card role="alert" className="p-4 text-sm text-tone-red-fg">{error}</Card>}
+      {status === "loading" && <Card className="p-5 text-sm text-muted">Loading class analytics...</Card>}
+      {status === "ready" && classroomId && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-muted">{selectedClassroom?.name ?? "Selected classroom"}</p>
+            <button
+              type="button"
+              onClick={exportCsv}
+              disabled={!students.length}
+              className="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2 text-sm font-bold disabled:opacity-50"
+            >
+              <Download size={16} /> Download student report
             </button>
           </div>
-        </div>
 
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-            <BarChart2 className="w-5 h-5 text-white" />
-          </div>
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-white" />
-          </div>
-        </div>
-      </div>
-
-<div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map((s) => (
-          <div key={s.label} className="bg-white border border-[#eceee8] rounded-2xl p-4 flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${s.color}`}>
-              <s.icon className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-xs text-slate-500">{s.label}</p>
-              <p className="text-xl font-extrabold text-slate-900">{s.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-        <div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">Quiz average trend</h3>
-          <div className="flex items-end justify-between h-40 pt-4 px-2">
-            {[
-              { label: 'Q1', val: '62%', h: '62px' },
-              { label: 'Q2', val: '70%', h: '78px' },
-              { label: 'Q3', val: '66%', h: '72px' },
-              { label: 'Q4', val: '74%', h: '88px' },
-              { label: 'Q5', val: '78%', h: '98px' },
-            ].map((bar) => (
-              <div key={bar.label} className="flex flex-col items-center gap-1.5">
-                <span className="text-[11px] font-bold text-slate-600">{bar.val}</span>
-                <div className="w-10 bg-[#fde047] rounded-t-lg" style={{ height: bar.h }} />
-                <span className="text-xs text-slate-500 font-semibold">{bar.label}</span>
-              </div>
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            {metrics.map((metric) => (
+              <Card key={metric.label} className="flex items-center gap-3 p-4">
+                <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand-soft"><metric.icon size={17} /></div>
+                <div><p className="text-xs text-muted">{metric.label}</p><p className="text-xl font-extrabold">{metric.value}</p></div>
+              </Card>
             ))}
           </div>
-        </div>
 
-<div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-4">
-          <h3 className="text-sm font-bold text-slate-900">Weak topics in class</h3>
-          <div className="space-y-3">
-            {[
-              { topic: 'Normalization', pct: 48 },
-              { topic: 'Stack and Queue', pct: 61 },
-              { topic: 'SQL Joins', pct: 70 },
-              { topic: 'Linked List', pct: 82 },
-            ].map((t) => (
-              <div key={t.topic} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="font-medium text-slate-800">{t.topic}</span>
-                  <span className="text-slate-400 font-bold">{t.pct}%</span>
-                </div>
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#181829] h-full rounded-full" style={{ width: `${t.pct}%` }} />
-                </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card className="p-5">
+              <h2 className="text-base font-extrabold">Assignment activity</h2>
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex justify-between gap-3"><span className="text-muted">Submitted work</span><span className="font-bold">{analytics?.totalSubmissions ?? 0}/{analytics?.totalPossibleSubmissions ?? 0}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-muted">Graded submissions</span><span className="font-bold">{analytics?.totalGradedSubmissions ?? 0}</span></div>
+                <div className="flex justify-between gap-3"><span className="text-muted">Not yet submitted</span><span className="font-bold">{analytics?.pendingSubmissions ?? 0}</span></div>
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+            </Card>
 
-<div className="bg-white border border-[#eceee8] rounded-2xl p-5 space-y-3">
-        <h3 className="text-sm font-bold text-slate-900">Students who may need support</h3>
-        <p className="text-xs text-slate-500">Estimated by the ML model from past assessments. Use it to offer revision help.</p>
-
-        <div className="p-3 bg-[#fbfbf9] rounded-xl flex items-center justify-between border border-slate-100">
-          <div>
-            <h4 className="text-xs font-bold text-slate-900">Vikram Rao</h4>
-            <p className="text-[11px] text-slate-400">Low quiz scores and 2 pending assignments</p>
+            <Card className="p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-extrabold">Student risk predictions</h2>
+                  <p className="mt-1 text-xs text-muted">Requires configured student profiles and a reachable ML service.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadPredictions}
+                  disabled={riskStatus === "loading"}
+                  className="rounded-xl bg-brand px-3 py-2 text-xs font-bold text-on-brand disabled:opacity-50"
+                >
+                  {riskStatus === "loading" ? "Loading..." : "Load predictions"}
+                </button>
+              </div>
+              {riskError && <p role="alert" className="mt-3 text-xs text-tone-red-fg">{riskError}</p>}
+              {riskStatus === "ready" && predictions.length === 0 && (
+                <p className="mt-3 text-sm text-muted">No prediction records were returned.</p>
+              )}
+              {riskStatus === "ready" && predictions.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {predictions.map((item) => (
+                    <div key={item.student?.id ?? item.student?._id} className="flex items-center justify-between gap-3 rounded-xl bg-soft p-3">
+                      <div>
+                        <p className="text-sm font-bold">{item.student?.name ?? "Student"}</p>
+                        <p className="text-xs text-muted">
+                          {item.status === "profile_required"
+                            ? "Student profile needs configuration"
+                            : `${item.prediction?.risk_probability == null ? "No probability" : `${Math.round(item.prediction.risk_probability * 100)}% risk probability`}`}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-card px-3 py-1 text-xs font-bold">
+                        {item.status === "profile_required"
+                          ? "Profile needed"
+                          : item.prediction?.risk_level ?? "Unavailable"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
           </div>
-          <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-600">
-            High risk
-          </span>
-        </div>
-      </div>
+
+          <Card className="overflow-hidden">
+            <div className="border-b border-line p-4">
+              <h2 className="font-extrabold">Students</h2>
+            </div>
+            {!students.length ? (
+              <p className="p-6 text-center text-sm text-muted">No students are enrolled in this classroom yet.</p>
+            ) : (
+              <div className="divide-y divide-line">
+                {students.map((row) => {
+                  const prediction = predictionByStudent.get(String(row.student?.id ?? row.student?._id));
+                  return (
+                    <div key={row.student?.id ?? row.student?._id} className="flex flex-wrap items-center justify-between gap-3 p-4">
+                      <div>
+                        <p className="font-bold">{row.student?.name ?? "Student"}</p>
+                        <p className="text-xs text-muted">{row.student?.email ?? ""}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-xs text-muted">
+                        <span>{row.submittedAssignments ?? 0}/{row.totalAssignments ?? 0} submitted</span>
+                        <span>{row.gradedAssignments ?? 0} graded</span>
+                        <span>{row.averagePercentage == null ? "No grades" : `${row.averagePercentage}% average`}</span>
+                        {prediction && <span className="font-bold text-ink">{prediction.prediction?.risk_level ?? prediction.status}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </Card>
+        </>
+      )}
+      {status === "ready" && !classroomId && (
+        <Card className="p-6 text-sm text-muted">Create a classroom to view analytics.</Card>
+      )}
     </div>
   );
 }

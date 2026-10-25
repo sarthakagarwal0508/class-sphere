@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 // Public & Auth Pages
 import LandingPage from "./LandingPage";
@@ -21,6 +22,7 @@ import StudentAnnouncements from "./pages/student/Announcements";
 import StudentDoubtForum from "./pages/student/DoubtForum";
 import MyClasses from "./pages/student/MyClasses";
 import ClassDetails from "./pages/student/ClassDetails";
+import StudentHelpCenter from "./pages/student/HelpCenter";
 
 // Teacher Portal
 import TeacherLayout from "./layouts/TeacherLayout";
@@ -37,6 +39,23 @@ import TeacherAnnouncements from "./pages/teacher/Announcements";
 import TeacherDoubtForum from "./pages/teacher/DoubtForum";
 import HelpCenter from "./pages/teacher/HelpCenter";
 
+function RequireAuth() {
+  const { user, initializing } = useAuth();
+  const location = useLocation();
+
+  if (initializing) {
+    return (
+      <div className="grid min-h-screen place-items-center text-sm text-muted">
+        Checking your session...
+      </div>
+    );
+  }
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+  return <Outlet />;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -48,47 +67,45 @@ export default function App() {
         <Route path="/verify-otp" element={<VerifyOtp />} />
 
      
-        <Route path="/student" element={<StudentLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="materials" element={<StudyMaterial />} />
-          <Route path="assignments" element={<Assignments />} />
-          <Route path="quizzes" element={<Quizzes />} />
-          <Route path="quizzes/:quizId" element={<AttemptQuiz />} />
-          <Route path="notes-ai" element={<NotesAI />} />
-          <Route path="flashcards" element={<Flashcards />} />
-          <Route path="grades" element={<Grades />} />
-          <Route path="progress" element={<Progress />} />
-          <Route path="announcements" element={<StudentAnnouncements />} />
-          <Route path="doubts" element={<StudentDoubtForum />} />
-          <Route path="classes" element={<MyClasses />} />
-          <Route path="classes/:classId" element={<ClassDetails />} />
-        </Route>
+        <Route element={<RequireAuth />}>
+          <Route path="/student" element={<StudentLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<StudentDashboard />} />
+            <Route path="materials" element={<StudyMaterial />} />
+            <Route path="assignments" element={<Assignments />} />
+            <Route path="quizzes" element={<Quizzes />} />
+            <Route path="quizzes/:quizId" element={<AttemptQuiz />} />
+            <Route path="notes-ai" element={<NotesAI />} />
+            <Route path="flashcards" element={<Flashcards />} />
+            <Route path="grades" element={<Grades />} />
+            <Route path="progress" element={<Progress />} />
+            <Route path="announcements" element={<StudentAnnouncements />} />
+            <Route path="doubts" element={<StudentDoubtForum />} />
+            <Route path="classes" element={<MyClasses />} />
+            <Route path="classes/:classId" element={<ClassDetails />} />
+            <Route path="help" element={<StudentHelpCenter />} />
+            <Route path="help-center" element={<StudentHelpCenter />} />
+          </Route>
 
-       
-        <Route path="/teacher" element={<TeacherLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<TeacherDashboard />} />
-          
-          <Route path="create-class" element={<CreateClassroom />} />
-          <Route path="create-classroom" element={<CreateClassroom />} />
-          
-          <Route path="members" element={<ManageMembers />} />
-          <Route path="upload-material" element={<UploadMaterial />} />
-          <Route path="create-assignment" element={<CreateAssignment />} />
-          <Route path="submissions" element={<StudentSubmissions />} />
-          <Route path="create-quiz" element={<CreateQuiz />} />
-          <Route path="quiz-results" element={<QuizResults />} />
-          <Route path="analytics" element={<ClassAnalytics />} />
-          <Route path="announcements" element={<TeacherAnnouncements />} />
-          
-          <Route path="doubts" element={<TeacherDoubtForum />} />
-          <Route path="doubt-forum" element={<TeacherDoubtForum />} />
-          <Route path="doubtforum" element={<TeacherDoubtForum />} />
-
-          {/* 🆘 Help Center (Supports both /help and /help-center) */}
-          <Route path="help" element={<HelpCenter />} />
-          <Route path="help-center" element={<HelpCenter />} />
+          <Route path="/teacher" element={<TeacherLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<TeacherDashboard />} />
+            <Route path="create-class" element={<CreateClassroom />} />
+            <Route path="create-classroom" element={<CreateClassroom />} />
+            <Route path="members" element={<ManageMembers />} />
+            <Route path="upload-material" element={<UploadMaterial />} />
+            <Route path="create-assignment" element={<CreateAssignment />} />
+            <Route path="submissions" element={<StudentSubmissions />} />
+            <Route path="create-quiz" element={<CreateQuiz />} />
+            <Route path="quiz-results" element={<QuizResults />} />
+            <Route path="analytics" element={<ClassAnalytics />} />
+            <Route path="announcements" element={<TeacherAnnouncements />} />
+            <Route path="doubts" element={<TeacherDoubtForum />} />
+            <Route path="doubt-forum" element={<TeacherDoubtForum />} />
+            <Route path="doubtforum" element={<TeacherDoubtForum />} />
+            <Route path="help" element={<HelpCenter />} />
+            <Route path="help-center" element={<HelpCenter />} />
+          </Route>
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

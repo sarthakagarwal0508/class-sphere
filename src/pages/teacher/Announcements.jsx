@@ -1,22 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Bell, Send, Trash2, AlertCircle, CheckCircle2, 
-  Megaphone, Calendar, Users, FolderOpen, RefreshCw, Plus
+  Megaphone, Calendar, FolderOpen, RefreshCw, Plus
 } from 'lucide-react';
-import api from '../../services/api';
-
-// Helper to safely unpack any MongoDB classroom response format
-function extractClassrooms(res) {
-  const body = res?.data;
-  if (!body) return [];
-  if (Array.isArray(body)) return body;
-  if (Array.isArray(body.data)) return body.data;
-  if (Array.isArray(body.classrooms)) return body.classrooms;
-  if (Array.isArray(body.data?.classrooms)) return body.data.classrooms;
-  if (Array.isArray(body.myClassrooms)) return body.myClassrooms;
-  return [];
-}
+import { fetchMyClassrooms } from '../../services/classroomService';
+import {
+  createAnnouncement,
+  deleteAnnouncement,
+  getClassroomAnnouncements,
+} from '../../services/announcementService';
 
 export default function Announcements() {
   const navigate = useNavigate();
@@ -34,67 +27,36 @@ export default function Announcements() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 1. Fetch Teacher's Classrooms (Handles both /classrooms and /api/classrooms)
   const loadClassrooms = async () => {
     setClassroomsLoading(true);
     setErrorMsg('');
 
     try {
-      let res;
-      try {
-        // First try relative path (if baseURL includes /api)
-        res = await api.get('/classrooms');
-      } catch (err) {
-        if (err.response?.status === 404) {
-          // Fallback if baseURL does NOT include /api
-          res = await api.get('/api/classrooms');
-        } else {
-          throw err;
-        }
-      }
-
-      const list = extractClassrooms(res);
+      const list = await fetchMyClassrooms();
       setClassrooms(list);
 
       if (list.length > 0) {
         setSelectedClassId((prev) => prev || list[0]._id || list[0].id);
       }
     } catch (err) {
-      console.error('Failed to load classrooms:', err);
-      setErrorMsg(
-        err.response?.data?.message || 'Could not load your classrooms. Please verify login.'
-      );
+      setErrorMsg(err.message || 'Could not load your classrooms.');
     } finally {
       setClassroomsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadClassrooms();
+    Promise.resolve().then(loadClassrooms);
   }, []);
 
-  // 2. Fetch Announcements for the selected classroom
   const loadAnnouncements = async (classroomId) => {
     if (!classroomId) return;
     setFeedLoading(true);
 
     try {
-      let res;
-      try {
-        res = await api.get(`/classrooms/${classroomId}/announcements`);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          res = await api.get(`/api/classrooms/${classroomId}/announcements`);
-        } else {
-          throw err;
-        }
-      }
-
-      const payload = res.data?.data ?? res.data;
-      const list = Array.isArray(payload) ? payload : payload.announcements ?? [];
-      setAnnouncements(list);
+      setAnnouncements(await getClassroomAnnouncements(classroomId));
     } catch (err) {
-      console.error('Failed to load announcements:', err);
+      setErrorMsg(err.message || 'Could not load announcements.');
       setAnnouncements([]);
     } finally {
       setFeedLoading(false);
@@ -103,11 +65,10 @@ export default function Announcements() {
 
   useEffect(() => {
     if (selectedClassId) {
-      loadAnnouncements(selectedClassId);
+      Promise.resolve().then(() => loadAnnouncements(selectedClassId));
     }
   }, [selectedClassId]);
 
-  // 3. Handle Posting Announcement
   const handlePost = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -124,23 +85,15 @@ export default function Announcements() {
 
     setLoading(true);
     try {
-      let res;
-      const body = { title: title.trim(), content: content.trim() };
-
-      try {
-        res = await api.post(`/classrooms/${selectedClassId}/announcements`, body);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          res = await api.post(`/api/classrooms/${selectedClassId}/announcements`, body);
-        } else {
-          throw err;
-        }
-      }
+      await createAnnouncement(selectedClassId, {
+        title: title.trim(),
+        content: content.trim(),
+      });
 
       setSuccessMsg('Announcement broadcasted to all enrolled students!');
       setTitle('');
       setContent('');
-      loadAnnouncements(selectedClassId);
+      await loadAnnouncements(selectedClassId);
     } catch (err) {
       setErrorMsg(
         err.response?.data?.message || err.message || 'Failed to post announcement.'
@@ -150,24 +103,15 @@ export default function Announcements() {
     }
   };
 
-  // 4. Handle Deleting Announcement
   const handleDelete = async (announcementId) => {
     if (!window.confirm('Delete this announcement? Students will no longer see it.')) return;
 
     try {
-      try {
-        await api.delete(`/announcements/${announcementId}`);
-      } catch (err) {
-        if (err.response?.status === 404) {
-          await api.delete(`/api/announcements/${announcementId}`);
-        } else {
-          throw err;
-        }
-      }
+      await deleteAnnouncement(announcementId);
       setAnnouncements((prev) => prev.filter((a) => (a._id || a.id) !== announcementId));
       setSuccessMsg('Announcement deleted.');
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to delete announcement.');
+      setErrorMsg(err.message || 'Failed to delete announcement.');
     }
   };
 

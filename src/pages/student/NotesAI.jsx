@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Sparkles, FileText, Layers } from "lucide-react";
 
 import Topbar from "../../components/Topbar";
@@ -14,7 +14,7 @@ import { generateStudyAid, MIN_CHARS, MAX_CHARS } from "../../services/notesAiSe
 
 const steps = [
   "Choose a PDF shared by your teacher, or paste your own notes.",
-  "The app extracts selectable text from the PDF and picks key sentences.",
+  "Shared PDFs are summarized by the configured ClassSphere AI service; pasted text uses the built-in summary helper.",
   "Read the key points and use the flashcards to test yourself.",
 ];
 
@@ -29,6 +29,7 @@ function listFrom(response, key) {
 
 export default function NotesAI() {
   const location = useLocation();
+  const navigate = useNavigate();
   const incomingMaterial = location.state?.material ?? null;
 
   const [text, setText] = useState("");
@@ -42,7 +43,6 @@ export default function NotesAI() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
   const [showHelp, setShowHelp] = useState(false);
-  const [reviseNote, setReviseNote] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -123,7 +123,6 @@ export default function NotesAI() {
     }
 
     setError("");
-    setReviseNote("");
     setStatus("loading");
     setRequest((prev) => ({ key: (prev?.key ?? 0) + 1, text, material }));
   };
@@ -134,7 +133,6 @@ export default function NotesAI() {
     setRequest(null);
     setResult(null);
     setError("");
-    setReviseNote("");
     setStatus("idle");
   };
 
@@ -236,9 +234,10 @@ export default function NotesAI() {
           <FlashcardsCard
             cards={result?.flashcards ?? []}
             status={status}
-            onRevise={() => setReviseNote("The Flashcards page opens here in the next step.")}
+            onRevise={() => navigate("/student/flashcards", {
+              state: { cards: result?.flashcards ?? [] },
+            })}
           />
-          {reviseNote && <p className="text-xs text-muted">{reviseNote}</p>}
         </div>
       </div>
     </div>

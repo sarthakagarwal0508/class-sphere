@@ -10,8 +10,8 @@ import { tokenStorage, AUTH_EXPIRED_EVENT } from "../services/tokenStorage";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-
   const [user, setUser] = useState(() => {
+    if (!tokenStorage.get()?.accessToken) return null;
     try {
       const saved = localStorage.getItem("user");
       return saved ? JSON.parse(saved) : null;
@@ -20,11 +20,15 @@ export function AuthProvider({ children }) {
     }
   });
 
-  const [initializing, setInitializing] = useState(() => Boolean(tokenStorage.get()));
+  const [initializing, setInitializing] = useState(
+    () => Boolean(tokenStorage.get()?.accessToken)
+  );
 
   useEffect(() => {
-    if (!tokenStorage.get()) {
-      setInitializing(false);
+    if (!tokenStorage.get()?.accessToken) {
+      tokenStorage.clear();
+      localStorage.removeItem("user");
+      localStorage.removeItem("role");
       return undefined;
     }
 

@@ -13,58 +13,6 @@ import {
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
 import Card from "../../components/Card";
-import { courses } from "../../data/mockData";
-
-const sampleCards = [
-  {
-    id: 1,
-    course: "Data Structures",
-    question: "What is a linked list?",
-    answer:
-      "A linear data structure where each node stores data and a reference to the next node.",
-  },
-  {
-    id: 2,
-    course: "Data Structures",
-    question:
-      "What is the time complexity of inserting at the head of a linked list?",
-    answer: "O(1), because only the head pointer needs to be updated.",
-  },
-  {
-    id: 3,
-    course: "Data Structures",
-    question: "How does a stack work?",
-    answer: "It follows LIFO: Last In, First Out.",
-  },
-  {
-    id: 4,
-    course: "Database Systems",
-    question: "What is database normalization?",
-    answer:
-      "Organizing tables to reduce data redundancy and improve data integrity.",
-  },
-  {
-    id: 5,
-    course: "Database Systems",
-    question: "What is a primary key?",
-    answer:
-      "A column or set of columns that uniquely identifies each row in a table.",
-  },
-  {
-    id: 6,
-    course: "Web Development",
-    question: "What does CSS Flexbox help with?",
-    answer:
-      "It lays out and aligns items along a row or column in a container.",
-  },
-  {
-    id: 7,
-    course: "Web Development",
-    question: "What is the DOM?",
-    answer:
-      "The Document Object Model represents a webpage as a tree of objects that JavaScript can access.",
-  },
-];
 
 export default function Flashcards() {
   const location = useLocation();
@@ -78,7 +26,7 @@ export default function Flashcards() {
           id: card.id ?? `generated-${index}`,
           course: card.course ?? "Notes AI",
         }))
-      : sampleCards
+      : []
   );
 
   const [course, setCourse] = useState("All");
@@ -316,8 +264,7 @@ export default function Flashcards() {
       </div>
 
       <p className="text-xs text-muted">
-        Sample cards are for the frontend demo. Generated Notes AI
-        cards can be opened from Notes AI.
+        Flashcards are generated from a PDF in Notes AI. They are not saved between sessions by the current API.
       </p>
     </div>
   );

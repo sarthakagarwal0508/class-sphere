@@ -1,340 +1,311 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, Clock, FileCheck2, Save, Users } from "lucide-react";
+import Card from "../../components/Card";
+import Topbar from "../../components/Topbar";
+import HeroBanner from "../../components/HeroBanner";
+import { fetchMyClassrooms } from "../../services/classroomService";
 import {
-  FileCheck2, Users, Award, Clock, Download,
-  CheckCircle2, AlertCircle, Save, Sparkles, Filter, ChevronRight
-} from 'lucide-react';
+  getAssignmentSubmissions,
+  getClassroomAssignments,
+  gradeAssignmentSubmission,
+} from "../../services/assignmentService";
 
-export default function StudentSubmissions() {
-  const [filter, setFilter] = useState('pending');
-  const [selectedId, setSelectedId] = useState(1);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+const classroomIdOf = (classroom) => classroom?._id ?? classroom?.id;
+const submissionIdOf = (submission) => submission?._id ?? submission?.id;
 
-  const [submissions, setSubmissions] = useState([
-    {
-      id: 1,
-      student: 'Aarav Mehta',
-      email: 'aarav@college.edu',
-      class: 'Data Structures (CS-A)',
-      assignment: 'Lab 4: Binary Search Trees',
-      submittedAt: 'Today at 10:45 AM',
-      status: 'pending',
-      marks: 18,
-      maxMarks: 20,
-      feedback: 'Excellent recursive insertion logic. Consider balancing edge cases for duplicate values.',
-      codeSnippet: `// Binary Search Tree - Insert Implementation
-class Node {
-  constructor(value) {
-    this.value = value;
-    this.left = null;
-    this.right = null;
-  }
+function displayDate(value) {
+  if (!value) return "Submission date unavailable";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "Submission date unavailable" : date.toLocaleString();
 }
 
-function insertNode(root, value) {
-  if (!root) return new Node(value);
-  if (value < root.value) {
-    root.left = insertNode(root.left, value);
-  } else if (value > root.value) {
-    root.right = insertNode(root.right, value);
-  }
-  return root;
-}`,
-      fileName: 'bst_implementation.cpp',
-      fileSize: '14.2 KB',
-    },
-    {
-      id: 2,
-      student: 'Kabir Singh',
-      email: 'kabir@college.edu',
-      class: 'Database Systems (CS-B)',
-      assignment: 'Lab 2: E-R Diagram & Normalization',
-      submittedAt: 'Yesterday at 4:15 PM',
-      status: 'pending',
-      marks: 16,
-      maxMarks: 20,
-      feedback: 'Good 3NF normalization. Foreign key constraints in the orders table need review.',
-      codeSnippet: `-- Schema definition for E-Commerce Orders
-CREATE TABLE Customers (
-    customer_id SERIAL PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
-    email VARCHAR(150) UNIQUE NOT NULL
-);
+export default function StudentSubmissions() {
+  const [classrooms, setClassrooms] = useState([]);
+  const [classroomId, setClassroomId] = useState("");
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [filter, setFilter] = useState("pending");
+  const [drafts, setDrafts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-CREATE TABLE Orders (
-    order_id SERIAL PRIMARY KEY,
-    customer_id INT REFERENCES Customers(customer_id),
-    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    total_amount NUMERIC(10, 2)
-);`,
-      fileName: 'schema_normalization.sql',
-      fileSize: '8.6 KB',
-    },
-    {
-      id: 3,
-      student: 'Riya Sharma',
-      email: 'riya@college.edu',
-      class: 'Data Structures (CS-A)',
-      assignment: 'Lab 3: Linked List Reversal',
-      submittedAt: '18 Oct at 2:30 PM',
-      status: 'graded',
-      marks: 19,
-      maxMarks: 20,
-      feedback: 'Flawless 3-pointer iterative reversal. Clean time complexity O(n) and O(1) space.',
-      codeSnippet: `// Iterative Linked List In-Place Reversal
-ListNode* reverseList(ListNode* head) {
-    ListNode* prev = nullptr;
-    ListNode* curr = head;
-    while (curr != nullptr) {
-        ListNode* nextTemp = curr->next;
-        curr->next = prev;
-        prev = curr;
-        curr = nextTemp;
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then((items) => {
+        if (!active) return;
+        setClassrooms(items);
+        setClassroomId((current) => current || String(classroomIdOf(items[0]) ?? ""));
+        if (!items.length) setLoading(false);
+      })
+      .catch((loadError) => {
+        if (active) {
+          setError(loadError.message || "Could not load your classrooms.");
+          setLoading(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!classroomId) {
+      return undefined;
     }
-    return prev;
-}`,
-      fileName: 'reverse_list.cpp',
-      fileSize: '11.4 KB',
-    },
-  ]);
 
-  const selectedSub = submissions.find((s) => s.id === selectedId) || submissions[0];
+    let active = true;
+    Promise.resolve()
+      .then(() => {
+        setLoading(true);
+        setError("");
+      })
+      .then(() => getClassroomAssignments(classroomId))
+      .then((assignments) => Promise.all(assignments.map(async (assignment) => {
+        const assignmentId = assignment._id ?? assignment.id;
+        const items = await getAssignmentSubmissions(assignmentId);
+        return items.map((submission) => ({
+          ...submission,
+          id: submissionIdOf(submission),
+          assignmentId,
+          assignment: assignment.title ?? "Assignment",
+          maxMarks: assignment.maxMarks ?? 0,
+          studentName: submission.student?.name ?? "Student",
+          studentEmail: submission.student?.email ?? "",
+          status: submission.status === "graded" ? "graded" : "pending",
+        }));
+      })))
+      .then((groups) => {
+        if (!active) return;
+        const items = groups.flat();
+        setSubmissions(items);
+        setSelectedId((current) =>
+          items.some((item) => String(item.id) === current)
+            ? current
+            : String(items[0]?.id ?? "")
+        );
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || "Could not load student submissions.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
 
-  const handleUpdateMarks = (val) => {
-    const num = Math.min(Math.max(Number(val) || 0, 0), selectedSub.maxMarks);
-    setSubmissions((prev) =>
-      prev.map((s) => (s.id === selectedSub.id ? { ...s, marks: num } : s))
-    );
+    return () => {
+      active = false;
+    };
+  }, [classroomId]);
+
+  const filtered = useMemo(
+    () => submissions.filter((item) => item.status === filter),
+    [submissions, filter]
+  );
+  const selected = submissions.find((item) => String(item.id) === selectedId);
+
+  const selectedDraft = drafts[selectedId] ?? {
+    marks: selected?.marksObtained == null ? "" : String(selected.marksObtained),
+    feedback: selected?.feedback ?? "",
   };
 
-  const handleUpdateFeedback = (text) => {
-    setSubmissions((prev) =>
-      prev.map((s) => (s.id === selectedSub.id ? { ...s, feedback: text } : s))
-    );
+  const handleSaveGrade = async (event) => {
+    event.preventDefault();
+    if (!selected) return;
+    const grade = Number(selectedDraft.marks);
+    if (!Number.isFinite(grade) || grade < 0 || grade > selected.maxMarks) {
+      setError(`Enter a score between 0 and ${selected.maxMarks}.`);
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    setSaveSuccess(false);
+    try {
+      const updated = await gradeAssignmentSubmission(
+        selected.assignmentId,
+        selected.id,
+        { marksObtained: grade, feedback: selectedDraft.feedback.trim() }
+      );
+      setSubmissions((current) => current.map((item) =>
+        String(item.id) === String(selected.id)
+          ? { ...item, ...updated, status: "graded", marksObtained: grade, feedback: selectedDraft.feedback.trim() }
+          : item
+      ));
+      setSaveSuccess(true);
+    } catch (saveError) {
+      setError(saveError.message || "Could not save this grade.");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleSaveGrade = (e) => {
-    e.preventDefault();
-    setSubmissions((prev) =>
-      prev.map((s) => (s.id === selectedSub.id ? { ...s, status: 'graded' } : s))
-    );
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 2500);
-  };
-
-  const filteredList = submissions.filter((s) => s.status === filter);
+  const currentClassroom = classrooms.find(
+    (item) => String(classroomIdOf(item)) === classroomId
+  );
 
   return (
-    <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
+    <div className="mx-auto max-w-6xl space-y-6 dashboard-stagger">
+      <Topbar title="Student Submissions" subtitle="Review and grade work submitted to your classes" />
+      <HeroBanner
+        variant="navy"
+        eyebrow="EVALUATION WORKSPACE"
+        title="Grade with feedback"
+        subtitle="Review student answers, assign marks, and provide feedback."
+        icons={[FileCheck2, Users, Clock]}
+      />
 
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
-          Student Submissions
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Evaluate submitted code, assign scores, and leave constructive feedback.
-        </p>
-      </div>
+      <Card className="p-4">
+        <label htmlFor="submission-classroom" className="mb-2 block text-xs font-bold">
+          Classroom
+        </label>
+        <select
+          id="submission-classroom"
+          value={classroomId}
+          onChange={(event) => setClassroomId(event.target.value)}
+          disabled={!classrooms.length}
+          className="w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm text-ink sm:max-w-md"
+        >
+          {classrooms.length ? classrooms.map((classroom) => (
+            <option key={classroomIdOf(classroom)} value={classroomIdOf(classroom)}>
+              {classroom.name ?? classroom.title ?? "Classroom"}
+            </option>
+          )) : <option value="">No classrooms available</option>}
+        </select>
+      </Card>
 
-<div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
-        <div className="space-y-2 z-10 max-w-md">
-          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            EVALUATION WORKSPACE
-          </p>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Grade with feedback
-          </h2>
-          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            Review student work, assign marks, and leave comments that guide academic growth.
-          </p>
-          <div className="pt-2 flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 text-[#fde047] text-xs font-bold border border-white/10">
-              <Clock className="w-3.5 h-3.5" /> 2 pending evaluation
-            </span>
-          </div>
-        </div>
+      {error && <Card role="alert" className="p-4 text-sm text-tone-red-fg">{error}</Card>}
 
-        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <FileCheck2 className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
-              <Users className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Award className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <button
-              onClick={() => setFilter('pending')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                filter === 'pending'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              To Grade ({submissions.filter((s) => s.status === 'pending').length})
-            </button>
-            <button
-              onClick={() => setFilter('graded')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                filter === 'graded'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Graded ({submissions.filter((s) => s.status === 'graded').length})
-            </button>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Card className="space-y-4 p-4">
+          <div className="flex gap-2 rounded-xl bg-soft p-1">
+            {["pending", "graded"].map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setFilter(value)}
+                className={`flex-1 rounded-lg py-2 text-xs font-bold capitalize ${
+                  filter === value ? "bg-surface text-ink shadow-sm" : "text-muted"
+                }`}
+              >
+                {value === "pending" ? "To Grade" : "Graded"} ({submissions.filter((item) => item.status === value).length})
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-2 max-h-[520px] overflow-y-auto pr-1">
-            {filteredList.length === 0 ? (
-              <p className="text-xs text-slate-400 py-8 text-center">No submissions in this queue.</p>
-            ) : (
-              filteredList.map((sub) => (
-                <div
-                  key={sub.id}
-                  onClick={() => setSelectedId(sub.id)}
-                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition ${
-                    selectedId === sub.id
-                      ? 'border-[#fde047] bg-amber-50/50 dark:bg-amber-950/20 shadow-sm'
-                      : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
+          {loading ? (
+            <p className="py-8 text-center text-sm text-muted">Loading submissions...</p>
+          ) : filtered.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted">No {filter} submissions in this class.</p>
+          ) : (
+            <div className="max-h-[560px] space-y-2 overflow-y-auto">
+              {filtered.map((submission) => (
+                <button
+                  key={submission.id}
+                  type="button"
+                  onClick={() => setSelectedId(String(submission.id))}
+                  className={`w-full rounded-xl border p-3 text-left transition ${
+                    String(submission.id) === selectedId ? "border-brand bg-brand-soft" : "border-line bg-card hover:bg-soft"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">
-                        {sub.student}
-                      </p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-1">
-                        {sub.assignment}
-                      </p>
+                      <p className="text-sm font-bold">{submission.studentName}</p>
+                      <p className="mt-1 text-xs text-muted">{submission.assignment}</p>
                     </div>
-                    {sub.status === 'graded' && (
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold shrink-0">
-                        {sub.marks}/{sub.maxMarks}
+                    {submission.status === "graded" && (
+                      <span className="shrink-0 text-xs font-bold">
+                        {submission.marksObtained}/{submission.maxMarks}
                       </span>
                     )}
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-2">{sub.submittedAt}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
+                  <p className="mt-2 text-[11px] text-muted">{displayDate(submission.submittedAt)}</p>
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
 
-<div className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-6">
-          {selectedSub ? (
+        <Card className="space-y-5 p-5 lg:col-span-2">
+          {!selected ? (
+            <p className="py-16 text-center text-sm text-muted">Select a submission to review.</p>
+          ) : (
             <>
-
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                    {selectedSub.assignment}
-                  </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    Student: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedSub.student}</span> &bull; {selectedSub.class}
-                  </p>
-                </div>
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                  <Clock className="w-3.5 h-3.5" /> {selectedSub.submittedAt}
-                </div>
+              <div className="border-b border-line pb-4">
+                <h2 className="text-lg font-extrabold">{selected.assignment}</h2>
+                <p className="mt-1 text-sm text-muted">
+                  {selected.studentName}{selected.studentEmail ? ` · ${selected.studentEmail}` : ""}
+                  {currentClassroom ? ` · ${currentClassroom.name ?? currentClassroom.title}` : ""}
+                </p>
+                <p className="mt-1 text-xs text-muted">Submitted {displayDate(selected.submittedAt)}</p>
               </div>
 
-<div className="space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    Code Submission Preview ({selectedSub.fileName})
-                  </span>
-                  <button
-                    onClick={() => alert(`Downloading ${selectedSub.fileName}...`)}
-                    className="text-amber-500 hover:text-amber-600 font-bold flex items-center gap-1 text-[11px]"
+              <section className="space-y-3">
+                <h3 className="text-sm font-bold">Student work</h3>
+                {selected.answerText ? (
+                  <pre className="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-soft p-4 text-sm font-sans">
+                    {selected.answerText}
+                  </pre>
+                ) : (
+                  <p className="text-sm text-muted">No written answer was attached.</p>
+                )}
+                {selected.submissionUrl && (
+                  <a
+                    href={selected.submissionUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-bold text-tone-blue-fg underline"
                   >
-                    <Download className="w-3 h-3" /> Download file
-                  </button>
-                </div>
+                    Open submitted work
+                  </a>
+                )}
+              </section>
 
-                <pre className="p-4 rounded-xl bg-slate-950 text-emerald-400 font-mono text-xs overflow-x-auto leading-relaxed border border-slate-800 shadow-inner">
-                  <code>{selectedSub.codeSnippet}</code>
-                </pre>
-              </div>
-
-<form onSubmit={handleSaveGrade} className="space-y-4 pt-2">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Awarded Marks (Out of {selectedSub.maxMarks})
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max={selectedSub.maxMarks}
-                      value={selectedSub.marks}
-                      onChange={(e) => handleUpdateMarks(e.target.value)}
-                      className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#fde047]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                      Status
-                    </label>
-                    <select
-                      value={selectedSub.status}
-                      onChange={(e) =>
-                        setSubmissions((prev) =>
-                          prev.map((s) => (s.id === selectedSub.id ? { ...s, status: e.target.value } : s))
-                        )
-                      }
-                      className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047]"
-                    >
-                      <option value="pending">Needs Revision / Pending</option>
-                      <option value="graded">Graded & Approved</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
-                    Feedback for Student
-                  </label>
-                  <textarea
-                    rows="3"
-                    placeholder="Provide constructive feedback on code structure, time complexity, or edge cases..."
-                    value={selectedSub.feedback}
-                    onChange={(e) => handleUpdateFeedback(e.target.value)}
-                    className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+              <form onSubmit={handleSaveGrade} className="space-y-4">
+                <label className="block space-y-1 text-sm font-semibold">
+                  Marks (out of {selected.maxMarks})
+                  <input
+                    type="number"
+                    min="0"
+                    max={selected.maxMarks}
+                    step="any"
+                    required
+                    value={selectedDraft.marks}
+                    onChange={(event) => setDrafts((current) => ({
+                      ...current,
+                      [selectedId]: { ...selectedDraft, marks: event.target.value },
+                    }))}
+                    className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink"
                   />
-                </div>
-
-                <div className="flex items-center justify-between pt-2">
+                </label>
+                <label className="block space-y-1 text-sm font-semibold">
+                  Feedback
+                  <textarea
+                    rows={4}
+                    maxLength={3000}
+                    value={selectedDraft.feedback}
+                    onChange={(event) => setDrafts((current) => ({
+                      ...current,
+                      [selectedId]: { ...selectedDraft, feedback: event.target.value },
+                    }))}
+                    className="w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm font-normal text-ink"
+                  />
+                </label>
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 rounded-xl bg-[#fde047] hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 transition shadow-sm"
+                    disabled={saving}
+                    className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-on-brand disabled:opacity-50"
                   >
-                    <Save className="w-4 h-4" /> Save Grade & Feedback
+                    <Save size={16} /> {saving ? "Saving..." : "Save grade"}
                   </button>
-
-                  {saveSuccess && (
-                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                      <CheckCircle2 className="w-4 h-4" /> Saved!
-                    </span>
-                  )}
+                  {saveSuccess && <span className="inline-flex items-center gap-1 text-sm font-bold text-tone-green-fg"><CheckCircle2 size={16} /> Grade saved</span>}
                 </div>
               </form>
             </>
-          ) : (
-            <p className="text-xs text-slate-400 py-16 text-center">Select a submission from the queue.</p>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );
