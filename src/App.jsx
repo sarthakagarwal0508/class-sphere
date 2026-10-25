@@ -37,7 +37,7 @@ import QuizResults from "./pages/teacher/QuizResults";
 import ClassAnalytics from "./pages/teacher/ClassAnalytics";
 import TeacherAnnouncements from "./pages/teacher/Announcements";
 import TeacherDoubtForum from "./pages/teacher/DoubtForum";
-import HelpCenter from "./pages/teacher/HelpCenter";
+import HelpCenter from "./pages/teacher/Helpcenter";
 
 function RequireAuth() {
   const { user, initializing } = useAuth();
