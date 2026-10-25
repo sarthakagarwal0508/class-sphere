@@ -11,6 +11,7 @@ const studyMaterialRoutes = require("./routes/studyMaterialRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const mlPredictionRoutes = require("./routes/mlPredictionRoutes");
 
 app.use(helmet());
 
@@ -52,6 +53,7 @@ app.use("/api", studyMaterialRoutes);
 app.use("/api", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/analytics", mlPredictionRoutes);
 
 
 module.exports = app;

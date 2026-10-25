@@ -58,3 +58,11 @@ The cleanup performs operations across MongoDB and Cloudinary without a shared t
 ## Validation boundary
 
 These documents describe the route/controller/schema contracts reviewed from the available backend ZIP plus the changes discussed in this chat. Examples are illustrative; IDs, dates, array sizes and token values vary. The live deployed environment was not called from this documentation build, so run the checklist before treating every endpoint as production-verified.
+
+
+## ML-Based Performance Insights integration
+
+- Added a separate teacher-only risk-profile upsert endpoint and classroom risk-prediction endpoint under `/api/analytics/teacher/classrooms/:id/`.
+- Added `StudentRiskProfile`, a model-service client using Node.js built-in `fetch`, deployment configuration example, and focused client tests.
+- The integration derives assessment counts, graded score percentages, weighted score, and late submissions from existing assignment/submission records. Inputs not tracked in existing schemas are explicitly required in the risk profile rather than fabricated.
+- Validation run for this package: `node --check` on JavaScript files and `npm test` for the ML service client. Database-connected end-to-end prediction tests still require a running MongoDB database, a configured teacher/classroom/student, and the deployed model service.

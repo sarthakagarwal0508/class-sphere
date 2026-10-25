@@ -30,6 +30,7 @@ There is no `admin` role in the current User schema. The backend loads the user 
 - `Study-Materials.md` — PDF upload, list, download, update, delete.
 - `Announcements-and-Notifications.md` — announcements and in-app notifications.
 - `Analytics.md` — student and teacher analytics endpoints.
+- `ML-Performance-Insights.md` — teacher-only at-risk prediction APIs, required risk profile fields, model-service configuration, and data compatibility caveats.
 - `Data-Schemas.md` — MongoDB/Mongoose schema reference and relationships.
 - `CHANGELOG-and-Testing.md` — changes in this documentation update and Postman checklist.
 
@@ -67,5 +68,6 @@ For PDF upload, use `multipart/form-data` and let Postman/browser generate the m
 - IDs such as `CLASSROOM_ID`, `ASSIGNMENT_ID`, and `MATERIAL_ID` must be MongoDB ObjectId strings.
 - Do not send refresh tokens as bearer access tokens.
 - Never expose assignment/quiz answer keys or secrets to a student-facing response.
-- A `GET /api/health` response confirms the API process responds; it does not prove MongoDB, email, or Cloudinary operations are all healthy.
+- `MODEL_API_URL` must be configured on the Node.js backend service for ML prediction requests. See `ML-Performance-Insights.md`.
+- A `GET /api/health` response confirms the API process responds; it does not prove MongoDB, email, Cloudinary, or ML model operations are all healthy.
 - Classroom deletion is destructive. Test it only on a disposable classroom and keep a backup. Database and Cloudinary deletion are not one atomic transaction.
