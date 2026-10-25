@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+// Public & Auth Pages
 import LandingPage from "./LandingPage";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 
+// Student Portal
 import StudentLayout from "./layouts/StudentLayout";
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudyMaterial from "./pages/student/StudyMaterial";
@@ -14,12 +16,8 @@ import AttemptQuiz from "./pages/student/AttemptQuiz";
 import NotesAI from "./pages/student/NotesAI";
 import Flashcards from "./pages/student/Flashcards";
 import Grades from "./pages/student/Grades";
-import Progress from "./pages/student/Progress";
-import StudentAnnouncements from "./pages/student/Announcements";
-import StudentDoubtForum from "./pages/student/DoubtForum";
-import MyClasses from "./pages/student/MyClasses";
-import ClassDetails from "./pages/student/ClassDetails";
 
+// Teacher Portal
 import TeacherLayout from "./layouts/TeacherLayout";
 import TeacherDashboard from "./pages/teacher/TeacherDashboard";
 import CreateClassroom from "./pages/teacher/CreateClassroom";
@@ -30,22 +28,21 @@ import StudentSubmissions from "./pages/teacher/StudentSubmissions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
 import QuizResults from "./pages/teacher/QuizResults";
 import ClassAnalytics from "./pages/teacher/ClassAnalytics";
-import TeacherAnnouncements from "./pages/teacher/Announcements";
+import Announcements from "./pages/teacher/Announcements";
 import DoubtForum from "./pages/teacher/DoubtForum";
+import HelpCenter from "./pages/teacher/HelpCenter";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+       
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route
-          path="/announcements"
-          element={<Navigate to="/student/announcements" replace />}
-        />
 
+     
         <Route path="/student" element={<StudentLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
@@ -56,18 +53,16 @@ export default function App() {
           <Route path="notes-ai" element={<NotesAI />} />
           <Route path="flashcards" element={<Flashcards />} />
           <Route path="grades" element={<Grades />} />
-          <Route path="progress" element={<Progress />} />
-          <Route path="announcements" element={<StudentAnnouncements />} />
-          <Route path="doubts" element={<StudentDoubtForum />} />
-          <Route path="classes" element={<MyClasses />} />
-          <Route path="classes/:classId" element={<ClassDetails />} />
         </Route>
 
+       
         <Route path="/teacher" element={<TeacherLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<TeacherDashboard />} />
+          
           <Route path="create-class" element={<CreateClassroom />} />
           <Route path="create-classroom" element={<CreateClassroom />} />
+          
           <Route path="members" element={<ManageMembers />} />
           <Route path="upload-material" element={<UploadMaterial />} />
           <Route path="create-assignment" element={<CreateAssignment />} />
@@ -75,10 +70,15 @@ export default function App() {
           <Route path="create-quiz" element={<CreateQuiz />} />
           <Route path="quiz-results" element={<QuizResults />} />
           <Route path="analytics" element={<ClassAnalytics />} />
-          <Route path="announcements" element={<TeacherAnnouncements />} />
+          <Route path="announcements" element={<Announcements />} />
+          
           <Route path="doubts" element={<DoubtForum />} />
           <Route path="doubt-forum" element={<DoubtForum />} />
           <Route path="doubtforum" element={<DoubtForum />} />
+
+          {/* 🆘 Help Center (Supports both /help and /help-center) */}
+          <Route path="help" element={<HelpCenter />} />
+          <Route path="help-center" element={<HelpCenter />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
