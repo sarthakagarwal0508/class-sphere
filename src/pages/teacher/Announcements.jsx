@@ -1,310 +1,381 @@
-import { useEffect, useState } from "react";
-import { Bell, CalendarDays, CheckCircle2, Megaphone } from "lucide-react";
-import Card from "../../components/Card";
-import HeroBanner from "../../components/HeroBanner";
-import Topbar from "../../components/Topbar";
-import { fetchMyClassrooms } from "../../services/classroomService";
-import {
-  createAnnouncement,
-  getClassroomAnnouncements,
-} from "../../services/announcementService";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Bell, Send, Trash2, AlertCircle, CheckCircle2, 
+  Megaphone, Calendar, Users, FolderOpen, RefreshCw, Plus
+} from 'lucide-react';
+import api from '../../services/api';
 
-function unwrapList(response, key) {
-  const payload = response?.data ?? response;
-  return Array.isArray(payload) ? payload : payload?.[key] ?? [];
-}
-
-function getClassroomId(classroom) {
-  return classroom?._id ?? classroom?.id;
-}
-
-function getClassroomLabel(classroom) {
-  return classroom?.name ?? classroom?.title ?? "Classroom";
+// Helper to safely unpack any MongoDB classroom response format
+function extractClassrooms(res) {
+  const body = res?.data;
+  if (!body) return [];
+  if (Array.isArray(body)) return body;
+  if (Array.isArray(body.data)) return body.data;
+  if (Array.isArray(body.classrooms)) return body.classrooms;
+  if (Array.isArray(body.data?.classrooms)) return body.data.classrooms;
+  if (Array.isArray(body.myClassrooms)) return body.myClassrooms;
+  return [];
 }
 
 export default function Announcements() {
+  const navigate = useNavigate();
+
   const [classrooms, setClassrooms] = useState([]);
-  const [classroomId, setClassroomId] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState('');
   const [announcements, setAnnouncements] = useState([]);
-  const [announcementsClassId, setAnnouncementsClassId] = useState("");
-  const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
-  const [loadingClasses, setLoadingClasses] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [classroomsLoading, setClassroomsLoading] = useState(true);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // 1. Fetch Teacher's Classrooms (Handles both /classrooms and /api/classrooms)
+  const loadClassrooms = async () => {
+    setClassroomsLoading(true);
+    setErrorMsg('');
+
+    try {
+      let res;
+      try {
+        // First try relative path (if baseURL includes /api)
+        res = await api.get('/classrooms');
+      } catch (err) {
+        if (err.response?.status === 404) {
+          // Fallback if baseURL does NOT include /api
+          res = await api.get('/api/classrooms');
+        } else {
+          throw err;
+        }
+      }
+
+      const list = extractClassrooms(res);
+      setClassrooms(list);
+
+      if (list.length > 0) {
+        setSelectedClassId((prev) => prev || list[0]._id || list[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load classrooms:', err);
+      setErrorMsg(
+        err.response?.data?.message || 'Could not load your classrooms. Please verify login.'
+      );
+    } finally {
+      setClassroomsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let active = true;
-
-    fetchMyClassrooms()
-      .then((response) => {
-        if (!active) return;
-        const items = unwrapList(response, "classrooms");
-        setClassrooms(items);
-        if (items.length > 0) {
-          setClassroomId(String(getClassroomId(items[0])));
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setError(err.message || "Could not load your classrooms.");
-        }
-      })
-      .finally(() => {
-        if (active) setLoadingClasses(false);
-      });
-
-    return () => {
-      active = false;
-    };
+    loadClassrooms();
   }, []);
 
+  // 2. Fetch Announcements for the selected classroom
+  const loadAnnouncements = async (classroomId) => {
+    if (!classroomId) return;
+    setFeedLoading(true);
+
+    try {
+      let res;
+      try {
+        res = await api.get(`/classrooms/${classroomId}/announcements`);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          res = await api.get(`/api/classrooms/${classroomId}/announcements`);
+        } else {
+          throw err;
+        }
+      }
+
+      const payload = res.data?.data ?? res.data;
+      const list = Array.isArray(payload) ? payload : payload.announcements ?? [];
+      setAnnouncements(list);
+    } catch (err) {
+      console.error('Failed to load announcements:', err);
+      setAnnouncements([]);
+    } finally {
+      setFeedLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!classroomId) return undefined;
+    if (selectedClassId) {
+      loadAnnouncements(selectedClassId);
+    }
+  }, [selectedClassId]);
 
-    let active = true;
-    getClassroomAnnouncements(classroomId)
-      .then((items) => {
-        if (active) {
-          setAnnouncements(items);
-          setAnnouncementsClassId(classroomId);
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setAnnouncements([]);
-          setAnnouncementsClassId(classroomId);
-          setError(err.message || "Could not load announcements for this class.");
-        }
-      });
+  // 3. Handle Posting Announcement
+  const handlePost = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setSuccessMsg('');
 
-    return () => {
-      active = false;
-    };
-  }, [classroomId]);
-
-  const selectedClassroom = classrooms.find(
-    (item) => String(getClassroomId(item)) === classroomId
-  );
-  const visibleAnnouncements =
-    announcementsClassId === classroomId ? announcements : [];
-  const loadingAnnouncements =
-    Boolean(classroomId) && announcementsClassId !== classroomId;
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setError("");
-    setNotice("");
-
-    if (!classroomId) {
-      setError("Create a classroom before posting an announcement.");
+    if (!selectedClassId) {
+      setErrorMsg('Please select a classroom first.');
+      return;
+    }
+    if (!title.trim() || !content.trim()) {
+      setErrorMsg('Please enter both a title and message content.');
       return;
     }
 
-    setSubmitting(true);
+    setLoading(true);
     try {
-      const created = await createAnnouncement(classroomId, {
-        title: title.trim(),
-        content: message.trim(),
-      });
+      let res;
+      const body = { title: title.trim(), content: content.trim() };
 
-      setAnnouncements((items) => [created, ...items]);
-      setTitle("");
-      setMessage("");
-      setNotice("Announcement posted successfully.");
+      try {
+        res = await api.post(`/classrooms/${selectedClassId}/announcements`, body);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          res = await api.post(`/api/classrooms/${selectedClassId}/announcements`, body);
+        } else {
+          throw err;
+        }
+      }
+
+      setSuccessMsg('Announcement broadcasted to all enrolled students!');
+      setTitle('');
+      setContent('');
+      loadAnnouncements(selectedClassId);
     } catch (err) {
-      setError(err.message || "Could not post the announcement.");
+      setErrorMsg(
+        err.response?.data?.message || err.message || 'Failed to post announcement.'
+      );
     } finally {
-      setSubmitting(false);
+      setLoading(false);
     }
-  }
+  };
+
+  // 4. Handle Deleting Announcement
+  const handleDelete = async (announcementId) => {
+    if (!window.confirm('Delete this announcement? Students will no longer see it.')) return;
+
+    try {
+      try {
+        await api.delete(`/announcements/${announcementId}`);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          await api.delete(`/api/announcements/${announcementId}`);
+        } else {
+          throw err;
+        }
+      }
+      setAnnouncements((prev) => prev.filter((a) => (a._id || a.id) !== announcementId));
+      setSuccessMsg('Announcement deleted.');
+    } catch (err) {
+      setErrorMsg(err.response?.data?.message || 'Failed to delete announcement.');
+    }
+  };
 
   return (
-    <div className="space-y-5">
-      <Topbar
-        title="Announcements"
-        subtitle="Post updates for your classroom"
-        backFallbackPath="/teacher/dashboard"
-      />
+    <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
+      {/* Header */}
+      <div>
+        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
+          Class Announcements
+        </h1>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Broadcast updates, assignment deadlines, and reminders to your students.
+        </p>
+      </div>
 
-      <HeroBanner
-        variant="navy"
-        eyebrow="KEEP EVERYONE INFORMED"
-        title="Share an update with your students"
-        subtitle="Choose a classroom and post important news, reminders, and schedule changes."
-        icons={[Megaphone, Bell, CalendarDays]}
-      />
-
-      {error && (
-        <Card className="border border-tone-red/40 p-4 text-sm text-tone-red-fg">
-          {error}
-        </Card>
-      )}
-      {notice && (
-        <Card className="flex items-center gap-2 border border-tone-green/40 p-4 text-sm text-tone-green-fg">
-          <CheckCircle2 size={17} />
-          {notice}
-        </Card>
-      )}
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,1fr)]">
-        <Card className="p-5 sm:p-6">
-          <h2 className="text-base font-extrabold text-ink">New announcement</h2>
-          <p className="mt-1 text-xs text-muted">
-            Your announcement will be shared with students in the selected class.
+      {/* 🌟 Dark Navy Hero Banner with Yellow Accent */}
+      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
+        <div className="space-y-2 z-10 max-w-md">
+          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
+            KEEP EVERYONE INFORMED
           </p>
+          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+            Share an update with your students
+          </h2>
+          <p className="text-xs text-slate-300 leading-relaxed font-medium">
+            Choose a classroom and post important news, reminders, and schedule changes.
+          </p>
+        </div>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-4">
-            <div>
-              <label
-                htmlFor="announcement-classroom"
-                className="mb-1.5 block text-xs font-bold text-ink"
-              >
-                Classroom
-              </label>
-              <select
-                id="announcement-classroom"
-                value={classroomId}
-                onChange={(event) => {
-                  setClassroomId(event.target.value);
-                  setError("");
-                  setNotice("");
-                }}
-                disabled={loadingClasses || classrooms.length === 0}
-                required
-                className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand disabled:opacity-60"
-              >
-                {loadingClasses ? (
-                  <option value="">Loading classrooms...</option>
-                ) : classrooms.length === 0 ? (
-                  <option value="">No classrooms available</option>
-                ) : (
-                  classrooms.map((classroom) => {
-                    const id = getClassroomId(classroom);
-                    return (
-                      <option key={id} value={id}>
-                        {getClassroomLabel(classroom)}
-                      </option>
-                    );
-                  })
-                )}
-              </select>
+        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
+          <div className="relative z-10 flex items-center gap-2">
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <Megaphone className="w-5 h-5" />
             </div>
-
-            <div>
-              <label
-                htmlFor="announcement-title"
-                className="mb-1.5 block text-xs font-bold text-ink"
-              >
-                Title
-              </label>
-              <input
-                id="announcement-title"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                placeholder="e.g. Lab moved to Friday"
-                required
-                maxLength={120}
-                className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand"
-              />
+            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
+              <Bell className="w-5 h-5" />
             </div>
-
-            <div>
-              <label
-                htmlFor="announcement-message"
-                className="mb-1.5 block text-xs font-bold text-ink"
-              >
-                Message
-              </label>
-              <textarea
-                id="announcement-message"
-                rows={5}
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                placeholder="Write the update for your students..."
-                required
-                maxLength={5000}
-                className="w-full resize-y rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting || loadingClasses || classrooms.length === 0}
-              className="w-full rounded-xl bg-brand px-4 py-3 text-sm font-extrabold text-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {submitting ? "Posting..." : "Post announcement"}
-            </button>
-          </form>
-        </Card>
-
-        <Card className="p-5 sm:p-6">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-base font-extrabold text-ink">
-                Posted announcements
-              </h2>
-              <p className="mt-1 text-xs text-muted">
-                {selectedClassroom
-                  ? getClassroomLabel(selectedClassroom)
-                  : "Select a classroom to view its announcements"}
-              </p>
-            </div>
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-tone-yellow text-tone-yellow-fg">
-              <Megaphone size={19} />
+            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
+              <Calendar className="w-5 h-5" />
             </div>
           </div>
+        </div>
+      </div>
 
-          {loadingAnnouncements ? (
-            <p className="py-10 text-center text-sm text-muted">
-              Loading announcements...
-            </p>
-          ) : visibleAnnouncements.length === 0 ? (
-            <div className="py-10 text-center">
-              <Bell className="mx-auto h-8 w-8 text-muted" />
-              <p className="mt-3 text-sm font-bold text-ink">
-                No announcements yet
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                Posted updates for this class will appear here.
-              </p>
+      {/* Alerts */}
+      {errorMsg && (
+        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {/* Main Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Composer Card */}
+        <form
+          onSubmit={handlePost}
+          className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 space-y-4 shadow-sm"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              New Announcement
+            </h3>
+            <button
+              type="button"
+              onClick={loadClassrooms}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs font-semibold flex items-center gap-1"
+              title="Refresh classrooms list"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${classroomsLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Select Classroom <span className="text-rose-500">*</span>
+              </label>
+              {classrooms.length === 0 && (
+                <button
+                  type="button"
+                  onClick={() => navigate('/teacher/create-class')}
+                  className="text-xs font-bold text-[#facc15] hover:underline flex items-center gap-0.5"
+                >
+                  <Plus className="w-3 h-3" /> Create Classroom
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="mt-4 divide-y divide-line">
-              {visibleAnnouncements.map((announcement, index) => {
-                const id =
-                  announcement._id ?? announcement.id ?? `${announcement.title}-${index}`;
-                const createdAt = announcement.createdAt
-                  ? new Date(announcement.createdAt).toLocaleDateString()
-                  : null;
 
-                return (
-                  <article key={id} className="py-4 first:pt-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-sm font-bold text-ink">
-                        {announcement.title}
-                      </h3>
-                      {createdAt && (
-                        <span className="shrink-0 text-[11px] text-muted">
-                          {createdAt}
-                        </span>
-                      )}
-                    </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted">
-                      {announcement.content ?? announcement.message}
-                    </p>
-                    {announcement.teacher?.name && (
-                      <p className="mt-2 text-xs font-semibold text-muted">
-                        {announcement.teacher.name}
+            <select
+              value={selectedClassId}
+              onChange={(e) => setSelectedClassId(e.target.value)}
+              disabled={classroomsLoading || classrooms.length === 0}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047] disabled:opacity-60"
+            >
+              {classroomsLoading ? (
+                <option value="">Loading your classrooms...</option>
+              ) : classrooms.length === 0 ? (
+                <option value="">No classrooms found. Create one first.</option>
+              ) : (
+                classrooms.map((c) => (
+                  <option key={c._id || c.id} value={c._id || c.id}>
+                    {c.name} ({c.classCode || c.code || 'Cohort'})
+                  </option>
+                ))
+              )}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Title <span className="text-rose-500">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="e.g. Lab Session Rescheduled to Friday"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Message / Content <span className="text-rose-500">*</span>
+            </label>
+            <textarea
+              rows="4"
+              required
+              placeholder="Write your announcement details here..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || classrooms.length === 0}
+            className="px-6 py-2.5 rounded-xl bg-[#fde047] hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Send className="w-3.5 h-3.5" />
+            {loading ? 'Broadcasting...' : 'Post Announcement'}
+          </button>
+        </form>
+
+        {/* Posted Announcements Feed */}
+        <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+              Posted Announcements ({announcements.length})
+            </h3>
+
+            {feedLoading ? (
+              <p className="text-xs text-slate-400 py-8 text-center">Loading feed...</p>
+            ) : announcements.length === 0 ? (
+              <div className="text-center py-12 space-y-2">
+                <FolderOpen className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto" />
+                <p className="text-xs text-slate-500">No announcements posted for this classroom yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[480px] overflow-y-auto pr-1 divide-y divide-slate-100 dark:divide-slate-800">
+                {announcements.map((item) => {
+                  const id = item._id || item.id;
+                  const dateStr = item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent';
+
+                  return (
+                    <div key={id} className="pt-3 first:pt-0 space-y-1.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                          {item.title}
+                        </h4>
+                        <button
+                          onClick={() => handleDelete(id)}
+                          className="text-slate-400 hover:text-rose-500 transition shrink-0 p-1"
+                          title="Delete announcement"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {item.content}
                       </p>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 pt-1">
+                        <span>{dateStr}</span>
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                          Sent to enrolled students
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
