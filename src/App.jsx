@@ -16,6 +16,11 @@ import AttemptQuiz from "./pages/student/AttemptQuiz";
 import NotesAI from "./pages/student/NotesAI";
 import Flashcards from "./pages/student/Flashcards";
 import Grades from "./pages/student/Grades";
+import Progress from "./pages/student/Progress";
+import StudentAnnouncements from "./pages/student/Announcements";
+import StudentDoubtForum from "./pages/student/DoubtForum";
+import MyClasses from "./pages/student/MyClasses";
+import ClassDetails from "./pages/student/ClassDetails";
 
 // Teacher Portal
 import TeacherLayout from "./layouts/TeacherLayout";
@@ -28,8 +33,8 @@ import StudentSubmissions from "./pages/teacher/StudentSubmissions";
 import CreateQuiz from "./pages/teacher/CreateQuiz";
 import QuizResults from "./pages/teacher/QuizResults";
 import ClassAnalytics from "./pages/teacher/ClassAnalytics";
-import Announcements from "./pages/teacher/Announcements";
-import DoubtForum from "./pages/teacher/DoubtForum";
+import TeacherAnnouncements from "./pages/teacher/Announcements";
+import TeacherDoubtForum from "./pages/teacher/DoubtForum";
 import HelpCenter from "./pages/teacher/HelpCenter";
 
 export default function App() {
@@ -53,6 +58,11 @@ export default function App() {
           <Route path="notes-ai" element={<NotesAI />} />
           <Route path="flashcards" element={<Flashcards />} />
           <Route path="grades" element={<Grades />} />
+          <Route path="progress" element={<Progress />} />
+          <Route path="announcements" element={<StudentAnnouncements />} />
+          <Route path="doubts" element={<StudentDoubtForum />} />
+          <Route path="classes" element={<MyClasses />} />
+          <Route path="classes/:classId" element={<ClassDetails />} />
         </Route>
 
        
@@ -70,11 +80,11 @@ export default function App() {
           <Route path="create-quiz" element={<CreateQuiz />} />
           <Route path="quiz-results" element={<QuizResults />} />
           <Route path="analytics" element={<ClassAnalytics />} />
-          <Route path="announcements" element={<Announcements />} />
+          <Route path="announcements" element={<TeacherAnnouncements />} />
           
-          <Route path="doubts" element={<DoubtForum />} />
-          <Route path="doubt-forum" element={<DoubtForum />} />
-          <Route path="doubtforum" element={<DoubtForum />} />
+          <Route path="doubts" element={<TeacherDoubtForum />} />
+          <Route path="doubt-forum" element={<TeacherDoubtForum />} />
+          <Route path="doubtforum" element={<TeacherDoubtForum />} />
 
           {/* 🆘 Help Center (Supports both /help and /help-center) */}
           <Route path="help" element={<HelpCenter />} />
