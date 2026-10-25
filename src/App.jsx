@@ -35,7 +35,7 @@ import QuizResults from "./pages/teacher/QuizResults";
 import ClassAnalytics from "./pages/teacher/ClassAnalytics";
 import TeacherAnnouncements from "./pages/teacher/Announcements";
 import TeacherDoubtForum from "./pages/teacher/DoubtForum";
-import HelpCenter from "./pages/teacher/HelpCenter";
+import HelpCenter from "./pages/teacher/Helpcenter";
 
 export default function App() {
   return (
