@@ -1,5 +1,20 @@
 
 import { Link } from "react-router-dom";
+import {
+  Bell,
+  BookOpen,
+  Brain,
+  CalendarDays,
+  Check,
+  ClipboardList,
+  Compass,
+  MessageCircle,
+  RefreshCw,
+  Sparkles,
+  Target,
+  TrendingUp,
+  UsersRound,
+} from "lucide-react";
 import ThemeToggle from "./components/ThemeToggle";
 import "./LandingPage.css";
 
@@ -91,6 +106,8 @@ export default function LandingPage() {
           <nav aria-label="Main navigation" className="landing-nav order-3 flex w-full items-center gap-1 overflow-x-auto sm:order-none sm:w-auto sm:flex-1 sm:justify-center">
             <a href="#home" className="landing-nav-link">Home</a>
             <a href="#features" className="landing-nav-link">Features</a>
+            <a href="#study-toolkit" className="landing-nav-link">Study toolkit</a>
+            <a href="#why-classsphere" className="landing-nav-link">Why ClassSphere</a>
             <a href="#faq" className="landing-nav-link">FAQ</a>
             <a href="#contact" className="landing-nav-link">Contact Us</a>
           </nav>
@@ -156,44 +173,195 @@ export default function LandingPage() {
 
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">📚</span>
+              <span className="landing-feature-icon" aria-hidden="true"><BookOpen size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Classes & materials</h3>
               <p className="mt-2 leading-6 text-slate-600">Keep class resources and study materials organized and easy to revisit when it is time to learn.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">📝</span>
+              <span className="landing-feature-icon" aria-hidden="true"><ClipboardList size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Assignments & deadlines</h3>
               <p className="mt-2 leading-6 text-slate-600">Keep track of classroom assignments and due dates so you can plan your work with confidence.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">🧠</span>
+              <span className="landing-feature-icon" aria-hidden="true"><Brain size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Flashcards for revision</h3>
               <p className="mt-2 leading-6 text-slate-600">Review important ideas with quick flashcard sessions that help reinforce what you have learned.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">✨</span>
+              <span className="landing-feature-icon" aria-hidden="true"><Sparkles size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Notes summaries</h3>
               <p className="mt-2 leading-6 text-slate-600">Turn shared study notes into concise key points and revision material to make review easier.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">📈</span>
+              <span className="landing-feature-icon" aria-hidden="true"><TrendingUp size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Progress reports</h3>
               <p className="mt-2 leading-6 text-slate-600">See your learning activity, assignment status, and course progress together in one place.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">💬</span>
+              <span className="landing-feature-icon" aria-hidden="true"><MessageCircle size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Doubt forum</h3>
               <p className="mt-2 leading-6 text-slate-600">Ask questions, share explanations, and get help from classmates and teachers.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">🎯</span>
+              <span className="landing-feature-icon" aria-hidden="true"><Target size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Quizzes & practice</h3>
               <p className="mt-2 leading-6 text-slate-600">Practice course topics with quizzes and check your understanding as you learn.</p>
             </article>
             <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true">🔔</span>
+              <span className="landing-feature-icon" aria-hidden="true"><Bell size={21} /></span>
               <h3 className="mt-4 text-lg font-bold">Class announcements</h3>
               <p className="mt-2 leading-6 text-slate-600">Stay up to date with classroom news, reminders, and updates from your teachers.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="study-toolkit" className="landing-section landing-toolkit px-5 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="landing-toolkit-heading mx-auto max-w-2xl text-center">
+            <p className="text-sm font-extrabold tracking-[0.2em] text-[#3266B5]">YOUR STUDY TOOLKIT</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Turn class resources into real understanding</h2>
+            <p className="mt-4 leading-7 text-slate-600">A useful study session is more than reading notes. ClassSphere gives you tools to review, make sense of a topic, and test what you remember.</p>
+          </div>
+
+          <div className="landing-toolkit-grid mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <article className="landing-toolkit-card">
+              <span className="landing-toolkit-icon" aria-hidden="true"><BookOpen size={21} /></span>
+              <p className="landing-toolkit-step">START WITH YOUR CLASS</p>
+              <h3 className="mt-3 text-lg font-bold">Find the right material</h3>
+              <p className="mt-2 leading-6 text-slate-600">Open class resources and revisit the notes or files shared for the topic you are studying.</p>
+            </article>
+            <article className="landing-toolkit-card">
+              <span className="landing-toolkit-icon" aria-hidden="true"><Sparkles size={21} /></span>
+              <p className="landing-toolkit-step">MAKE SENSE OF IT</p>
+              <h3 className="mt-3 text-lg font-bold">Review key ideas</h3>
+              <p className="mt-2 leading-6 text-slate-600">Use Notes AI to turn study notes into concise key points you can revisit while learning.</p>
+            </article>
+            <article className="landing-toolkit-card">
+              <span className="landing-toolkit-icon" aria-hidden="true"><Brain size={21} /></span>
+              <p className="landing-toolkit-step">PRACTICE RECALL</p>
+              <h3 className="mt-3 text-lg font-bold">Strengthen your memory</h3>
+              <p className="mt-2 leading-6 text-slate-600">Use flashcards to bring important terms and concepts back to mind in short study sessions.</p>
+            </article>
+            <article className="landing-toolkit-card">
+              <span className="landing-toolkit-icon" aria-hidden="true"><Target size={21} /></span>
+              <p className="landing-toolkit-step">CHECK YOURSELF</p>
+              <h3 className="mt-3 text-lg font-bold">See what you understand</h3>
+              <p className="mt-2 leading-6 text-slate-600">Try a quiz to check your understanding and identify topics to review again.</p>
+            </article>
+          </div>
+
+          <div className="landing-toolkit-note mx-auto mt-7 flex max-w-4xl items-start gap-3 rounded-xl p-4 sm:items-center">
+            <RefreshCw size={19} className="mt-0.5 shrink-0 sm:mt-0" aria-hidden="true" />
+            <p className="text-sm leading-6"><strong>Keep the learning loop going.</strong> Review what you know, practice what you are learning, and return to challenging ideas at your own pace.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="why-classsphere" className="landing-section landing-why px-5 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <p className="text-sm font-extrabold tracking-[0.2em] text-[#3266B5]">WHY CLASSSPHERE?</p>
+            <h2 className="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">Less time chasing classwork. More time learning.</h2>
+            <p className="mt-5 leading-7 text-slate-600">
+              Schoolwork can end up spread across messages, files, and separate tools. ClassSphere gives your classroom one shared place for the everyday work of learning, from the first class resource to the latest progress check.
+            </p>
+            <p className="mt-4 leading-7 text-slate-600">
+              It is not just a place to store materials. Students can use those resources to practice and ask questions, while teachers can share work and follow how the class is progressing.
+            </p>
+            <Link to="/register" className="landing-text-link mt-6 inline-flex items-center gap-2 font-bold">
+              See what your learning space can do <span aria-hidden="true">→</span>
+            </Link>
+          </div>
+
+          <div className="landing-why-points grid gap-4 sm:grid-cols-2">
+            <article className="landing-why-card">
+              <span className="landing-why-icon" aria-hidden="true"><Compass size={20} /></span>
+              <h3 className="mt-4 text-lg font-bold">Know where things belong</h3>
+              <p className="mt-2 leading-6 text-slate-600">Classes, materials, assignments, and announcements have a shared home, so important information is easier to find again.</p>
+            </article>
+            <article className="landing-why-card">
+              <span className="landing-why-icon" aria-hidden="true"><CalendarDays size={20} /></span>
+              <h3 className="mt-4 text-lg font-bold">Make the next step clearer</h3>
+              <p className="mt-2 leading-6 text-slate-600">See class tasks and due dates together and make a plan for what to study or complete next.</p>
+            </article>
+            <article className="landing-why-card">
+              <span className="landing-why-icon" aria-hidden="true"><RefreshCw size={20} /></span>
+              <h3 className="mt-4 text-lg font-bold">Turn review into practice</h3>
+              <p className="mt-2 leading-6 text-slate-600">Revisit topics with notes, flashcards, and quizzes instead of stopping at simply collecting resources.</p>
+            </article>
+            <article className="landing-why-card">
+              <span className="landing-why-icon" aria-hidden="true"><UsersRound size={20} /></span>
+              <h3 className="mt-4 text-lg font-bold">Keep the classroom connected</h3>
+              <p className="mt-2 leading-6 text-slate-600">Teachers can share updates and review student work; students can ask questions and follow their learning.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="how-it-works" className="landing-section landing-journey px-5 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-extrabold tracking-[0.2em] text-[#3266B5]">A CLEARER WAY TO LEARN</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">From class time to confident progress</h2>
+            <p className="mt-4 leading-7 text-slate-600">Keep the important parts of learning connected, so it is easier to know what to do next.</p>
+          </div>
+
+          <div className="landing-journey-grid mt-10 grid gap-5 md:grid-cols-3">
+            <article className="landing-journey-card">
+              <span className="landing-journey-number">01</span>
+              <h3 className="mt-5 text-xl font-bold">Join your classroom</h3>
+              <p className="mt-2 leading-7 text-slate-600">Find your classes and see the materials, announcements, and activities your teacher shares.</p>
+            </article>
+            <article className="landing-journey-card">
+              <span className="landing-journey-number">02</span>
+              <h3 className="mt-5 text-xl font-bold">Learn and practice</h3>
+              <p className="mt-2 leading-7 text-slate-600">Review class resources, work through assignments, and use quizzes and flashcards to practice.</p>
+            </article>
+            <article className="landing-journey-card">
+              <span className="landing-journey-number">03</span>
+              <h3 className="mt-5 text-xl font-bold">See your next step</h3>
+              <p className="mt-2 leading-7 text-slate-600">Check your progress, revisit topics, and ask questions when you need a little extra help.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="for-everyone" className="landing-section landing-audience px-5 py-16 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-6xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-sm font-extrabold tracking-[0.2em] text-[#3266B5]">ONE SPACE, TWO PERSPECTIVES</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Made for the whole classroom</h2>
+            <p className="mt-4 leading-7 text-slate-600">Students and teachers get tools that make their everyday learning and teaching easier to manage.</p>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <article className="landing-audience-card landing-audience-student">
+              <span className="landing-audience-label">FOR STUDENTS</span>
+              <h3 className="mt-4 text-2xl font-extrabold">Make learning feel manageable.</h3>
+              <p className="mt-3 leading-7 text-slate-600">Spend less time figuring out where things are and more time building understanding, one class at a time.</p>
+              <ul className="landing-audience-list mt-6 space-y-3">
+                <li><span aria-hidden="true"><Check size={14} /></span> Keep class materials and tasks together</li>
+                <li><span aria-hidden="true"><Check size={14} /></span> Practice with quizzes and flashcards</li>
+                <li><span aria-hidden="true"><Check size={14} /></span> Follow your progress and ask questions</li>
+              </ul>
+              <Link to="/register" className="landing-text-link mt-7 inline-flex items-center gap-2 font-bold">
+                Get started as a student <span aria-hidden="true">→</span>
+              </Link>
+            </article>
+
+            <article className="landing-audience-card landing-audience-teacher">
+              <span className="landing-audience-label">FOR TEACHERS</span>
+              <h3 className="mt-4 text-2xl font-extrabold">Bring your classroom together.</h3>
+              <p className="mt-3 leading-7 text-slate-600">Share resources, organize class activities, and keep an eye on how learners are doing from one teaching space.</p>
+              <ul className="landing-audience-list mt-6 space-y-3">
+                <li><span aria-hidden="true"><Check size={14} /></span> Share materials and announcements</li>
+                <li><span aria-hidden="true"><Check size={14} /></span> Create assignments and quizzes</li>
+                <li><span aria-hidden="true"><Check size={14} /></span> Review submissions and class progress</li>
+              </ul>
+              <Link to="/register" className="landing-text-link mt-7 inline-flex items-center gap-2 font-bold">
+                Get started as a teacher <span aria-hidden="true">→</span>
+              </Link>
             </article>
           </div>
         </div>
@@ -213,7 +381,7 @@ export default function LandingPage() {
             </details>
             <details className="landing-faq-item">
               <summary>Who can use ClassSphere?</summary>
-              <p>It is built for learners who want a simple place to organize their studies and keep track of their learning journey.</p>
+              <p>Students can organize their studies and track progress, while teachers can manage classroom materials, activities, and student work.</p>
             </details>
             <details className="landing-faq-item">
               <summary>How do I get started?</summary>
@@ -227,7 +395,23 @@ export default function LandingPage() {
         </div>
       </section>
 
-    
+      <section id="contact" className="landing-section landing-contact px-5 py-16 sm:px-8 lg:px-12">
+        <div className="landing-contact-panel mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 rounded-3xl px-6 py-10 sm:px-10 sm:py-12 lg:flex-row lg:items-center">
+          <div className="max-w-2xl">
+            <p className="text-sm font-extrabold tracking-[0.2em] text-[#ffe873]">YOUR NEXT CHAPTER STARTS HERE</p>
+            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">Ready to make learning feel more connected?</h2>
+            <p className="mt-4 leading-7 text-white/75">Create your ClassSphere account to bring classes, study resources, and progress into one learning space.</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-3">
+            <Link to="/register" className="rounded-xl bg-[#FFDF59] px-6 py-3 font-bold text-[#1F1D3D] transition hover:-translate-y-0.5 hover:bg-[#ffe873]">
+              Create your account <span aria-hidden="true">→</span>
+            </Link>
+            <Link to="/login" className="rounded-xl border border-white/30 px-6 py-3 font-bold text-white transition hover:bg-white/10">
+              I already have an account
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <footer className="landing-footer px-5 py-10 sm:px-8 lg:px-12">
         <div className="mx-auto grid max-w-6xl gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -244,7 +428,12 @@ export default function LandingPage() {
             <div className="landing-footer-links mt-3 flex flex-col items-start gap-2 text-sm">
               <a href="#home">Home</a>
               <a href="#features">Features</a>
+              <a href="#study-toolkit">Study toolkit</a>
+              <a href="#why-classsphere">Why ClassSphere</a>
+              <a href="#how-it-works">How it works</a>
+              <a href="#for-everyone">For students & teachers</a>
               <a href="#faq">FAQ</a>
+              <a href="#contact">Contact us</a>
             </div>
           </div>
 
