@@ -4,6 +4,8 @@ import {
   Bell, Send, Trash2, AlertCircle, CheckCircle2, 
   Megaphone, Calendar, FolderOpen, RefreshCw, Plus
 } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
 import { fetchMyClassrooms } from '../../services/classroomService';
 import {
   createAnnouncement,
@@ -117,45 +119,18 @@ export default function Announcements() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
-          Class Announcements
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Broadcast updates, assignment deadlines, and reminders to your students.
-        </p>
-      </div>
-
-      {/* 🌟 Dark Navy Hero Banner with Yellow Accent */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
-        <div className="space-y-2 z-10 max-w-md">
-          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            KEEP EVERYONE INFORMED
-          </p>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Share an update with your students
-          </h2>
-          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            Choose a classroom and post important news, reminders, and schedule changes.
-          </p>
-        </div>
-
-        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Megaphone className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
-              <Bell className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Calendar className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <Topbar
+        title="Class announcements"
+        subtitle="Broadcast updates, assignment deadlines, and reminders to your students."
+        backFallbackPath="/teacher/dashboard"
+      />
+      <HeroBanner
+        variant="navy"
+        eyebrow="KEEP EVERYONE INFORMED"
+        title="Share an update with your students"
+        subtitle="Choose a classroom and post important news, reminders, and schedule changes."
+        icons={[Megaphone, Bell, Calendar]}
+      />
 
       {/* Alerts */}
       {errorMsg && (

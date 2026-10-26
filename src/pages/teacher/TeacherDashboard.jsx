@@ -4,6 +4,9 @@ import {
   BookOpen, Users, FileCheck2, Award, PlusCircle,
   ArrowRight, Copy, Check, FolderPlus, HelpCircle, Upload
 } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
+import StatCard from '../../components/StatCard';
 import { fetchMyClassrooms } from '../../services/classroomService';
 import { useAuth } from '../../context/AuthContext';
 import { getTeacherClassroomAnalytics } from '../../services/analyticsService';
@@ -106,78 +109,38 @@ export default function TeacherDashboard() {
   };
 
   const metrics = [
-    { label: 'Classrooms', value: classrooms.length, icon: BookOpen, color: 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300' },
-    { label: 'Student enrollments', value: dashboardData.totalStudents, icon: Users, color: 'bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300' },
-    { label: 'To grade', value: dashboardData.pendingGradingCount, icon: FileCheck2, color: 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300' },
-    { label: 'Class average', value: dashboardData.averagePercentage == null ? '—' : `${dashboardData.averagePercentage}%`, icon: Award, color: 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' },
+    { label: 'Classrooms', value: classrooms.length, icon: BookOpen, tone: 'yellow' },
+    { label: 'Student enrollments', value: dashboardData.totalStudents, icon: Users, tone: 'blue' },
+    { label: 'To grade', value: dashboardData.pendingGradingCount, icon: FileCheck2, tone: 'red' },
+    { label: 'Class average', value: dashboardData.averagePercentage == null ? '—' : `${dashboardData.averagePercentage}%`, icon: Award, tone: 'green' },
   ];
 
   const displayName = user?.name ? `Prof. ${user.name.split(' ')[0]}` : 'Professor';
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
+      <Topbar title="Teacher dashboard" subtitle="Classrooms, student progress, and work to review" />
 
-      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
-        <div className="space-y-2 z-10 max-w-md">
-          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            TEACHER PORTAL &bull; CLASS OVERVIEW
-          </p>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Welcome back, {displayName}! 👋
-          </h1>
-          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            You have <span className="text-[#fde047] font-bold">{classrooms.length} active classrooms</span> and {dashboardData.pendingGradingCount} submissions awaiting grading.
-          </p>
-          <div className="pt-2 flex flex-wrap items-center gap-2.5">
-            <button
-              onClick={() => navigate('/teacher/submissions')}
-              className="px-4 py-2 rounded-xl bg-[#fde047] text-slate-950 text-xs font-bold hover:bg-amber-400 transition shadow-sm"
-            >
-              Grade pending work
-            </button>
-            <button
-              onClick={() => navigate('/teacher/create-class')}
-              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/20"
-            >
-              New classroom
-            </button>
-          </div>
-        </div>
+      <HeroBanner
+        variant="navy"
+        eyebrow="TEACHER PORTAL"
+        title={`Welcome back, ${displayName}!`}
+        subtitle={`You have ${classrooms.length} active classrooms and ${dashboardData.pendingGradingCount} submissions awaiting grading.`}
+        buttonText="Grade pending work"
+        onButtonClick={() => navigate('/teacher/submissions')}
+        icons={[BookOpen, Users, Award]}
+      />
 
-        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
-              <Users className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Award className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {metrics.map((m, i) => {
-          const Icon = m.icon;
-          return (
-            <div
-              key={i}
-              className="rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-4 flex items-center gap-3 shadow-sm"
-            >
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${m.color}`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{m.label}</p>
-                <p className="text-xl font-black text-slate-900 dark:text-slate-100">{m.value}</p>
-              </div>
-            </div>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {metrics.map((metric) => (
+          <StatCard
+            key={metric.label}
+            label={metric.label}
+            value={metric.value}
+            icon={metric.icon}
+            tone={metric.tone}
+          />
+        ))}
       </div>
 
 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

@@ -145,7 +145,11 @@ export default function ClassAnalytics() {
 
   return (
     <div className="space-y-6">
-      <Topbar title="Class analytics" subtitle="Assignment performance and participation" />
+      <Topbar
+        title="Class analytics"
+        subtitle="Assignment performance and participation"
+        backFallbackPath="/teacher/dashboard"
+      />
       <HeroBanner
         variant="navy"
         title="Understand your classes"

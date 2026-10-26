@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
-import { 
-  HelpCircle, MessageSquare, Mail, LifeBuoy, ChevronDown, 
+import { useState } from 'react';
+import {
+  HelpCircle, Mail, LifeBuoy, ChevronDown,
   ChevronUp, Search, Send, CheckCircle2, BookOpen, 
-  ShieldCheck, Sparkles 
+  ShieldCheck
 } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
 
 export default function HelpCenter() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,45 +64,18 @@ export default function HelpCenter() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
-          Help & Support Center
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Guides, frequently asked questions, and direct support for educators.
-        </p>
-      </div>
-
-      {/* 🌟 Dark Navy Hero Banner with Yellow Accent */}
-      <div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
-        <div className="space-y-2 z-10 max-w-md">
-          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            EDUCATOR SUPPORT DESK
-          </p>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            How can we assist you today?
-          </h2>
-          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            Find answers to common questions about classroom setup, grading, and student management, or message our tech team directly.
-          </p>
-        </div>
-
-        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <LifeBuoy className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
-              <HelpCircle className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Mail className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <Topbar
+        title="Help & support"
+        subtitle="Guides, frequently asked questions, and direct support for educators."
+        backFallbackPath="/teacher/dashboard"
+      />
+      <HeroBanner
+        variant="navy"
+        eyebrow="EDUCATOR SUPPORT DESK"
+        title="How can we assist you today?"
+        subtitle="Find answers about classroom setup, grading, and student management, or message the support team."
+        icons={[LifeBuoy, HelpCircle, Mail]}
+      />
 
       {/* Quick Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

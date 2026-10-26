@@ -1,6 +1,8 @@
 ﻿import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Users, Plus, Copy, Check, Sparkles, ArrowRight, AlertCircle } from 'lucide-react';
+import { BookOpen, Users, Plus, Copy, Check, ArrowRight, AlertCircle } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
 import { createClassroom } from '../../services/classroomService';
 
 export default function CreateClassroom() {
@@ -64,44 +66,18 @@ export default function CreateClassroom() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100">
-          Create Classroom
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Set up a new cohort and generate a unique join code for students.
-        </p>
-      </div>
-
-<div className="relative overflow-hidden rounded-3xl bg-[#181829] dark:bg-[#1a1a26] text-white p-6 md:p-8 flex items-center justify-between border border-slate-800 shadow-sm">
-        <div className="space-y-2 z-10 max-w-md">
-          <p className="text-[11px] font-bold tracking-wider uppercase text-slate-400">
-            CLASSROOM CREATOR
-          </p>
-          <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">
-            Start a new classroom
-          </h2>
-          <p className="text-xs text-slate-300 leading-relaxed font-medium">
-            Create your cohort, share the 6-character join code, and enrolled students can access your course notes & assignments instantly.
-          </p>
-        </div>
-
-        <div className="relative hidden sm:flex items-center justify-center w-64 h-32 shrink-0">
-          <div className="absolute -right-6 top-1/2 -translate-y-1/2 w-48 h-48 rounded-full bg-[#fde047] z-0" />
-          <div className="relative z-10 flex items-center gap-2">
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <BookOpen className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-[#181829] text-white shadow-md flex items-center justify-center border border-slate-700">
-              <Users className="w-5 h-5" />
-            </div>
-            <div className="w-12 h-12 rounded-2xl bg-white text-slate-900 shadow-md flex items-center justify-center">
-              <Plus className="w-5 h-5" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <Topbar
+        title="Create classroom"
+        subtitle="Set up a new cohort and generate a unique join code for students."
+        backFallbackPath="/teacher/dashboard"
+      />
+      <HeroBanner
+        variant="navy"
+        eyebrow="CLASSROOM CREATOR"
+        title="Start a new classroom"
+        subtitle="Create your cohort, share the join code, and give students access to class materials and assignments."
+        icons={[BookOpen, Users, Plus]}
+      />
 
       {error && (
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">

@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
-import { MessageSquare, CheckCircle, Clock, Send, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { MessageSquare, CheckCircle, Clock, Send } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
 
 export default function DoubtForum() {
   const [filter, setFilter] = useState('open');
@@ -68,14 +70,18 @@ export default function DoubtForum() {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">
-          Doubt Forum
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Answer student questions and clarify course concepts.
-        </p>
-      </div>
+      <Topbar
+        title="Doubt forum"
+        subtitle="Answer student questions and clarify course concepts."
+        backFallbackPath="/teacher/dashboard"
+      />
+      <HeroBanner
+        variant="navy"
+        eyebrow="STUDENT SUPPORT"
+        title="Help students move forward"
+        subtitle="Review open questions, share explanations, and mark topics resolved."
+        icons={[MessageSquare, CheckCircle, Clock]}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 

@@ -3,6 +3,8 @@ import {
   Upload, FileText, Trash2, Download, AlertCircle,
   CheckCircle2, HardDrive, FolderOpen
 } from 'lucide-react';
+import Topbar from '../../components/Topbar';
+import HeroBanner from '../../components/HeroBanner';
 import { fetchMyClassrooms } from '../../services/classroomService';
 import {
   deleteMaterial,
@@ -132,15 +134,18 @@ const handleDelete = async (materialId) => {
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
-
-      <div>
-        <h1 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100">
-          Upload Study Material
-        </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Share lecture slides, reference PDFs, and notes with your enrolled students.
-        </p>
-      </div>
+      <Topbar
+        title="Upload study material"
+        subtitle="Share lecture slides, reference PDFs, and notes with your enrolled students."
+        backFallbackPath="/teacher/dashboard"
+      />
+      <HeroBanner
+        variant="navy"
+        eyebrow="CLASSROOM RESOURCES"
+        title="Share materials with your students"
+        subtitle="Upload course PDFs and make them available to students in the selected classroom."
+        icons={[Upload, FileText, HardDrive]}
+      />
 
 {errorMsg && (
         <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 text-xs flex items-center gap-2">

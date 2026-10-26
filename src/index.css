@@ -168,6 +168,60 @@ body {
   color: #f4f4f5 !important;
 }
 
+.teacher-portal [class~="bg-white"],
+.teacher-portal [class~="dark:bg-[#121214]"],
+.teacher-portal [class~="dark:bg-[#161618]"] {
+  background-color: var(--card) !important;
+}
+
+.teacher-portal [class~="bg-[#181829]"],
+.teacher-portal [class~="dark:bg-[#1a1a26]"] {
+  background-color: var(--panel) !important;
+}
+
+.teacher-portal [class~="bg-[#f8f9fa]"],
+.teacher-portal [class~="bg-slate-50"],
+.teacher-portal [class~="bg-slate-100"],
+.teacher-portal [class~="dark:bg-slate-800/40"],
+.teacher-portal [class~="dark:bg-slate-800/60"],
+.teacher-portal [class~="dark:bg-slate-800/80"] {
+  background-color: var(--soft) !important;
+}
+
+.teacher-portal [class~="bg-[#fde047]"] {
+  background-color: #ffe04d !important;
+}
+
+.teacher-portal [class~="text-[#fde047]"],
+.teacher-portal [class~="text-[#facc15]"] {
+  color: #ffe04d !important;
+}
+
+.teacher-portal [class~="text-slate-900"],
+.teacher-portal [class~="text-slate-800"] {
+  color: var(--ink) !important;
+}
+
+.teacher-portal [class~="text-slate-700"],
+.teacher-portal [class~="text-slate-600"],
+.teacher-portal [class~="text-slate-500"],
+.teacher-portal [class~="text-slate-400"] {
+  color: var(--muted) !important;
+}
+
+.teacher-portal [class~="border-[#e5e7eb]"],
+.teacher-portal [class~="dark:border-[#1f1f23]"],
+.teacher-portal [class~="border-slate-100"],
+.teacher-portal [class~="border-slate-200"],
+.teacher-portal [class~="border-slate-700"],
+.teacher-portal [class~="border-slate-800"] {
+  border-color: var(--line) !important;
+}
+
+.teacher-portal [class~="hover:bg-black"]:hover {
+  background-color: var(--panel-2) !important;
+}
+
 .glass-sidebar {
   background: linear-gradient(145deg, rgb(18 18 40 / 96%), rgb(30 30 63 / 90%));
   border: 1px solid rgb(255 255 255 / 25%);
