@@ -4,14 +4,14 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
-const User = require("../models/User");
-const Classroom = require("../models/Classroom");
-const Assignment = require("../models/Assignment");
-const Submission = require("../models/Submission");
-const Announcement = require("../models/Announcement");
-const Notification = require("../models/Notification");
-const StudyMaterial = require("../models/StudyMaterial");
-const StudentRiskProfile = require("../models/StudentRiskProfile");
+const User = require("../src/models/User");
+const Classroom = require("../src/models/Classroom");
+const Assignment = require("../src/models/Assignment");
+const Submission = require("../src/models/Submission");
+const Announcement = require("../src/models/Announcement");
+const Notification = require("../src/models/Notification");
+const StudyMaterial = require("../src/models/StudyMaterial");
+const StudentRiskProfile = require("../src/models/StudentRiskProfile");
 
 const DEMO_PASSWORD = "Demo@12345";
 const DAY = 24 * 60 * 60 * 1000;
