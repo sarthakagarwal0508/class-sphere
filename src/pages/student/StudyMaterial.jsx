@@ -222,6 +222,7 @@ export default function StudyMaterial() {
                       id: selectedMaterial.id,
                       classroomId: selectedMaterial.classroomId,
                       title: selectedMaterial.title,
+                      courseName: selectedMaterial.course?.name,
                     },
                   },
                 })

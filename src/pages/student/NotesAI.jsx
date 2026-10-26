@@ -235,7 +235,17 @@ export default function NotesAI() {
             cards={result?.flashcards ?? []}
             status={status}
             onRevise={() => navigate("/student/flashcards", {
-              state: { cards: result?.flashcards ?? [] },
+              state: {
+                cards: result?.flashcards ?? [],
+                material: material
+                  ? {
+                      id: material.id,
+                      classroomId: material.classroomId,
+                      title: material.title,
+                      courseName: material.courseName,
+                    }
+                  : null,
+              },
             })}
           />
         </div>
