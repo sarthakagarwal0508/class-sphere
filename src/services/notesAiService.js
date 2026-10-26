@@ -1,5 +1,6 @@
 import { fetchMaterialFile } from "./materialService";
 import { summarizePdf } from "./aiService";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 export const MIN_CHARS = 60;
 export const MAX_CHARS = 8000;
@@ -18,12 +19,22 @@ const wordsOf = (sentence) => sentence.toLowerCase().match(/[a-z0-9]+/g) ?? [];
 const meaningful = (sentence) => wordsOf(sentence).filter((w) => w.length > 2 && !STOP_WORDS.has(w));
 
 function splitSentences(text) {
-  return text
-    .replace(/\s+/g, " ")
+  const sentences = text
+    .replace(/\r/g, "")
     .trim()
-    .split(/(?<=[.!?])\s+/)
+    .split(/(?<=[.!?])\s+|\n+/)
     .map((s) => s.trim())
     .filter((s) => s.split(" ").length >= 5);
+  if (sentences.length >= 2) return sentences;
+
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length < 10) return sentences;
+
+  const chunkCount = Math.min(6, Math.max(2, Math.ceil(words.length / 30)));
+  const chunkSize = Math.ceil(words.length / chunkCount);
+  return Array.from({ length: chunkCount }, (_, index) =>
+    words.slice(index * chunkSize, (index + 1) * chunkSize).join(" ")
+  ).filter((chunk) => chunk.split(" ").length >= 5);
 }
 
 function wordFrequency(sentences) {
@@ -112,20 +123,98 @@ function summarizeText(source) {
   return { keyPoints, flashcards };
 }
 
+async function extractPdfText(pdf) {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+  const loadingTask = pdfjsLib.getDocument({
+    data: new Uint8Array(await pdf.arrayBuffer()),
+  });
+
+  try {
+    const document = await loadingTask.promise;
+    const pages = await Promise.all(
+      Array.from({ length: document.numPages }, async (_, pageIndex) => {
+        const page = await document.getPage(pageIndex + 1);
+        const content = await page.getTextContent();
+        return content.items
+          .filter((item) => typeof item.str === "string")
+          .map((item) => `${item.str}${item.hasEOL ? "\n" : " "}`)
+          .join("")
+          .trim();
+      })
+    );
+    const text = pages.filter(Boolean).join("\n");
+    if (text.trim().length < MIN_CHARS) {
+      throw new Error(
+        "This PDF has no readable text. It may be scanned; try a text-based PDF or paste the notes instead."
+      );
+    }
+    return text;
+  } finally {
+    await loadingTask.destroy();
+  }
+}
+
+function normalizeAiResult(response) {
+  const summary = response?.summary ?? response?.keyPoints ?? response?.key_points ?? [];
+  const keyPoints = Array.isArray(summary)
+    ? summary.map((point) => (typeof point === "string" ? point : point?.text ?? point?.content ?? "")).filter(Boolean)
+    : String(summary)
+        .split(/\r?\n|(?<=[.!?])\s+/)
+        .map((line) => line.replace(/^\s*(?:[-*#]+\s*)/, "").trim())
+        .filter(Boolean);
+  const rawCards = response?.flashcards ?? response?.flash_cards ?? [];
+  const flashcards = Array.isArray(rawCards)
+    ? rawCards
+        .map((card) => ({
+          question: card?.question ?? card?.front ?? card?.term ?? "",
+          answer: card?.answer ?? card?.back ?? card?.definition ?? "",
+        }))
+        .filter((card) => card.question && card.answer)
+    : [];
+  return { keyPoints, flashcards };
+}
+
 export async function generateStudyAid({ text = "", material = null }) {
   if (material) {
     const pdf = await fetchMaterialFile(material.id);
+    if (!(pdf instanceof Blob) || pdf.size === 0) {
+      throw new Error("The selected study material is empty or could not be downloaded.");
+    }
     const filename = material.title?.toLowerCase().endsWith(".pdf")
       ? material.title
       : `${material.title || "study-material"}.pdf`;
     const file = new File([pdf], filename, { type: "application/pdf" });
-    const response = await summarizePdf(file);
-    const summary = response?.summary ?? "";
-    const keyPoints = summary
-      .split(/\r?\n/)
-      .map((line) => line.replace(/^\s*(?:[-*#]+\s*)/, "").trim())
-      .filter(Boolean);
-    return { keyPoints, flashcards: response?.flashcards ?? [] };
+    let aiResult;
+    let aiError;
+    try {
+      aiResult = normalizeAiResult(await summarizePdf(file));
+      if (aiResult.keyPoints.length && aiResult.flashcards.length) return aiResult;
+    } catch (error) {
+      aiError = error;
+    }
+
+    try {
+      const localResult = summarizeText(await extractPdfText(pdf));
+      return {
+        keyPoints: aiResult?.keyPoints.length
+          ? aiResult.keyPoints
+          : localResult.keyPoints,
+        flashcards: aiResult?.flashcards.length
+          ? aiResult.flashcards
+          : localResult.flashcards,
+        warning:
+          "The AI service could not fully process this PDF. Results were generated from its readable text in your browser.",
+      };
+    } catch (localError) {
+      if (aiError) {
+        throw new Error(
+          `${aiError.message} Browser fallback could not process the PDF: ${localError.message}`,
+          { cause: localError }
+        );
+      }
+      throw localError;
+    }
   }
 
   const source = text;

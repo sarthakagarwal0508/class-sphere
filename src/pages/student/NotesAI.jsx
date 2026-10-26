@@ -206,6 +206,11 @@ export default function NotesAI() {
               {error}
             </p>
           )}
+          {result?.warning && (
+            <p role="status" className="mt-3 text-xs text-muted">
+              {result.warning}
+            </p>
+          )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button
