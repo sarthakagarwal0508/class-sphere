@@ -15,6 +15,11 @@ import {
   getClassroomAssignments,
 } from '../../services/assignmentService';
 
+function apiErrorMessage(error) {
+  const status = error?.status ? `HTTP ${error.status}: ` : '';
+  return `${status}${error?.message || 'request failed'}`;
+}
+
 export default function TeacherDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -22,6 +27,8 @@ export default function TeacherDashboard() {
   const [classrooms, setClassrooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [dataError, setDataError] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
   const [copiedCode, setCopiedCode] = useState(null);
   const [dashboardData, setDashboardData] = useState({
     totalStudents: 0,
@@ -33,17 +40,68 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     let ignore = false;
-    fetchMyClassrooms()
-      .then(async (items) => {
+    async function loadDashboard() {
+      setLoading(true);
+      setLoadError('');
+      setDataError('');
+
+      let items;
+      try {
+        items = await fetchMyClassrooms();
+      } catch (err) {
+        if (!ignore) {
+          setLoadError(apiErrorMessage(err));
+          setLoading(false);
+        }
+        return;
+      }
+      if (ignore) return;
+      setClassrooms(items);
+      setLoading(false);
+
+      try {
+        const errors = [];
         const results = await Promise.all(items.map(async (classroom) => {
           const classroomId = classroom._id ?? classroom.id;
-          const [analytics, assignments] = await Promise.all([
+          if (!classroomId) {
+            errors.push(`Could not load data for "${classroom.name ?? 'a classroom'}": missing classroom ID.`);
+            return { classroom, analytics: null, pendingGrading: [] };
+          }
+
+          const [analyticsResult, assignmentsResult] = await Promise.allSettled([
             getTeacherClassroomAnalytics(classroomId),
             getClassroomAssignments(classroomId),
           ]);
-          const submissionGroups = await Promise.all(assignments.map(async (assignment) => {
-            const submissions = await getAssignmentSubmissions(assignment._id ?? assignment.id);
-            return submissions
+          const analytics = analyticsResult.status === 'fulfilled'
+            ? analyticsResult.value
+            : null;
+          const assignments = assignmentsResult.status === 'fulfilled'
+            ? assignmentsResult.value
+            : [];
+          const classroomName = classroom.name ?? classroom.title ?? 'Classroom';
+
+          if (analyticsResult.status === 'rejected') {
+            errors.push(`${classroomName}: analytics request failed (${apiErrorMessage(analyticsResult.reason)}).`);
+          }
+          if (assignmentsResult.status === 'rejected') {
+            errors.push(`${classroomName}: assignments request failed (${apiErrorMessage(assignmentsResult.reason)}).`);
+          }
+
+          const submissionResults = await Promise.all(assignments.map((assignment) =>
+            Promise.resolve()
+              .then(() => getAssignmentSubmissions(assignment._id ?? assignment.id))
+              .then((submissions) => ({
+                assignment,
+                submissions,
+              }))
+              .catch((error) => {
+                errors.push(`${classroomName}: submissions request failed for "${assignment.title || 'an assignment'}" (${apiErrorMessage(error)}).`);
+                return null;
+              })
+          ));
+          const pendingGrading = submissionResults
+            .filter(Boolean)
+            .flatMap(({ assignment, submissions }) => submissions
               .filter((submission) => submission.status !== 'graded')
               .map((submission) => ({
                 id: submission._id ?? submission.id,
@@ -53,24 +111,25 @@ export default function TeacherDashboard() {
                 time: submission.submittedAt
                   ? new Date(submission.submittedAt).toLocaleDateString()
                   : 'Recently submitted',
-              }));
-          }));
-          return { classroom, analytics, pendingGrading: submissionGroups.flat() };
+              })));
+
+          return { classroom, analytics, pendingGrading };
         }));
         if (ignore) return;
-        setClassrooms(items);
-        const gradedCount = results.reduce(
+
+        const analyticsResults = results.filter((result) => result.analytics);
+        const gradedCount = analyticsResults.reduce(
           (sum, result) => sum + (result.analytics.totalGradedSubmissions ?? 0),
           0
         );
         const weightedAverage = gradedCount
-          ? results.reduce((sum, result) =>
+          ? analyticsResults.reduce((sum, result) =>
             sum + (result.analytics.averageGradedPercentage ?? 0)
               * (result.analytics.totalGradedSubmissions ?? 0), 0
           ) / gradedCount
           : null;
         setDashboardData({
-          totalStudents: results.reduce(
+          totalStudents: analyticsResults.reduce(
             (sum, result) => sum + (result.analytics.totalStudents ?? 0), 0
           ),
           pendingGrading: results
@@ -81,26 +140,30 @@ export default function TeacherDashboard() {
             (sum, result) => sum + result.pendingGrading.length, 0
           ),
           averagePercentage: weightedAverage == null ? null : Math.round(weightedAverage),
-          classAverages: results.map(({ classroom, analytics }) => ({
-            id: classroom._id ?? classroom.id,
-            name: classroom.name ?? classroom.title ?? 'Class',
-            average: analytics.averageGradedPercentage,
-          })),
+          classAverages: results
+            .filter((result) => result.analytics)
+            .map(({ classroom, analytics }) => ({
+              id: classroom._id ?? classroom.id,
+              name: classroom.name ?? classroom.title ?? 'Class',
+              average: analytics.averageGradedPercentage,
+            })),
         });
-      })
-      .catch((err) => {
+        setDataError([...new Set(errors)].join('\n'));
+      } catch (err) {
         if (!ignore) {
-          setLoadError(err.message || 'Could not load your classrooms.');
+          setDataError(`Could not process classroom dashboard data (${apiErrorMessage(err)}).`);
         }
-      })
-      .finally(() => {
+      } finally {
         if (!ignore) setLoading(false);
-      });
+      }
+    }
+
+    loadDashboard();
 
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [reloadKey]);
 
   const handleCopyCode = (code) => {
     navigator.clipboard.writeText(code);
@@ -198,7 +261,14 @@ export default function TeacherDashboard() {
           <div className="p-8 text-center text-xs text-slate-500">Loading your classrooms...</div>
         ) : loadError ? (
           <div className="rounded-2xl border border-rose-200 dark:border-rose-900 p-6 text-center bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-700 dark:text-rose-300">
-            {loadError}
+            <p>{loadError}</p>
+            <button
+              type="button"
+              onClick={() => setReloadKey((current) => current + 1)}
+              className="mt-3 rounded-xl bg-card px-4 py-2 font-bold text-ink shadow-sm"
+            >
+              Try again
+            </button>
           </div>
         ) : classrooms.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-8 text-center bg-white dark:bg-[#121214] space-y-3">
@@ -260,6 +330,23 @@ export default function TeacherDashboard() {
           </div>
         )}
       </div>
+
+      {dataError && (
+        <div
+          role="status"
+          className="whitespace-pre-line rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200"
+        >
+          <p>Some dashboard data could not be loaded:</p>
+          <p className="mt-1">{dataError}</p>
+          <button
+            type="button"
+            onClick={() => setReloadKey((current) => current + 1)}
+            className="mt-3 rounded-xl bg-card px-4 py-2 font-bold text-ink shadow-sm"
+          >
+            Retry dashboard data
+          </button>
+        </div>
+      )}
 
 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 rounded-2xl border border-[#e5e7eb] dark:border-[#1f1f23] bg-white dark:bg-[#121214] p-5 space-y-3 shadow-sm">
