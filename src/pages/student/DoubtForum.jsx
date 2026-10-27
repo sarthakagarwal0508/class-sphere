@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BookOpen,
   CheckCircle,
@@ -11,12 +11,14 @@ import {
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
 import Card from "../../components/Card";
+import { useAuth } from "../../context/AuthContext";
+import { fetchMyClassrooms } from "../../services/classroomService";
 import {
   addDoubtReply,
   createDoubt,
+  fetchClassroomDoubts,
   formatDoubtTime,
-  getDoubts,
-  subscribeToDoubts,
+  normalizeDoubt,
 } from "../../services/doubtService";
 
 const filters = [
@@ -26,16 +28,59 @@ const filters = [
 ];
 
 export default function DoubtForum() {
-  const [doubts, setDoubts] = useState(getDoubts);
+  const { user } = useAuth();
+  const [classrooms, setClassrooms] = useState([]);
+  const [doubts, setDoubts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
   const [activeDoubtId, setActiveDoubtId] = useState(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [subject, setSubject] = useState("");
+  const [classroomId, setClassroomId] = useState("");
   const [search, setSearch] = useState("");
   const [reply, setReply] = useState("");
 
-  useEffect(() => subscribeToDoubts(setDoubts), []);
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then(async (myClassrooms) => {
+        const classroomResults = await Promise.all(
+          myClassrooms.map(async (classroom) => {
+            const id = String(classroom._id ?? classroom.id);
+            const result = await fetchClassroomDoubts(id);
+            return {
+              classroom: {
+                id,
+                name: classroom.name ?? classroom.title ?? "Classroom",
+              },
+              doubts: result.map((item) =>
+                normalizeDoubt(item, classroom.name ?? classroom.title)
+              ),
+            };
+          })
+        );
+        if (!active) return;
+        setClassrooms(classroomResults.map((item) => item.classroom));
+        setDoubts(classroomResults.flatMap((item) => item.doubts));
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || "Could not load doubts.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const classNameById = useMemo(
+    () => new Map(classrooms.map((classroom) => [classroom.id, classroom.name])),
+    [classrooms]
+  );
 
   const visibleDoubts = doubts.filter((doubt) => {
     const matchesFilter = filter === "all" || doubt.status === filter;
@@ -49,31 +94,81 @@ export default function DoubtForum() {
     visibleDoubts[0] ??
     null;
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-
-    const newDoubt = createDoubt({
-      title: title.trim(),
-      description: description.trim(),
-      subject: subject.trim(),
-      author: "Student",
-    });
-
-    setFilter("all");
-    setSearch("");
-    setActiveDoubtId(newDoubt.id);
-    setTitle("");
-    setDescription("");
-    setSubject("");
+    if (!classroomId) {
+      setError("Join a class before posting a doubt.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await createDoubt(classroomId, {
+        title: title.trim(),
+        description: description.trim(),
+      });
+      const createdDoubt = normalizeDoubt(
+        response?.doubt ?? response,
+        classNameById.get(classroomId)
+      );
+      setDoubts((previous) => [
+        createdDoubt,
+        ...previous.filter((item) => item.id !== createdDoubt.id),
+      ]);
+      setFilter("all");
+      setSearch("");
+      setActiveDoubtId(createdDoubt.id);
+      setTitle("");
+      setDescription("");
+    } catch (submitError) {
+      setError(submitError.message || "Could not post your doubt.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  function handleReply(e) {
+  async function handleReply(e) {
     e.preventDefault();
     const message = reply.trim();
     if (!message || !activeDoubt) return;
-
-    addDoubtReply(activeDoubt.id, "Student", message);
-    setReply("");
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await addDoubtReply(activeDoubt.id, message);
+      const updated = response?.doubt ?? response;
+      if (updated?.replies) {
+        const normalized = normalizeDoubt(updated, activeDoubt.subject);
+        setDoubts((previous) =>
+          previous.map((item) => item.id === activeDoubt.id ? normalized : item)
+        );
+      } else {
+        setDoubts((previous) =>
+          previous.map((item) =>
+            item.id === activeDoubt.id
+              ? normalizeDoubt(
+                  {
+                    ...item,
+                    replies: [
+                      ...item.replies,
+                      {
+                        author: user?.name ?? "You",
+                        message,
+                        createdAt: new Date().toISOString(),
+                      },
+                    ],
+                  },
+                  item.subject
+                )
+              : item
+          )
+        );
+      }
+      setReply("");
+    } catch (replyError) {
+      setError(replyError.message || "Could not post your reply.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const openCount = doubts.filter((doubt) => doubt.status !== "resolved").length;
@@ -93,6 +188,19 @@ export default function DoubtForum() {
         subtitle="Ask your classmates and teachers for help, or share what you know."
         icons={[MessageSquare, BookOpen, MessagesSquare]}
       />
+
+      {error && (
+        <Card className="p-4 text-sm text-tone-red-fg" role="alert">
+          {error}
+          <button
+            type="button"
+            onClick={() => setError("")}
+            className="ml-2 font-bold underline"
+          >
+            Dismiss
+          </button>
+        </Card>
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(16rem,0.85fr)_minmax(0,1.6fr)]">
         <Card className="flex min-h-[28rem] flex-col p-4">
@@ -134,7 +242,11 @@ export default function DoubtForum() {
           </div>
 
           <div className="mt-4 flex-1 space-y-2 overflow-y-auto lg:max-h-[28rem]">
-            {visibleDoubts.length === 0 ? (
+            {loading ? (
+              <p className="px-3 py-10 text-center text-sm text-muted">
+                Loading doubts...
+              </p>
+            ) : visibleDoubts.length === 0 ? (
               <p className="px-3 py-10 text-center text-sm text-muted">
                 No doubts found. Try another filter or ask a question.
               </p>
@@ -267,11 +379,12 @@ export default function DoubtForum() {
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
                       placeholder="Share an explanation or follow-up..."
+                      maxLength={3000}
                       className="min-w-0 flex-1 rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand"
                     />
                     <button
                       type="submit"
-                      disabled={!reply.trim()}
+                      disabled={!reply.trim() || submitting}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Send size={15} />
@@ -295,7 +408,7 @@ export default function DoubtForum() {
             <div className="mb-4">
               <h2 className="text-base font-extrabold text-ink">Ask a doubt</h2>
               <p className="mt-1 text-xs text-muted">
-                Give your question a clear title and tell us which subject it is about.
+                Choose the class where your question belongs.
               </p>
             </div>
 
@@ -306,17 +419,27 @@ export default function DoubtForum() {
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="Doubt title"
                   aria-label="Doubt title"
+                  maxLength={150}
                   required
                   className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand"
                 />
-                <input
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  placeholder="Subject or class"
-                  aria-label="Subject or class"
+                <select
+                  value={classroomId}
+                  onChange={(e) => setClassroomId(e.target.value)}
+                  aria-label="Class"
                   required
-                  className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand"
-                />
+                  disabled={!classrooms.length || submitting}
+                  className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand disabled:opacity-60"
+                >
+                  <option value="">
+                    {classrooms.length ? "Choose a class" : "Join a class first"}
+                  </option>
+                  {classrooms.map((classroom) => (
+                    <option key={classroom.id} value={classroom.id}>
+                      {classroom.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <textarea
                 value={description}
@@ -324,16 +447,18 @@ export default function DoubtForum() {
                 placeholder="Explain what you are stuck on..."
                 aria-label="Describe your doubt"
                 rows={3}
+                maxLength={5000}
                 required
                 className="w-full resize-y rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none transition focus:border-brand"
               />
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand transition hover:brightness-95"
+                  disabled={submitting || !classroomId}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-sm font-extrabold text-on-brand transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Send size={15} />
-                  Post doubt
+                  {submitting ? "Posting..." : "Post doubt"}
                 </button>
               </div>
             </form>

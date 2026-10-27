@@ -171,47 +171,86 @@ export default function LandingPage() {
             <p className="mt-4 leading-7 text-slate-600">Spend less time searching and more time learning. ClassSphere brings your study essentials together in one clear space.</p>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><BookOpen size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Classes & materials</h3>
-              <p className="mt-2 leading-6 text-slate-600">Keep class resources and study materials organized and easy to revisit when it is time to learn.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><ClipboardList size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Assignments & deadlines</h3>
-              <p className="mt-2 leading-6 text-slate-600">Keep track of classroom assignments and due dates so you can plan your work with confidence.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><Brain size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Flashcards for revision</h3>
-              <p className="mt-2 leading-6 text-slate-600">Review important ideas with quick flashcard sessions that help reinforce what you have learned.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><Sparkles size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Notes summaries</h3>
-              <p className="mt-2 leading-6 text-slate-600">Turn shared study notes into concise key points and revision material to make review easier.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><TrendingUp size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Progress reports</h3>
-              <p className="mt-2 leading-6 text-slate-600">See your learning activity, assignment status, and course progress together in one place.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><MessageCircle size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Doubt forum</h3>
-              <p className="mt-2 leading-6 text-slate-600">Ask questions, share explanations, and get help from classmates and teachers.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><Target size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Quizzes & practice</h3>
-              <p className="mt-2 leading-6 text-slate-600">Practice course topics with quizzes and check your understanding as you learn.</p>
-            </article>
-            <article className="landing-feature-card">
-              <span className="landing-feature-icon" aria-hidden="true"><Bell size={21} /></span>
-              <h3 className="mt-4 text-lg font-bold">Class announcements</h3>
-              <p className="mt-2 leading-6 text-slate-600">Stay up to date with classroom news, reminders, and updates from your teachers.</p>
-            </article>
+          <div className="landing-feature-catalog mt-10">
+            <section className="landing-feature-group">
+              <h3 className="landing-feature-category">IN YOUR CLASS</h3>
+              <div className="landing-feature-pair">
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><BookOpen size={19} /></span>
+                  <div>
+                    <h4>Classes & materials</h4>
+                    <p>Keep class resources organized and easy to revisit when it is time to learn.</p>
+                  </div>
+                </article>
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><Bell size={19} /></span>
+                  <div>
+                    <h4>Class announcements</h4>
+                    <p>Stay up to date with classroom news, reminders, and teacher updates.</p>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section className="landing-feature-group">
+              <h3 className="landing-feature-category">STAY ON TRACK</h3>
+              <div className="landing-feature-pair">
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><ClipboardList size={19} /></span>
+                  <div>
+                    <h4>Assignments & deadlines</h4>
+                    <p>See what is due and plan your work with confidence.</p>
+                  </div>
+                </article>
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><TrendingUp size={19} /></span>
+                  <div>
+                    <h4>Progress reports</h4>
+                    <p>Review learning activity, assignment status, and course progress.</p>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section className="landing-feature-group">
+              <h3 className="landing-feature-category">MAKE LEARNING STICK</h3>
+              <div className="landing-feature-pair">
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><Sparkles size={19} /></span>
+                  <div>
+                    <h4>Notes summaries</h4>
+                    <p>Turn shared study notes into concise key points for review.</p>
+                  </div>
+                </article>
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><Brain size={19} /></span>
+                  <div>
+                    <h4>Flashcards for revision</h4>
+                    <p>Revisit important ideas in short, focused study sessions.</p>
+                  </div>
+                </article>
+              </div>
+            </section>
+
+            <section className="landing-feature-group">
+              <h3 className="landing-feature-category">LEARN TOGETHER</h3>
+              <div className="landing-feature-pair">
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><MessageCircle size={19} /></span>
+                  <div>
+                    <h4>Doubt forum</h4>
+                    <p>Ask questions and get help from classmates and teachers.</p>
+                  </div>
+                </article>
+                <article className="landing-feature-entry">
+                  <span className="landing-feature-icon" aria-hidden="true"><Target size={19} /></span>
+                  <div>
+                    <h4>Quizzes & practice</h4>
+                    <p>Practice course topics and check your understanding as you go.</p>
+                  </div>
+                </article>
+              </div>
+            </section>
           </div>
         </div>
       </section>

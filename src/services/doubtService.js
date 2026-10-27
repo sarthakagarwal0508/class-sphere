@@ -1,118 +1,94 @@
+import api from "./api";
+import { toApiError } from "./apiError";
 
-const STORAGE_KEY = "classsphere_doubts_v1";
+function unwrap(response) {
+  return response?.data?.data ?? response?.data ?? response;
+}
 
-const initialDoubts = [
-  {
-    id: "1",
-    title: "Confusion in React Hooks",
-    description: "Can someone explain how useEffect works?",
-    subject: "Web Development",
-    author: "Aarav",
-    status: "open",
-    createdAt: new Date().toISOString(),
-    replies: [],
-  },
-  {
-    id: "2",
-    title: "Binary Search Tree",
-    description: "How do we calculate the height of a BST?",
-    subject: "Data Structures",
-    author: "Priya",
-    status: "resolved",
-    createdAt: new Date().toISOString(),
-    replies: [
-      {
-        id: "r1",
-        author: "Teacher",
-        message: "The height is the number of edges on the longest path from the root to a leaf.",
-        createdAt: new Date().toISOString(),
-      },
-    ],
-  },
-];
+export function listFrom(response) {
+  const data = unwrap(response);
+  return Array.isArray(data) ? data : data?.doubts ?? [];
+}
 
-function readDoubts() {
+export async function fetchClassroomDoubts(classroomId) {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialDoubts));
+    return listFrom(await api.get(`/classrooms/${classroomId}/doubts`));
   } catch (error) {
-    console.error("Unable to load doubts:", error);
+    throw toApiError(error);
   }
-
-  return initialDoubts;
 }
 
-function saveDoubts(doubts) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(doubts));
-  window.dispatchEvent(new Event("doubts-updated"));
+export async function createDoubt(classroomId, { title, description }) {
+  try {
+    return unwrap(
+      await api.post(`/classrooms/${classroomId}/doubts`, {
+        title,
+        description,
+      })
+    );
+  } catch (error) {
+    throw toApiError(error);
+  }
 }
 
-export function getDoubts() {
-  return readDoubts();
+export async function addDoubtReply(doubtId, message) {
+  try {
+    return unwrap(await api.post(`/doubts/${doubtId}/replies`, { message }));
+  } catch (error) {
+    throw toApiError(error);
+  }
 }
 
-export function subscribeToDoubts(callback) {
-  const update = () => callback(getDoubts());
-
-  window.addEventListener("doubts-updated", update);
-  window.addEventListener("storage", update);
-
-  return () => {
-    window.removeEventListener("doubts-updated", update);
-    window.removeEventListener("storage", update);
-  };
+export async function setDoubtStatus(doubtId, status) {
+  try {
+    return unwrap(await api.patch(`/doubts/${doubtId}/status`, { status }));
+  } catch (error) {
+    throw toApiError(error);
+  }
 }
 
-export function createDoubt({ title, description, subject, author }) {
-  const doubts = getDoubts();
+export function normalizeDoubt(doubt, classroomName) {
+  const student = doubt.student;
+  const author =
+    typeof student === "string"
+      ? doubt.studentName ?? "Student"
+      : student?.name ?? student?.fullName ?? "Student";
+  const classroom =
+    typeof doubt.classroom === "object" ? doubt.classroom : null;
+  const replies = Array.isArray(doubt.replies) ? doubt.replies : [];
 
-  const newDoubt = {
-    id: crypto.randomUUID(),
-    title,
-    description,
-    subject,
+  return {
+    ...doubt,
+    id: String(doubt._id ?? doubt.id),
+    title: doubt.title ?? "",
+    description: doubt.description ?? doubt.body ?? "",
+    subject:
+      classroom?.name ??
+      classroom?.title ??
+      classroomName ??
+      doubt.subject ??
+      "Classroom",
     author,
-    status: "open",
-    createdAt: new Date().toISOString(),
-    replies: [],
+    status: doubt.status === "resolved" ? "resolved" : "open",
+    createdAt: doubt.createdAt ?? doubt.created_at,
+    replies: replies.map((reply, index) => {
+      const replyAuthor = reply.author;
+      return {
+        ...reply,
+        id: String(reply._id ?? reply.id ?? `${doubt._id ?? doubt.id}-reply-${index}`),
+        author:
+          typeof replyAuthor === "string"
+            ? reply.authorName ?? "User"
+            : replyAuthor?.name ?? replyAuthor?.fullName ?? "User",
+        message: reply.message ?? reply.text ?? "",
+        createdAt: reply.createdAt ?? reply.created_at,
+      };
+    }),
   };
-
-  saveDoubts([newDoubt, ...doubts]);
-  return newDoubt;
-}
-
-export function addDoubtReply(doubtId, author, message) {
-  const doubts = getDoubts();
-
-  const updated = doubts.map((doubt) =>
-    doubt.id === doubtId
-      ? {
-          ...doubt,
-          replies: [
-            ...(doubt.replies || []),
-            {
-              id: crypto.randomUUID(),
-              author,
-              message,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        }
-      : doubt
-  );
-
-  saveDoubts(updated);
-}
-
-export function setDoubtStatus(doubtId, status) {
-  const updated = getDoubts().map((doubt) =>
-    doubt.id === doubtId ? { ...doubt, status } : doubt
-  );
-
-  saveDoubts(updated);
 }
 
 export function formatDoubtTime(date) {
-  return new Date(date).toLocaleString();
+  if (!date) return "";
+  const parsedDate = new Date(date);
+  return Number.isNaN(parsedDate.getTime()) ? "" : parsedDate.toLocaleString();
 }

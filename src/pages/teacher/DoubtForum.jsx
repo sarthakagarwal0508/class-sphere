@@ -1,72 +1,134 @@
-import { useState } from 'react';
-import { MessageSquare, CheckCircle, Clock, Send } from 'lucide-react';
-import Topbar from '../../components/Topbar';
-import HeroBanner from '../../components/HeroBanner';
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  CheckCircle,
+  Clock3,
+  MessageSquare,
+  MessagesSquare,
+  Send,
+} from "lucide-react";
+import Topbar from "../../components/Topbar";
+import HeroBanner from "../../components/HeroBanner";
+import Card from "../../components/Card";
+import { fetchMyClassrooms } from "../../services/classroomService";
+import {
+  addDoubtReply,
+  fetchClassroomDoubts,
+  formatDoubtTime,
+  normalizeDoubt,
+  setDoubtStatus,
+} from "../../services/doubtService";
 
 export default function DoubtForum() {
-  const [filter, setFilter] = useState('open');
-  const [activeDoubtId, setActiveDoubtId] = useState(1);
-  const [replyText, setReplyText] = useState('');
+  const [doubts, setDoubts] = useState([]);
+  const [filter, setFilter] = useState("open");
+  const [activeDoubtId, setActiveDoubtId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const [doubts, setDoubts] = useState([
-    {
-      id: 1,
-      student: 'Aarav Mehta',
-      class: 'Data Structures',
-      title: 'Difference between singly and doubly linked list memory usage?',
-      body: 'In a doubly linked list, how much extra pointer overhead is there compared to a singly linked list in 64-bit systems?',
-      time: '2 hours ago',
-      status: 'open',
-      replies: [
-        { author: 'Prof. Sharma', text: 'Each node in a doubly linked list requires an additional pointer (prev), taking 8 bytes extra on a 64-bit architecture.', time: '1 hour ago', isTeacher: true }
-      ]
-    },
-    {
-      id: 2,
-      student: 'Riya Sharma',
-      class: 'Database Systems',
-      title: 'B+ Tree vs Binary Search Tree indexing in DBMS?',
-      body: 'Why do relational databases prefer B+ trees over regular balanced BSTs for disk storage?',
-      time: 'Yesterday',
-      status: 'resolved',
-      replies: [
-        { author: 'Prof. Sharma', text: 'B+ Trees have a high branching factor, reducing disk I/O operations significantly compared to binary trees.', time: 'Yesterday', isTeacher: true }
-      ]
+  useEffect(() => {
+    let active = true;
+    fetchMyClassrooms()
+      .then(async (classrooms) => {
+        const groups = await Promise.all(
+          classrooms.map(async (classroom) => {
+            const classroomId = classroom._id ?? classroom.id;
+            const classroomName = classroom.name ?? classroom.title ?? "Classroom";
+            const result = await fetchClassroomDoubts(classroomId);
+            return result.map((doubt) => normalizeDoubt(doubt, classroomName));
+          })
+        );
+        if (active) setDoubts(groups.flat());
+      })
+      .catch((loadError) => {
+        if (active) setError(loadError.message || "Could not load classroom doubts.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const filteredDoubts = useMemo(
+    () => doubts.filter((doubt) => doubt.status === filter),
+    [doubts, filter]
+  );
+  const activeDoubt =
+    filteredDoubts.find((doubt) => doubt.id === activeDoubtId) ??
+    filteredDoubts[0] ??
+    null;
+
+  async function handlePostReply(event) {
+    event.preventDefault();
+    const message = replyText.trim();
+    if (!message || !activeDoubt) return;
+
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await addDoubtReply(activeDoubt.id, message);
+      const updated = response?.doubt ?? response;
+      if (updated?.replies) {
+        const normalized = normalizeDoubt(updated, activeDoubt.subject);
+        setDoubts((previous) =>
+          previous.map((item) => item.id === activeDoubt.id ? normalized : item)
+        );
+      } else {
+        setDoubts((previous) =>
+          previous.map((item) =>
+            item.id === activeDoubt.id
+              ? normalizeDoubt(
+                  {
+                    ...item,
+                    replies: [
+                      ...item.replies,
+                      {
+                        author: "You",
+                        message,
+                        createdAt: new Date().toISOString(),
+                      },
+                    ],
+                  },
+                  item.subject
+                )
+              : item
+          )
+        );
+      }
+      setReplyText("");
+    } catch (replyError) {
+      setError(replyError.message || "Could not post your answer.");
+    } finally {
+      setSubmitting(false);
     }
-  ]);
+  }
 
-  const activeDoubt = doubts.find(d => d.id === activeDoubtId) || doubts[0];
-
-  const handlePostReply = (e) => {
-    e.preventDefault();
-    if (!replyText.trim() || !activeDoubt) return;
-
-    setDoubts(prev => prev.map(d => {
-      if (d.id === activeDoubt.id) {
-        return {
-          ...d,
-          replies: [
-            ...d.replies,
-            { author: 'Prof. Sharma', text: replyText.trim(), time: 'Just now', isTeacher: true }
-          ]
-        };
-      }
-      return d;
-    }));
-
-    setReplyText('');
-  };
-
-  const toggleResolved = (doubtId) => {
-    setDoubts(prev => prev.map(d => {
-      if (d.id === doubtId) {
-        return { ...d, status: d.status === 'resolved' ? 'open' : 'resolved' };
-      }
-      return d;
-    }));
-  };
-
-  const filteredDoubts = doubts.filter(d => d.status === filter);
+  async function toggleResolved(doubt) {
+    const status = doubt.status === "resolved" ? "open" : "resolved";
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await setDoubtStatus(doubt.id, status);
+      const updated = response?.doubt ?? response;
+      const normalized =
+        updated?._id || updated?.id
+          ? normalizeDoubt(updated, doubt.subject)
+          : { ...doubt, status };
+      setDoubts((previous) =>
+        previous.map((item) => item.id === doubt.id ? normalized : item)
+      );
+      setActiveDoubtId(doubt.id);
+    } catch (statusError) {
+      setError(statusError.message || "Could not update the doubt status.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="space-y-6 dashboard-stagger max-w-6xl mx-auto">
@@ -79,115 +141,177 @@ export default function DoubtForum() {
         variant="navy"
         eyebrow="STUDENT SUPPORT"
         title="Help students move forward"
-        subtitle="Review open questions, share explanations, and mark topics resolved."
-        icons={[MessageSquare, CheckCircle, Clock]}
+        subtitle="Review class questions, share explanations, and mark topics resolved."
+        icons={[MessageSquare, CheckCircle, Clock3]}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {error && (
+        <Card className="p-4 text-sm text-tone-red-fg" role="alert">
+          {error}
+          <button
+            type="button"
+            onClick={() => setError("")}
+            className="ml-2 font-bold underline"
+          >
+            Dismiss
+          </button>
+        </Card>
+      )}
 
-        <div className="bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl">
-            <button
-              onClick={() => setFilter('open')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                filter === 'open'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Open Doubts
-            </button>
-            <button
-              onClick={() => setFilter('resolved')}
-              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition ${
-                filter === 'resolved'
-                  ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Resolved
-            </button>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="space-y-4 p-5">
+          <div className="flex gap-1 rounded-xl bg-soft p-1">
+            {["open", "resolved"].map((status) => (
+              <button
+                key={status}
+                type="button"
+                onClick={() => {
+                  setFilter(status);
+                  setActiveDoubtId(null);
+                }}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-bold capitalize transition ${
+                  filter === status
+                    ? "bg-card text-ink shadow-sm"
+                    : "text-muted hover:text-ink"
+                }`}
+              >
+                {status === "open" ? "Open doubts" : "Resolved"}
+              </button>
+            ))}
           </div>
 
-          <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-            {filteredDoubts.length === 0 ? (
-              <p className="text-xs text-slate-400 py-6 text-center">No doubts in this category.</p>
+          <div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
+            {loading ? (
+              <p className="py-6 text-center text-xs text-muted">Loading class doubts...</p>
+            ) : filteredDoubts.length === 0 ? (
+              <p className="py-6 text-center text-xs text-muted">No doubts in this category.</p>
             ) : (
-              filteredDoubts.map(d => (
-                <div
-                  key={d.id}
-                  onClick={() => setActiveDoubtId(d.id)}
-                  className={`p-3.5 rounded-xl border text-left cursor-pointer transition ${
-                    activeDoubtId === d.id
-                      ? 'border-[#fde047] bg-amber-50/50 dark:bg-amber-950/20'
-                      : 'border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30'
+              filteredDoubts.map((doubt) => (
+                <button
+                  key={doubt.id}
+                  type="button"
+                  onClick={() => setActiveDoubtId(doubt.id)}
+                  className={`w-full rounded-xl border p-3.5 text-left transition ${
+                    activeDoubt?.id === doubt.id
+                      ? "border-brand bg-brand-soft"
+                      : "border-line bg-card hover:bg-soft"
                   }`}
                 >
-                  <p className="text-xs font-bold text-slate-900 dark:text-white line-clamp-1">{d.title}</p>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{d.student} &bull; {d.class}</p>
-                </div>
+                  <p className="line-clamp-2 text-sm font-bold text-ink">{doubt.title}</p>
+                  <p className="mt-1 text-[11px] text-muted">
+                    {doubt.author} · {doubt.subject}
+                  </p>
+                  <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
+                    <MessagesSquare size={13} />
+                    {doubt.replies.length} replies
+                  </p>
+                </button>
               ))
             )}
           </div>
-        </div>
+        </Card>
 
-<div className="lg:col-span-2 bg-white dark:bg-[#121214] border border-[#e5e7eb] dark:border-[#1f1f23] rounded-2xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
+        <Card className="flex min-h-[30rem] flex-col justify-between space-y-5 p-5 lg:col-span-2 sm:p-6">
           {activeDoubt ? (
-            <div className="space-y-5">
-              <div className="flex items-start justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 dark:text-white">{activeDoubt.title}</h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Asked by <span className="font-semibold text-slate-700 dark:text-slate-300">{activeDoubt.student}</span> in {activeDoubt.class} &bull; {activeDoubt.time}
-                  </p>
-                </div>
-                <button
-                  onClick={() => toggleResolved(activeDoubt.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition ${
-                    activeDoubt.status === 'resolved'
-                      ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-emerald-100'
-                  }`}
-                >
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  {activeDoubt.status === 'resolved' ? 'Resolved' : 'Mark Resolved'}
-                </button>
-              </div>
-
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
-                {activeDoubt.body}
-              </p>
-
-<div className="space-y-3">
-                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Responses</h3>
-                {activeDoubt.replies.map((r, i) => (
-                  <div key={i} className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-1">
-                    <p className="text-[11px] font-bold text-amber-900 dark:text-amber-300">{r.author} &bull; {r.time}</p>
-                    <p className="text-xs text-slate-800 dark:text-slate-200">{r.text}</p>
+            <>
+              <div className="space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-4">
+                  <div className="min-w-0">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-bold text-tone-yellow-fg">
+                      <BookOpen size={13} />
+                      {activeDoubt.subject}
+                    </span>
+                    <h2 className="mt-3 text-lg font-extrabold text-ink">{activeDoubt.title}</h2>
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
+                      {activeDoubt.author}
+                      <span aria-hidden="true">·</span>
+                      <Clock3 size={13} />
+                      {formatDoubtTime(activeDoubt.createdAt)}
+                    </p>
                   </div>
-                ))}
+                  <button
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => toggleResolved(activeDoubt)}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition disabled:opacity-50 ${
+                      activeDoubt.status === "resolved"
+                        ? "bg-tone-green text-tone-green-fg"
+                        : "bg-soft text-ink hover:bg-tone-green"
+                    }`}
+                  >
+                    <CheckCircle size={14} />
+                    {activeDoubt.status === "resolved" ? "Reopen doubt" : "Mark resolved"}
+                  </button>
+                </div>
+
+                <p className="whitespace-pre-wrap rounded-xl border border-line bg-soft/60 p-4 text-sm leading-6 text-ink">
+                  {activeDoubt.description}
+                </p>
+
+                <div className="space-y-3">
+                  <h3 className="text-sm font-extrabold text-ink">
+                    Responses ({activeDoubt.replies.length})
+                  </h3>
+                  {activeDoubt.replies.length ? (
+                    activeDoubt.replies.map((reply) => (
+                      <div key={reply.id} className="rounded-xl border border-line bg-card p-3.5">
+                        <p className="text-xs font-bold text-tone-yellow-fg">
+                          {reply.author}
+                          {reply.createdAt && (
+                            <span className="font-medium text-muted">
+                              {" "}· {formatDoubtTime(reply.createdAt)}
+                            </span>
+                          )}
+                        </p>
+                        <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 text-ink">
+                          {reply.message}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="rounded-xl bg-soft px-4 py-3 text-sm text-muted">
+                      No responses yet. Be the first to help.
+                    </p>
+                  )}
+                </div>
               </div>
 
-<form onSubmit={handlePostReply} className="space-y-2 pt-2">
+              <form onSubmit={handlePostReply} className="space-y-2 border-t border-line pt-4">
+                <label htmlFor="teacher-doubt-reply" className="block text-xs font-bold text-ink">
+                  Add an answer
+                </label>
                 <textarea
-                  rows="3"
-                  placeholder="Type your official answer..."
+                  id="teacher-doubt-reply"
+                  rows={3}
+                  maxLength={3000}
+                  required
+                  placeholder="Type your explanation..."
                   value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  className="w-full bg-[#f8f9fa] dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#fde047]"
+                  onChange={(event) => setReplyText(event.target.value)}
+                  className="w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink outline-none focus:border-brand"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-[#181829] hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition"
+                  disabled={!replyText.trim() || submitting}
+                  className="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2.5 text-xs font-bold text-on-brand disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Send className="w-3.5 h-3.5" /> Post Answer
+                  <Send size={14} />
+                  {submitting ? "Sending..." : "Post answer"}
                 </button>
               </form>
-            </div>
+            </>
           ) : (
-            <p className="text-xs text-slate-400 py-10 text-center">Select a doubt thread to inspect.</p>
+            <div className="flex flex-1 flex-col items-center justify-center py-10 text-center">
+              <MessageSquare className="h-9 w-9 text-muted/70" />
+              <p className="mt-3 text-sm font-bold text-ink">
+                {loading ? "Loading doubts..." : "No doubt selected"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {loading ? "Fetching questions from your classrooms." : "Choose a question from the list."}
+              </p>
+            </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

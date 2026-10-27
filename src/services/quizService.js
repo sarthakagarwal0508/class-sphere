@@ -1,87 +1,116 @@
+import api from "./api";
+import { toApiError } from "./apiError";
 
-
-import { quizzesData } from "../data/quizzesData";
-
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
-const store = quizzesData.map((q) => ({ ...q }));
-
-const attempts = new Map();
-
-const find = (quizId) => store.find((q) => String(q.id) === String(quizId));
-
-function toSummary(q) {
-  return {
-    id: q.id,
-    title: q.title,
-    course: q.course,
-    color: q.color,
-    topic: q.topic,
-    durationMin: q.durationMin,
-    due: q.due,
-    dueDate: q.dueDate,
-    status: q.status,
-    score: q.score,
-    total: q.total,
-    questionCount: q.questions ? q.questions.length : q.total,
-  };
+function unwrap(response) {
+  return response?.data?.data ?? response?.data ?? response;
 }
 
-export async function getQuizzes() {
-  await delay(500);
-
-  return store.map(toSummary);
+export function listFrom(response, key = "quizzes") {
+  const data = unwrap(response);
+  return Array.isArray(data) ? data : data?.[key] ?? [];
 }
 
-export async function startQuiz(quizId) {
-  await delay(500);
-
-  const quiz = find(quizId);
-  if (!quiz) throw new Error("Quiz not found.");
-  if (quiz.status === "completed") throw new Error("You have already completed this quiz.");
-
-  if (!attempts.has(quiz.id)) {
-    attempts.set(quiz.id, Date.now() + quiz.durationMin * 60 * 1000);
+export async function createQuiz(payload) {
+  try {
+    return unwrap(await api.post("/quizzes", payload));
+  } catch (error) {
+    throw toApiError(error);
   }
+}
 
-  return {
-    id: quiz.id,
-    title: quiz.title,
-    course: quiz.course,
-    topic: quiz.topic,
-    durationMin: quiz.durationMin,
-    endsAt: attempts.get(quiz.id),
+export async function getClassroomQuizzes(classroomId) {
+  try {
+    return listFrom(await api.get(`/quizzes/classrooms/${classroomId}`));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
 
-    questions: quiz.questions.map(({ id, text, options }) => ({ id, text, options })),
-  };
+export async function publishQuiz(quizId) {
+  try {
+    return unwrap(await api.patch(`/quizzes/${quizId}/publish`));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function unpublishQuiz(quizId) {
+  try {
+    return unwrap(await api.patch(`/quizzes/${quizId}/unpublish`));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getQuizResults(quizId) {
+  try {
+    return unwrap(await api.get(`/quizzes/${quizId}/results`));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
+
+export async function getStudentClassroomQuizzes(classroomId) {
+  try {
+    return listFrom(
+      await api.get(`/quizzes/student/classrooms/${classroomId}`)
+    );
+  } catch (error) {
+    throw toApiError(error);
+  }
 }
 
 export async function submitQuiz({ quizId, answers }) {
-  await delay(700);
+  try {
+    return unwrap(await api.post(`/quizzes/${quizId}/submit`, { answers }));
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
 
-  const quiz = find(quizId);
-  if (!quiz) throw new Error("Quiz not found.");
-  if (quiz.status === "completed") throw new Error("This quiz was already submitted.");
+export async function getStudentQuizAttempts() {
+  try {
+    return listFrom(await api.get("/quizzes/student/attempts"), "attempts");
+  } catch (error) {
+    throw toApiError(error);
+  }
+}
 
-  const review = quiz.questions.map((q) => ({
-    id: q.id,
-    text: q.text,
-    options: q.options,
-    selected: answers[q.id] ?? null,
-    correct: q.correct,
-  }));
-  const score = review.filter((r) => r.selected === r.correct).length;
-
-  quiz.status = "completed";
-  quiz.score = score;
-  quiz.total = review.length;
-  attempts.delete(quiz.id);
-
+export function normalizeQuiz(quiz, classroom = {}) {
+  const questions = Array.isArray(quiz.questions) ? quiz.questions : [];
   return {
-    quizId: quiz.id,
-    score,
-    total: review.length,
-    percent: Math.round((score / review.length) * 100),
-    review,
+    ...quiz,
+    id: String(quiz._id ?? quiz.id),
+    classroomId: String(
+      quiz.classroomId ??
+        (typeof quiz.classroom === "object"
+          ? quiz.classroom?._id ?? quiz.classroom?.id
+          : quiz.classroom) ??
+        classroom._id ??
+        classroom.id ??
+        ""
+    ),
+    course:
+      classroom.name ??
+      classroom.title ??
+      (typeof quiz.classroom === "object"
+        ? quiz.classroom?.name ?? quiz.classroom?.title
+        : "") ??
+      quiz.course ??
+      "Classroom",
+    topic: quiz.topic ?? "",
+    title: quiz.title ?? quiz.topic ?? "Quiz",
+    status: quiz.status ?? "published",
+    difficulty: quiz.difficulty ?? "mixed",
+    questionCount: quiz.questionCount ?? questions.length,
+    questions: questions.map((question, index) => ({
+      ...question,
+      id: String(question._id ?? question.id ?? index),
+      question: question.question ?? question.text ?? "",
+      options: Array.isArray(question.options) ? question.options : [],
+    })),
+    totalMarks: Number(quiz.totalMarks ?? quiz.total ?? questions.length),
+    durationMin: Number(quiz.durationMin ?? quiz.duration ?? 0),
+    dueDate: quiz.dueDate ?? quiz.due ?? null,
   };
 }
