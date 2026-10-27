@@ -20,7 +20,7 @@ app.use(helmet());
 
 const allowedOrigins = [
   "http://localhost:5173",
-  "https://class-sphere-one.vercel.app/",
+  "https://class-sphere-one.vercel.app",
 ];
 
 app.use(
