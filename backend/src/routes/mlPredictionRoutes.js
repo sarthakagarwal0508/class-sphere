@@ -15,11 +15,6 @@ router.put(
   upsertStudentRiskProfile
 );
 
-router.get(
-  "/teacher/classrooms/:id/risk-predictions",
-  protect,
-  authorizeRoles("teacher"),
-  getClassroomRiskPredictions
-);
+router.get("/teacher/classrooms/:id/risk-predictions",protect,authorizeRoles("teacher"),getClassroomRiskPredictions);
 
 module.exports = router;

@@ -14,6 +14,7 @@ const analyticsRoutes = require("./routes/analyticsRoutes");
 const mlPredictionRoutes = require("./routes/mlPredictionRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const doubtRoutes = require("./routes/doubtRoutes");
+const quizRoutes = require("./routes/quizRoutes");
 
 app.use(helmet());
 
@@ -58,6 +59,7 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/analytics", mlPredictionRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/discussions", doubtRoutes);
+app.use("/api/quizzes", quizRoutes);
 
 
 module.exports = app;
