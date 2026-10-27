@@ -1,16 +1,50 @@
 
 const mongoose = require("mongoose");
 const Quiz = require("../models/Quiz");
-const Classroom = require("../models/Classroom");
 const QuizAttempt = require("../models/QuizAttempt");
+const Classroom = require("../models/Classroom");
 
-// Save an AI-generated quiz to MongoDB.
+const getCorrectAnswer = (question) =>
+  question.correctAnswer ??
+  question.correct_answer ??
+  question.answer ??
+  question.correctOption ??
+  question.correct_option;
+
+const isValidId = (id) => mongoose.isValidObjectId(id);
+
+const isTeacherOfClassroom = async (classroomId, teacherId) =>
+  Classroom.findOne({
+    _id: classroomId,
+    teacher: teacherId,
+  }).select("_id");
+
+const isStudentOfClassroom = async (classroomId, studentId) =>
+  Classroom.findOne({
+    _id: classroomId,
+    students: studentId,
+  }).select("_id");
+
+// Remove answer keys before sending questions to students.
+const hideCorrectAnswers = (question) => {
+  const safeQuestion = { ...question };
+
+  delete safeQuestion.correctAnswer;
+  delete safeQuestion.correct_answer;
+  delete safeQuestion.answer;
+  delete safeQuestion.correctOption;
+  delete safeQuestion.correct_option;
+
+  return safeQuestion;
+};
+
+// TEACHER: Save a quiz as draft or published.
 const saveQuiz = async (req, res) => {
   try {
     const {
       title,
       classroomId,
-      topic,
+      topic = "",
       questions,
       difficulty = "mixed",
       source = "topic",
@@ -18,14 +52,14 @@ const saveQuiz = async (req, res) => {
       totalMarks,
     } = req.body;
 
-    if (!title || typeof title !== "string" || title.trim().length < 3) {
+    if (typeof title !== "string" || title.trim().length < 3) {
       return res.status(400).json({
         success: false,
         message: "Title must contain at least 3 characters.",
       });
     }
 
-    if (!mongoose.isValidObjectId(classroomId)) {
+    if (!isValidId(classroomId)) {
       return res.status(400).json({
         success: false,
         message: "A valid classroomId is required.",
@@ -53,7 +87,7 @@ const saveQuiz = async (req, res) => {
     if (!["topic", "study_material", "pdf", "mixed"].includes(source)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid quiz source.",
+        message: "Invalid source.",
       });
     }
 
@@ -64,24 +98,43 @@ const saveQuiz = async (req, res) => {
       });
     }
 
-    const classroom = await Classroom.findOne({
-      _id: classroomId,
-      teacher: req.user._id,
-    });
+    const classroom = await isTeacherOfClassroom(
+      classroomId,
+      req.user._id
+    );
 
     if (!classroom) {
       return res.status(403).json({
         success: false,
-        message: "You can save quizzes only in your own classroom.",
+        message: "You can manage quizzes only in your own classroom.",
       });
     }
 
-    const marks = totalMarks === undefined ? questions.length : Number(totalMarks);
+    const marks =
+      totalMarks === undefined ? questions.length : Number(totalMarks);
 
     if (!Number.isFinite(marks) || marks <= 0) {
       return res.status(400).json({
         success: false,
         message: "totalMarks must be greater than 0.",
+      });
+    }
+
+    // A quiz can only be published if every question has an answer key.
+    if (
+      status === "published" &&
+      questions.some(
+        (question) =>
+          !question ||
+          typeof question !== "object" ||
+          getCorrectAnswer(question) === undefined ||
+          getCorrectAnswer(question) === null
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Every question must have a correct answer before publishing.",
       });
     }
 
@@ -99,10 +152,8 @@ const saveQuiz = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Quiz saved successfully.",
-      data: {
-        quiz,
-      },
+      message: `Quiz saved as ${status}.`,
+      data: quiz,
     });
   } catch (error) {
     console.error("Save quiz error:", error.message);
@@ -114,22 +165,22 @@ const saveQuiz = async (req, res) => {
   }
 };
 
-// List quizzes belonging to a classroom owned by this teacher.
+// TEACHER: List all quizzes in their classroom.
 const getTeacherQuizzes = async (req, res) => {
   try {
     const { classroomId } = req.params;
 
-    if (!mongoose.isValidObjectId(classroomId)) {
+    if (!isValidId(classroomId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
       });
     }
 
-    const classroom = await Classroom.findOne({
-      _id: classroomId,
-      teacher: req.user._id,
-    }).select("_id");
+    const classroom = await isTeacherOfClassroom(
+      classroomId,
+      req.user._id
+    );
 
     if (!classroom) {
       return res.status(403).json({
@@ -160,22 +211,151 @@ const getTeacherQuizzes = async (req, res) => {
   }
 };
 
+// TEACHER: Publish a saved draft.
+const publishQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
 
+    if (!isValidId(quizId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quiz ID.",
+      });
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      teacher: req.user._id,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: "Quiz not found.",
+      });
+    }
+
+    const classroom = await isTeacherOfClassroom(
+      quiz.classroom,
+      req.user._id
+    );
+
+    if (!classroom) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot publish quizzes in this classroom.",
+      });
+    }
+
+    if (
+      !quiz.questions.length ||
+      quiz.questions.some((question) => {
+        const answer = getCorrectAnswer(question);
+        return answer === undefined || answer === null;
+      })
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Every question must have a correct answer before publishing.",
+      });
+    }
+
+    quiz.status = "published";
+    await quiz.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Quiz published successfully.",
+      data: {
+        _id: quiz._id,
+        title: quiz.title,
+        status: quiz.status,
+        classroom: quiz.classroom,
+      },
+    });
+  } catch (error) {
+    console.error("Publish quiz error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to publish quiz.",
+    });
+  }
+};
+
+// TEACHER: Unpublish a quiz.
+// A quiz with existing attempts cannot be unpublished.
+const unpublishQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    if (!isValidId(quizId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quiz ID.",
+      });
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      teacher: req.user._id,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: "Quiz not found.",
+      });
+    }
+
+    const hasAttempts = await QuizAttempt.exists({ quiz: quiz._id });
+
+    if (hasAttempts) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This quiz already has student attempts and cannot be unpublished.",
+      });
+    }
+
+    quiz.status = "draft";
+    await quiz.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Quiz moved back to draft.",
+      data: {
+        _id: quiz._id,
+        status: quiz.status,
+      },
+    });
+  } catch (error) {
+    console.error("Unpublish quiz error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to unpublish quiz.",
+    });
+  }
+};
+
+// STUDENT: List published quizzes for a classroom.
 const getStudentQuizzes = async (req, res) => {
   try {
     const { classroomId } = req.params;
 
-    if (!mongoose.isValidObjectId(classroomId)) {
+    if (!isValidId(classroomId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
       });
     }
 
-    const classroom = await Classroom.findOne({
-      _id: classroomId,
-      students: req.user._id,
-    }).select("_id");
+    const classroom = await isStudentOfClassroom(
+      classroomId,
+      req.user._id
+    );
 
     if (!classroom) {
       return res.status(403).json({
@@ -189,24 +369,36 @@ const getStudentQuizzes = async (req, res) => {
       status: "published",
     }).sort({ createdAt: -1 });
 
-    const safeQuizzes = quizzes.map((quiz) => {
-      const data = quiz.toObject();
+    const attempts = await QuizAttempt.find({
+      student: req.user._id,
+      quiz: { $in: quizzes.map((quiz) => quiz._id) },
+    }).select("quiz score totalMarks submittedAt");
 
-      data.questions = data.questions.map((question) => {
-        const {
-          correctAnswer,
-          correct_answer,
-          answer,
-          correctOption,
-          correct_option,
-          ...safeQuestion
-        } = question;
+    const attemptMap = new Map(
+      attempts.map((attempt) => [
+        String(attempt.quiz),
+        {
+          attempted: true,
+          score: attempt.score,
+          totalMarks: attempt.totalMarks,
+          submittedAt: attempt.submittedAt,
+        },
+      ])
+    );
 
-        return safeQuestion;
-      });
-
-      return data;
-    });
+    const safeQuizzes = quizzes.map((quiz) => ({
+      _id: quiz._id,
+      title: quiz.title,
+      topic: quiz.topic,
+      classroom: quiz.classroom,
+      teacher: quiz.teacher,
+      difficulty: quiz.difficulty,
+      totalMarks: quiz.totalMarks,
+      questions: quiz.questions.map(hideCorrectAnswers),
+      createdAt: quiz.createdAt,
+      attempted: attemptMap.has(String(quiz._id)),
+      attempt: attemptMap.get(String(quiz._id)) || null,
+    }));
 
     return res.status(200).json({
       success: true,
@@ -223,12 +415,13 @@ const getStudentQuizzes = async (req, res) => {
   }
 };
 
+// STUDENT: Submit answers and calculate the score on the server.
 const submitQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
     const { answers } = req.body;
 
-    if (!mongoose.isValidObjectId(quizId)) {
+    if (!isValidId(quizId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid quiz ID.",
@@ -254,10 +447,10 @@ const submitQuiz = async (req, res) => {
       });
     }
 
-    const classroom = await Classroom.findOne({
-      _id: quiz.classroom,
-      students: req.user._id,
-    }).select("_id");
+    const classroom = await isStudentOfClassroom(
+      quiz.classroom,
+      req.user._id
+    );
 
     if (!classroom) {
       return res.status(403).json({
@@ -278,6 +471,13 @@ const submitQuiz = async (req, res) => {
       });
     }
 
+    if (answers.length > quiz.questions.length) {
+      return res.status(400).json({
+        success: false,
+        message: "Too many answers were submitted.",
+      });
+    }
+
     const seen = new Set();
 
     for (const answer of answers) {
@@ -291,7 +491,7 @@ const submitQuiz = async (req, res) => {
       ) {
         return res.status(400).json({
           success: false,
-          message: "Answers contain an invalid or duplicate question index.",
+          message: "An answer has an invalid or duplicate question index.",
         });
       }
 
@@ -301,22 +501,13 @@ const submitQuiz = async (req, res) => {
     let correctCount = 0;
 
     for (const answer of answers) {
-      const question = quiz.questions[answer.questionIndex].toObject
-        ? quiz.questions[answer.questionIndex].toObject()
-        : quiz.questions[answer.questionIndex];
-
-      const correctAnswer =
-        question.correctAnswer ??
-        question.correct_answer ??
-        question.answer ??
-        question.correctOption ??
-        question.correct_option;
+      const question = quiz.questions[answer.questionIndex];
+      const correctAnswer = getCorrectAnswer(question);
 
       if (correctAnswer === undefined || correctAnswer === null) {
         return res.status(422).json({
           success: false,
-          message:
-            "This quiz has a question without a recognized correct-answer field.",
+          message: "A question is missing its answer key.",
           questionIndex: answer.questionIndex,
         });
       }
@@ -340,6 +531,8 @@ const submitQuiz = async (req, res) => {
       answers,
       score,
       totalMarks: quiz.totalMarks,
+      correctAnswers: correctCount,
+      totalQuestions,
     });
 
     return res.status(201).json({
@@ -347,6 +540,7 @@ const submitQuiz = async (req, res) => {
       message: "Quiz submitted and graded successfully.",
       data: {
         attemptId: attempt._id,
+        quizId: quiz._id,
         score,
         totalMarks: quiz.totalMarks,
         correctAnswers: correctCount,
@@ -371,6 +565,7 @@ const submitQuiz = async (req, res) => {
   }
 };
 
+// STUDENT: See their own quiz history.
 const getMyQuizAttempts = async (req, res) => {
   try {
     const attempts = await QuizAttempt.find({
@@ -385,7 +580,7 @@ const getMyQuizAttempts = async (req, res) => {
       data: attempts,
     });
   } catch (error) {
-    console.error("Get quiz attempts error:", error.message);
+    console.error("Get quiz history error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -394,10 +589,74 @@ const getMyQuizAttempts = async (req, res) => {
   }
 };
 
+// TEACHER: View results for a classroom quiz.
+const getQuizResults = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+
+    if (!isValidId(quizId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid quiz ID.",
+      });
+    }
+
+    const quiz = await Quiz.findOne({
+      _id: quizId,
+      teacher: req.user._id,
+    });
+
+    if (!quiz) {
+      return res.status(404).json({
+        success: false,
+        message: "Quiz not found.",
+      });
+    }
+
+    const classroom = await isTeacherOfClassroom(
+      quiz.classroom,
+      req.user._id
+    );
+
+    if (!classroom) {
+      return res.status(403).json({
+        success: false,
+        message: "You cannot view results for this classroom.",
+      });
+    }
+
+    const attempts = await QuizAttempt.find({ quiz: quiz._id })
+      .populate("student", "name email")
+      .sort({ submittedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      quiz: {
+        _id: quiz._id,
+        title: quiz.title,
+        totalMarks: quiz.totalMarks,
+        status: quiz.status,
+      },
+      count: attempts.length,
+      data: attempts,
+    });
+  } catch (error) {
+    console.error("Get quiz results error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch quiz results.",
+    });
+  }
+};
+
 module.exports = {
   saveQuiz,
   getTeacherQuizzes,
+  publishQuiz,
+  unpublishQuiz,
   getStudentQuizzes,
   submitQuiz,
   getMyQuizAttempts,
+  getQuizResults,
 };

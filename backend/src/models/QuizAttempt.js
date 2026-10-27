@@ -7,12 +7,14 @@ const quizAttemptSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Quiz",
       required: true,
+      index: true,
     },
 
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      index: true,
     },
 
     answers: [
@@ -35,6 +37,18 @@ const quizAttemptSchema = new mongoose.Schema(
     },
 
     totalMarks: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
+    correctAnswers: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    totalQuestions: {
       type: Number,
       required: true,
       min: 1,

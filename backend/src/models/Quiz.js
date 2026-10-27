@@ -60,6 +60,7 @@ const quizSchema = new mongoose.Schema(
       type: String,
       enum: ["draft", "published"],
       default: "draft",
+      index: true,
     },
 
     totalMarks: {
@@ -68,11 +69,9 @@ const quizSchema = new mongoose.Schema(
       default: 1,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-quizSchema.index({ classroom: 1, createdAt: -1 });
+quizSchema.index({ classroom: 1, status: 1, createdAt: -1 });
 
 module.exports = mongoose.model("Quiz", quizSchema);
