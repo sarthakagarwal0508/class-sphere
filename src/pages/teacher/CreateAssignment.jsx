@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Clock3,
   FileText,
+  Upload,
   Sparkles,
   Trophy,
 } from "lucide-react";
@@ -42,6 +43,7 @@ export default function CreateAssignment() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
+  const [questionPdf, setQuestionPdf] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +80,28 @@ export default function CreateAssignment() {
     setIsSuccess(false);
   };
 
+  const handleQuestionPdfChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+    if (!file) return;
+
+    if (
+      file.type !== "application/pdf" ||
+      !file.name.toLowerCase().endsWith(".pdf")
+    ) {
+      setError("Select a PDF file for the assignment questions.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("The question PDF must be 10 MB or smaller.");
+      return;
+    }
+
+    setQuestionPdf(file);
+    setError("");
+    setIsSuccess(false);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
@@ -102,6 +126,7 @@ export default function CreateAssignment() {
         description: formData.instructions.trim(),
         dueDate: dueAt.toISOString(),
         maxMarks,
+        questionPdf,
       });
       setIsSuccess(true);
     } catch (submitError) {
@@ -244,6 +269,38 @@ export default function CreateAssignment() {
               <p className="mt-1.5 text-right text-[11px] text-muted">{formData.instructions.length}/5000</p>
             </div>
 
+            <div>
+              <label htmlFor="assignment-question-pdf" className="mb-1.5 block text-sm font-bold">
+                Question PDF <span className="text-xs font-medium text-muted">(optional, max 10 MB)</span>
+              </label>
+              <label
+                htmlFor="assignment-question-pdf"
+                className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-line bg-soft/50 px-4 py-6 text-center transition hover:border-brand"
+              >
+                <input
+                  id="assignment-question-pdf"
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={handleQuestionPdfChange}
+                  className="sr-only"
+                />
+                <Upload size={24} className="mb-2 text-muted" />
+                <span className="text-sm font-bold">
+                {questionPdf?.name ?? "Click to choose a question PDF"}
+                </span>
+                <span className="mt-1 text-xs text-muted">PDF only · Up to 10 MB</span>
+              </label>
+              {questionPdf && (
+                <button
+                  type="button"
+                  onClick={() => setQuestionPdf(null)}
+                  className="mt-2 text-xs font-bold text-tone-red-fg hover:underline"
+                >
+                  Remove PDF
+                </button>
+              )}
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label htmlFor="assignment-points" className="mb-1.5 block text-sm font-bold">
@@ -337,6 +394,12 @@ export default function CreateAssignment() {
               <p className="line-clamp-5 whitespace-pre-wrap text-sm leading-6 text-muted">
                 {formData.instructions.trim() || "Add instructions so students know what to work on and how to submit it."}
               </p>
+              {questionPdf && (
+                <div className="flex items-center gap-2 rounded-xl bg-soft p-3 text-xs font-semibold">
+                  <FileText size={16} className="shrink-0 text-tone-blue-fg" />
+                  <span className="min-w-0 truncate">{questionPdf.name}</span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2 border-t border-line pt-4">
                 <div className="rounded-xl bg-soft p-3">
                   <p className="text-[11px] text-muted">Maximum marks</p>

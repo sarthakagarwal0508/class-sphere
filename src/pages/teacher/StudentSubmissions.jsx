@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2, Clock, FileCheck2, Save, Users } from "lucide-react";
+import { CheckCircle2, Clock, Eye, FileCheck2, Save, Users, X } from "lucide-react";
 import Card from "../../components/Card";
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
@@ -8,6 +8,7 @@ import {
   getAssignmentSubmissions,
   getClassroomAssignments,
   gradeAssignmentSubmission,
+  fetchAssignmentPdf,
 } from "../../services/assignmentService";
 
 const classroomIdOf = (classroom) => classroom?._id ?? classroom?.id;
@@ -30,6 +31,14 @@ export default function StudentSubmissions() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [solutionPdfUrl, setSolutionPdfUrl] = useState("");
+  const [solutionPdfTitle, setSolutionPdfTitle] = useState("");
+  const [solutionPdfError, setSolutionPdfError] = useState("");
+  const [loadingPdfId, setLoadingPdfId] = useState("");
+
+  useEffect(() => () => {
+    if (solutionPdfUrl) URL.revokeObjectURL(solutionPdfUrl);
+  }, [solutionPdfUrl]);
 
   useEffect(() => {
     let active = true;
@@ -138,6 +147,24 @@ export default function StudentSubmissions() {
       setError(saveError.message || "Could not save this grade.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleViewSolution = async () => {
+    if (!selected) return;
+    setLoadingPdfId(String(selected.id));
+    setSolutionPdfError("");
+    try {
+      const pdf = await fetchAssignmentPdf(selected.assignmentId, selected.id);
+      setSolutionPdfUrl((currentUrl) => {
+        if (currentUrl) URL.revokeObjectURL(currentUrl);
+        return URL.createObjectURL(pdf);
+      });
+      setSolutionPdfTitle(`${selected.studentName} - ${selected.assignment}`);
+    } catch (pdfError) {
+      setSolutionPdfError(pdfError.message || "Could not open the solution PDF.");
+    } finally {
+      setLoadingPdfId("");
     }
   };
 
@@ -260,6 +287,24 @@ export default function StudentSubmissions() {
                     Open submitted work
                   </a>
                 )}
+                {selected.solutionPdfUrl && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={handleViewSolution}
+                      disabled={loadingPdfId === String(selected.id)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-2 text-sm font-bold text-ink transition hover:bg-soft disabled:opacity-60"
+                    >
+                      <Eye size={16} />
+                      {loadingPdfId === String(selected.id) ? "Opening PDF..." : "View solution PDF"}
+                    </button>
+                    {solutionPdfError && (
+                      <p role="alert" className="mt-2 text-sm text-tone-red-fg">
+                        {solutionPdfError}
+                      </p>
+                    )}
+                  </div>
+                )}
               </section>
 
               <form onSubmit={handleSaveGrade} className="space-y-4">
@@ -307,6 +352,36 @@ export default function StudentSubmissions() {
           )}
         </Card>
       </div>
+
+      {solutionPdfUrl && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+          <Card
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="solution-pdf-title"
+            className="flex h-[min(90vh,900px)] w-full max-w-5xl flex-col p-4"
+          >
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <h2 id="solution-pdf-title" className="truncate text-base font-extrabold">
+                {solutionPdfTitle}
+              </h2>
+              <button
+                type="button"
+                aria-label="Close solution PDF"
+                onClick={() => setSolutionPdfUrl("")}
+                className="rounded-lg p-2 text-muted hover:bg-soft"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <iframe
+              title={`${solutionPdfTitle} PDF`}
+              src={solutionPdfUrl}
+              className="min-h-0 flex-1 rounded-lg border border-line"
+            />
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

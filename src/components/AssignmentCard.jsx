@@ -29,12 +29,18 @@ function getSubtitle(a, compact) {
   return `Feedback: ${a.feedback}`;
 }
 
-export default function AssignmentCard({ assignment, compact = false, onSubmit }) {
+export default function AssignmentCard({
+  assignment,
+  compact = false,
+  onSubmit,
+  onViewQuestions,
+  loadingQuestions = false,
+}) {
   const { title, status, score, marks } = assignment;
   const s = styles[status];
 
   return (
-    <Card className="flex items-center gap-3 p-3">
+    <Card className="flex flex-wrap items-center gap-3 p-3">
       <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${s.icon}`}>
         <ClipboardList size={18} />
       </div>
@@ -51,6 +57,18 @@ export default function AssignmentCard({ assignment, compact = false, onSubmit }
       )}
 
       <span className={`rounded-full px-3 py-1 text-xs font-bold ${s.badge}`}>{s.label}</span>
+
+      {onViewQuestions && (
+        <button
+          type="button"
+          onClick={onViewQuestions}
+          disabled={loadingQuestions}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-xs font-bold text-ink transition hover:bg-soft disabled:opacity-60"
+        >
+          <ClipboardList size={14} />
+          {loadingQuestions ? "Opening..." : "View questions"}
+        </button>
+      )}
 
       {["pending", "submitted"].includes(status) && onSubmit && (
         <button

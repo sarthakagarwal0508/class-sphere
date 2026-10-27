@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ClipboardList, Clock, Check, X } from "lucide-react";
+import { ClipboardList, Clock, Check, FileText, Upload, X } from "lucide-react";
 
 import Topbar from "../../components/Topbar";
 import HeroBanner from "../../components/HeroBanner";
@@ -14,6 +14,7 @@ import {
 import {
   getClassroomAssignments,
   getMyAssignmentSubmission,
+  fetchAssignmentPdf,
   submitAssignment,
 } from "../../services/assignmentService";
 import { daysLeft, daysLeftLabel } from "../../utils/date";
@@ -64,8 +65,17 @@ export default function Assignments() {
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [answerText, setAnswerText] = useState("");
   const [submissionUrl, setSubmissionUrl] = useState("");
+  const [solutionPdf, setSolutionPdf] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
+  const [questionPdfUrl, setQuestionPdfUrl] = useState("");
+  const [questionPdfTitle, setQuestionPdfTitle] = useState("");
+  const [questionPdfError, setQuestionPdfError] = useState("");
+  const [loadingPdfId, setLoadingPdfId] = useState("");
+
+  useEffect(() => () => {
+    if (questionPdfUrl) URL.revokeObjectURL(questionPdfUrl);
+  }, [questionPdfUrl]);
 
   useEffect(() => {
     let ignore = false;
@@ -92,6 +102,8 @@ export default function Assignments() {
                   : "",
                 answerText: submission?.answerText ?? "",
                 submissionUrl: submission?.submissionUrl ?? "",
+                solutionPdfUrl: submission?.solutionPdfUrl ?? "",
+                questionPdfUrl: assignment.attachmentDownloadUrl ?? "",
               };
             }));
           })
@@ -121,8 +133,8 @@ export default function Assignments() {
 
   const handleSubmitAssignment = async (event) => {
     event.preventDefault();
-    if (!selectedAssignment || (!answerText.trim() && !submissionUrl.trim())) {
-      setSubmissionError("Add your answer or a link to your work before submitting.");
+    if (!selectedAssignment || (!answerText.trim() && !submissionUrl.trim() && !solutionPdf)) {
+      setSubmissionError("Add a PDF solution, written answer, or link before submitting.");
       return;
     }
 
@@ -132,10 +144,12 @@ export default function Assignments() {
       await submitAssignment(selectedAssignment.id, {
         answerText: answerText.trim(),
         submissionUrl: submissionUrl.trim(),
+        solutionPdf,
       });
       setSelectedAssignment(null);
       setAnswerText("");
       setSubmissionUrl("");
+      setSolutionPdf(null);
       setStatus("loading");
       setReloadKey((key) => key + 1);
     } catch (error) {
@@ -143,6 +157,39 @@ export default function Assignments() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleViewQuestions = async (assignment) => {
+    setLoadingPdfId(assignment.id);
+    setQuestionPdfError("");
+    try {
+      const pdf = await fetchAssignmentPdf(assignment.id);
+      if (questionPdfUrl) URL.revokeObjectURL(questionPdfUrl);
+      setQuestionPdfUrl(URL.createObjectURL(pdf));
+      setQuestionPdfTitle(assignment.title);
+    } catch (error) {
+      setQuestionPdfError(error.message || "Could not open the question PDF.");
+    } finally {
+      setLoadingPdfId("");
+    }
+  };
+
+  const handleSolutionPdfChange = (event) => {
+    const file = event.target.files?.[0] ?? null;
+    event.target.value = "";
+    if (!file) return;
+
+    if (file.type !== "application/pdf" || !file.name.toLowerCase().endsWith(".pdf")) {
+      setSubmissionError("Select a PDF file for your solution.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setSubmissionError("Your solution PDF must be 10 MB or smaller.");
+      return;
+    }
+
+    setSolutionPdf(file);
+    setSubmissionError("");
   };
 
 const pending = items
@@ -196,6 +243,12 @@ const pending = items
                   key={a.id}
                   assignment={a}
                   onSubmit={setSelectedAssignment}
+                  onViewQuestions={
+                    a.questionPdfUrl
+                      ? () => handleViewQuestions(a)
+                      : undefined
+                  }
+                  loadingQuestions={loadingPdfId === a.id}
                 />
               ))}
             </div>
@@ -231,7 +284,7 @@ const pending = items
                           Submit {selectedAssignment.title}
                         </h2>
                         <p className="mt-1 text-xs text-muted">
-                          Provide written work, a link, or both.
+                          Upload your solution as a PDF, or provide a written answer or link.
                         </p>
                       </div>
                       <button
@@ -265,6 +318,36 @@ const pending = items
                           className="w-full rounded-xl border border-line bg-surface p-3 text-sm font-normal text-ink"
                         />
                       </label>
+                      <div className="space-y-2">
+                        <label htmlFor="solution-pdf" className="block text-sm font-semibold">
+                          Solution PDF <span className="font-normal text-muted">(optional, max 10 MB)</span>
+                        </label>
+                        <label
+                          htmlFor="solution-pdf"
+                          className="flex cursor-pointer items-center gap-3 rounded-xl border-2 border-dashed border-line bg-soft/50 p-4 text-sm transition hover:border-brand"
+                        >
+                          <input
+                            id="solution-pdf"
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            onChange={handleSolutionPdfChange}
+                            className="sr-only"
+                          />
+                          <Upload size={18} className="shrink-0 text-muted" />
+                          <span className="min-w-0 truncate font-semibold">
+                            {solutionPdf?.name ?? "Choose your solution PDF"}
+                          </span>
+                        </label>
+                        {solutionPdf && (
+                          <button
+                            type="button"
+                            onClick={() => setSolutionPdf(null)}
+                            className="text-xs font-bold text-tone-red-fg hover:underline"
+                          >
+                            Remove PDF
+                          </button>
+                        )}
+                      </div>
                       {submissionError && (
                         <p role="alert" className="text-sm text-tone-red-fg">
                           {submissionError}
@@ -320,6 +403,41 @@ const pending = items
               </div>
             </Card>
           </aside>
+        </div>
+      )}
+      {questionPdfError && (
+        <Card role="alert" className="text-sm text-tone-red-fg p-4">
+          {questionPdfError}
+        </Card>
+      )}
+      {questionPdfUrl && (
+        <div className="fixed inset-0 z-[60] grid place-items-center bg-black/60 p-4">
+          <Card
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="question-pdf-title"
+            className="flex h-[min(90vh,60rem)] w-full max-w-5xl flex-col overflow-hidden"
+          >
+            <div className="flex items-center justify-between gap-3 border-b border-line p-4">
+              <h2 id="question-pdf-title" className="flex min-w-0 items-center gap-2 truncate font-extrabold">
+                <FileText size={18} className="shrink-0" />
+                <span className="truncate">{questionPdfTitle}</span>
+              </h2>
+              <button
+                type="button"
+                aria-label="Close question PDF"
+                onClick={() => setQuestionPdfUrl("")}
+                className="rounded-lg p-2 text-muted hover:bg-soft"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <iframe
+              title={`${questionPdfTitle} questions PDF`}
+              src={questionPdfUrl}
+              className="min-h-0 flex-1 bg-white"
+            />
+          </Card>
         </div>
       )}
     </div>
