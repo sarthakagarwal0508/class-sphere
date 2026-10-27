@@ -1,5 +1,28 @@
 const mongoose = require("mongoose");
 
+const assignmentAttachmentSchema = new mongoose.Schema(
+  {
+    cloudinaryPublicId: { type: String, required: true },
+    originalName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 255,
+    },
+    fileSize: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    mimeType: {
+      type: String,
+      enum: ["application/pdf"],
+      default: "application/pdf",
+    },
+  },
+  { _id: false }
+);
+
 const assignmentSchema = new mongoose.Schema(
   {
     title: {
@@ -38,6 +61,13 @@ const assignmentSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1,
+    },
+
+    // Optional teacher-provided PDF.
+    // Existing assignments without attachments remain valid.
+    attachment: {
+      type: assignmentAttachmentSchema,
+      default: undefined,
     },
   },
   {

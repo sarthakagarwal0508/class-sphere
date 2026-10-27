@@ -546,7 +546,7 @@ const deleteClassroom = async (req, res) => {
     // Find assignments belonging to this classroom.
     const assignments = await Assignment.find({
       classroom: classroom._id,
-    }).select("_id");
+    }).select("_id attachment.cloudinaryPublicId");
 
     const assignmentIds = assignments.map(
       (assignment) => assignment._id
@@ -557,7 +557,27 @@ const deleteClassroom = async (req, res) => {
       classroom: classroom._id,
     });
 
-    // Delete authenticated PDFs from Cloudinary.
+    // Delete optional assignment PDF attachments from Cloudinary first.
+    for (const assignment of assignments) {
+      const publicId = assignment.attachment?.cloudinaryPublicId;
+      if (!publicId) continue;
+
+      const cloudResult = await cloudinary.uploader.destroy(publicId, {
+        resource_type: "raw",
+        type: "authenticated",
+      });
+
+      if (
+        cloudResult.result !== "ok" &&
+        cloudResult.result !== "not found"
+      ) {
+        throw new Error(
+          `Cloudinary could not delete assignment attachment for ${assignment._id}`
+        );
+      }
+    }
+
+    // Delete authenticated study-material PDFs from Cloudinary.
     for (const material of materials) {
       const cloudResult = await cloudinary.uploader.destroy(
         material.cloudinaryPublicId,
