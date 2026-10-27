@@ -45,7 +45,7 @@ Example request body:
 }
 ```
 
-The values above are illustrative only. Submit values backed by actual/consented data and use the model's documented category labels exactly. `num_of_prev_attempts` defaults to `0` if omitted and `date_unregistration` defaults to `null`; all other example fields are required to run a prediction. The endpoint does not accept score fields—the scores are calculated from ClassSphere assignment/submission records.
+The values above are illustrative only. Submit values backed by actual/consented data and use the model's documented category labels exactly. `num_of_prev_attempts` defaults to `0` if omitted and `date_unregistration` may be stored as optional profile context; the backend does not send `date_unregistration` to the supplied prediction API because it is not in that API guide's accepted model input fields. All other example fields are required to configure a profile. The endpoint does not accept score fields—the scores are calculated from ClassSphere assignment/submission records. The model API input uses the documented 20 fields and a day-90 cutoff; `clicks_last_30_days` represents days 61–90.
 
 Successful response:
 

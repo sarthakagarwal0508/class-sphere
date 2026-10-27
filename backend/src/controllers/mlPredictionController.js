@@ -130,7 +130,6 @@ const toModelInput = (profile, metrics) => ({
   num_of_prev_attempts: profile.numOfPrevAttempts ?? 0,
   studied_credits: profile.studiedCredits,
   date_registration: profile.dateRegistration,
-  date_unregistration: profile.dateUnregistration ?? null,
 
   num_assessments_done: metrics.numAssessmentsDone,
   avg_score: metrics.averageScore ?? 0,

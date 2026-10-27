@@ -15,7 +15,7 @@ AI_SERVICE_URL=https://<deployed-summarizer-service-host>
 QUIZ_SERVICE_URL=https://<deployed-quiz-generator-service-host>
 ```
 
-Use the actual public base URLs supplied by the service owners. Do not append endpoint paths or a trailing route path.
+Use the actual public base URLs supplied by the service owners. Do not append endpoint paths or a trailing route path. `QUIZ_SERVICE_URL` must point to the Flask quiz-generator deployment that exposes `GET /health`, `POST /generate-quiz`, and `POST /generate-quiz-from-pdf`. Configure `GEMINI_API_KEY` in that Python service's own environment, not in the browser or Node backend. A non-JSON upstream response usually indicates a wrong service URL, hosting error page, or failed deployment; inspect the Python service logs.
 
 Do not put Gemini API keys or service secrets in frontend code. The deployed service URLs were not provided in the supplied integration guide and must be replaced with the real URLs before production use.
 

@@ -45,6 +45,14 @@ const googleAuth = async (req, res) => {
       });
     }
 
+    if (!ALLOWED_ROLES.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Please select a valid role: student or teacher.",
+        code: "LOGIN_FIELDS_INVALID",
+      });
+    }
+
     if (!process.env.GOOGLE_CLIENT_ID) {
       return res.status(500).json({
         success: false,
@@ -88,7 +96,17 @@ const googleAuth = async (req, res) => {
     }).select("+googleId");
 
     if (user) {
-      // Never change an existing user's role from this request
+      // Existing accounts must enter through their registered portal.
+      // A login request must never silently change an existing user's role.
+      if (user.role !== role) {
+        return res.status(403).json({
+          success: false,
+          message: `This account is registered as ${user.role}. Please use the ${user.role} login.`,
+          code: "ROLE_MISMATCH",
+          registeredRole: user.role,
+        });
+      }
+
       if (user.email.toLowerCase() !== email) {
         return res.status(409).json({
           success: false,
@@ -110,14 +128,6 @@ const googleAuth = async (req, res) => {
       user.isEmailVerified = true;
       await user.save();
     } else {
-      // Role is required only when creating a new Google account
-      if (!ALLOWED_ROLES.includes(role)) {
-        return res.status(400).json({
-          success: false,
-          message: "Please select a valid role: student or teacher.",
-        });
-      }
-
       user = await User.create({
         name: payload.name || email.split("@")[0],
         email,

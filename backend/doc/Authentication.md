@@ -98,13 +98,16 @@ Timing values are configuration-driven/implementation constants; confirm the act
 
 **POST** `/api/auth/login` — public; email must be verified.
 
-Request:
+Request (role is required and must match the role selected on the login screen):
 ```json
 {
   "email": "aarav@example.com",
-  "password": "YourStrongPassword"
+  "password": "YourStrongPassword",
+  "role": "student"
 }
 ```
+
+If the account is stored as a different role, the API returns `403` with `code: "ROLE_MISMATCH"` and does not issue tokens. If role is missing or invalid, it returns `400` with `code: "LOGIN_FIELDS_INVALID"`. The role is compared to the database record; it is never updated by login.
 
 Success `200`:
 ```json
@@ -137,7 +140,7 @@ Request for a new Google account:
   "role": "student"
 }
 ```
-`role` is required only when creating a new Google-backed account. For an existing account, this request does not change its stored role.
+`role` is required for every Google login. For an existing account, the requested role must match the stored role; a mismatch returns `403 ROLE_MISMATCH` and no tokens. The backend never changes an existing account's role during login.
 
 Success `200`:
 ```json

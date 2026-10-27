@@ -25,7 +25,15 @@ const getBaseUrl = (envName) => {
     throw new AIServiceError(`${envName} must use HTTPS outside localhost.`, "AI_SERVICE_URL_INSECURE", 503);
   }
 
-  return url.toString().replace(/\/+$/, "");
+  if (url.pathname !== "/" || url.search || url.hash) {
+    throw new AIServiceError(
+      `${envName} must contain only the service base URL, without an API path, query, or hash.`,
+      "AI_SERVICE_URL_INVALID",
+      503
+    );
+  }
+
+  return url.origin;
 };
 
 const requestService = async ({ envName, path, method = "POST", body, contentType, timeoutMs = 120000 }) => {
@@ -42,11 +50,18 @@ const requestService = async ({ envName, path, method = "POST", body, contentTyp
     });
 
     const raw = await response.text();
+    const responseContentType = response.headers.get("content-type") || "unknown content type";
     let data;
     try {
       data = raw ? JSON.parse(raw) : {};
     } catch {
-      throw new AIServiceError("The AI service returned an unreadable response.", "AI_INVALID_RESPONSE", 502);
+      // A deployed Flask host may return an HTML 404/502 page instead of JSON.
+      // Do not return upstream HTML or request details to the browser.
+      console.error(`${envName} returned non-JSON content (HTTP ${response.status}, ${responseContentType}).`);
+      const message = response.ok
+        ? "The AI service returned an unreadable response. Check that the configured URL points to the quiz API service."
+        : `The AI service returned a non-JSON error response (HTTP ${response.status}). Check the service URL and deployment logs.`;
+      throw new AIServiceError(message, "AI_INVALID_RESPONSE", 502);
     }
 
     if (!response.ok) {

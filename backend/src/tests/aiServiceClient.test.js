@@ -61,3 +61,24 @@ test("AI service client reports a missing service URL clearly", async () => {
     (error) => error instanceof AIServiceError && error.code === "AI_SERVICE_NOT_CONFIGURED"
   );
 });
+
+
+test("quiz service reports non-JSON upstream response without leaking HTML", async () => {
+  process.env.QUIZ_SERVICE_URL = "https://quiz.example";
+  global.fetch = async () => new Response("<html>Bad Gateway</html>", {
+    status: 502,
+    headers: { "Content-Type": "text/html" },
+  });
+  await assert.rejects(
+    generateQuiz({ topic: "Math", num_questions: 5, difficulty: "mixed" }),
+    (error) => error instanceof AIServiceError && error.code === "AI_INVALID_RESPONSE" && /non-JSON error response/.test(error.message)
+  );
+});
+
+test("quiz service base URL rejects an endpoint path to prevent duplicate routes", async () => {
+  process.env.QUIZ_SERVICE_URL = "https://quiz.example/generate-quiz";
+  await assert.rejects(
+    generateQuiz({ topic: "Math", num_questions: 5, difficulty: "mixed" }),
+    (error) => error instanceof AIServiceError && error.code === "AI_SERVICE_URL_INVALID"
+  );
+});

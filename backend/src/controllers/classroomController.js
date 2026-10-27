@@ -6,6 +6,10 @@ const Submission = require("../models/Submission");
 const Announcement = require("../models/Announcement");
 const Notification = require("../models/Notification");
 const StudyMaterial = require("../models/StudyMaterial");
+const Quiz = require("../models/Quiz");
+const QuizAttempt = require("../models/QuizAttempt");
+const StudentRiskProfile = require("../models/StudentRiskProfile");
+const Doubt = require("../models/Doubt");
 const cloudinary = require("../config/cloudinary");
 
 // Generate a six-character hexadecimal join code.
@@ -546,7 +550,7 @@ const deleteClassroom = async (req, res) => {
     // Find assignments belonging to this classroom.
     const assignments = await Assignment.find({
       classroom: classroom._id,
-    }).select("_id attachment.cloudinaryPublicId");
+    }).select("_id");
 
     const assignmentIds = assignments.map(
       (assignment) => assignment._id
@@ -557,27 +561,7 @@ const deleteClassroom = async (req, res) => {
       classroom: classroom._id,
     });
 
-    // Delete optional assignment PDF attachments from Cloudinary first.
-    for (const assignment of assignments) {
-      const publicId = assignment.attachment?.cloudinaryPublicId;
-      if (!publicId) continue;
-
-      const cloudResult = await cloudinary.uploader.destroy(publicId, {
-        resource_type: "raw",
-        type: "authenticated",
-      });
-
-      if (
-        cloudResult.result !== "ok" &&
-        cloudResult.result !== "not found"
-      ) {
-        throw new Error(
-          `Cloudinary could not delete assignment attachment for ${assignment._id}`
-        );
-      }
-    }
-
-    // Delete authenticated study-material PDFs from Cloudinary.
+    // Delete authenticated PDFs from Cloudinary.
     for (const material of materials) {
       const cloudResult = await cloudinary.uploader.destroy(
         material.cloudinaryPublicId,
@@ -597,7 +581,16 @@ const deleteClassroom = async (req, res) => {
       }
     }
 
-    // Remove dependent database records.
+    // Remove dependent database records. Delete quiz attempts before quizzes
+    // so classroom deletion cannot leave dangling quiz references.
+    const quizzes = await Quiz.find({ classroom: classroom._id }).select("_id");
+    const quizIds = quizzes.map((quiz) => quiz._id);
+
+    await QuizAttempt.deleteMany({ quiz: { $in: quizIds } });
+    await Quiz.deleteMany({ classroom: classroom._id });
+    await StudentRiskProfile.deleteMany({ classroom: classroom._id });
+    await Doubt.deleteMany({ classroom: classroom._id });
+
     await Notification.deleteMany({
       classroom: classroom._id,
     });

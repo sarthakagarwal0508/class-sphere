@@ -18,15 +18,15 @@ const quizRoutes = require("./routes/quizRoutes");
 
 app.use(helmet());
 
-const allowedOrigins = [
+const allowedOrigins = new Set([
   "http://localhost:5173",
   "https://class-sphere-one.vercel.app",
-];
+]);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.has(origin.replace(/\/$/, ""))) {
         return callback(null, true);
       }
 

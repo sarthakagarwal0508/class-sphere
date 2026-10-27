@@ -395,16 +395,21 @@ const resendOtp = async (req, res) => {
 // 4. Login verified users and issue tokens.
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
+    // Login forms must declare which portal the user is trying to enter.
+    // The requested role is only compared with the stored role; it is never used
+    // to change the user's role or to create a token with a client-supplied role.
     if (
       typeof email !== "string" ||
       typeof password !== "string" ||
-      !email.trim()
+      !email.trim() ||
+      !["student", "teacher"].includes(role)
     ) {
       return res.status(400).json({
         success: false,
-        message: "Email and password are required.",
+        message: "Email, password, and a valid role (student or teacher) are required.",
+        code: "LOGIN_FIELDS_INVALID",
       });
     }
 
@@ -428,6 +433,15 @@ const login = async (req, res) => {
         success: false,
         message: "Please verify your email before logging in.",
         code: "EMAIL_NOT_VERIFIED",
+      });
+    }
+
+    if (role !== user.role) {
+      return res.status(403).json({
+        success: false,
+        message: `This account is registered as ${user.role}. Please use the ${user.role} login.`,
+        code: "ROLE_MISMATCH",
+        registeredRole: user.role,
       });
     }
 
