@@ -10,9 +10,16 @@ export function listFrom(response) {
   return Array.isArray(data) ? data : data?.doubts ?? [];
 }
 
-export async function fetchClassroomDoubts(classroomId) {
+export async function fetchClassroomDoubts(
+  classroomId,
+  { status, page, limit } = {}
+) {
   try {
-    return listFrom(await api.get(`/classrooms/${classroomId}/doubts`));
+    const response = await api.get(
+      `/discussions/classrooms/${classroomId}/doubts`,
+      { params: { status, page, limit } }
+    );
+    return listFrom(response);
   } catch (error) {
     throw toApiError(error);
   }
@@ -21,7 +28,7 @@ export async function fetchClassroomDoubts(classroomId) {
 export async function createDoubt(classroomId, { title, description }) {
   try {
     return unwrap(
-      await api.post(`/classrooms/${classroomId}/doubts`, {
+      await api.post(`/discussions/classrooms/${classroomId}/doubts`, {
         title,
         description,
       })
@@ -33,7 +40,9 @@ export async function createDoubt(classroomId, { title, description }) {
 
 export async function addDoubtReply(doubtId, message) {
   try {
-    return unwrap(await api.post(`/doubts/${doubtId}/replies`, { message }));
+    return unwrap(
+      await api.post(`/discussions/doubts/${doubtId}/replies`, { message })
+    );
   } catch (error) {
     throw toApiError(error);
   }
@@ -41,7 +50,9 @@ export async function addDoubtReply(doubtId, message) {
 
 export async function setDoubtStatus(doubtId, status) {
   try {
-    return unwrap(await api.patch(`/doubts/${doubtId}/status`, { status }));
+    return unwrap(
+      await api.patch(`/discussions/doubts/${doubtId}/status`, { status })
+    );
   } catch (error) {
     throw toApiError(error);
   }
