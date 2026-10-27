@@ -227,23 +227,25 @@ const handleDelete = async (materialId) => {
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
               Upload PDF File (Max 10 MB) <span className="text-rose-500">*</span>
             </label>
-            <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center hover:border-[#fde047] transition bg-[#f8f9fa] dark:bg-slate-800/30">
-              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <label
+              htmlFor="pdf-upload"
+              className="block cursor-pointer border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl p-6 text-center transition hover:border-[#fde047] bg-[#f8f9fa] dark:bg-slate-800/30"
+            >
               <input
                 type="file"
                 id="pdf-upload"
                 accept=".pdf,application/pdf"
-                className="hidden"
+                className="sr-only"
                 onChange={(e) => setFile(e.target.files[0])}
               />
-              <label
-                htmlFor="pdf-upload"
-                className="cursor-pointer text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-amber-500"
-              >
+              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <span className="text-xs font-bold text-slate-900 dark:text-slate-100 hover:text-amber-500">
                 {file ? file.name : 'Click to select PDF or drag and drop'}
-              </label>
-              <p className="text-[11px] text-slate-400 mt-1">PDF documents only &bull; Up to 10 MB</p>
-            </div>
+              </span>
+              <span className="mt-1 block text-[11px] text-slate-400">
+                PDF documents only &bull; Up to 10 MB
+              </span>
+            </label>
           </div>
 
           <button

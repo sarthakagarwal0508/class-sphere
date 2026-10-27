@@ -11,8 +11,7 @@ import {
   Send,
   ShieldCheck,
 } from "lucide-react";
-
-const supportEmail = "support@classsphere.edu";
+import { supportEmail } from "../../data/support";
 
 const faqs = [
   {

@@ -1,24 +1,22 @@
 import { useState } from 'react';
 import {
   HelpCircle, Mail, LifeBuoy, ChevronDown,
-  ChevronUp, Search, Send, CheckCircle2, BookOpen, 
+  ChevronUp, Search, Send, BookOpen,
   ShieldCheck
 } from 'lucide-react';
 import Topbar from '../../components/Topbar';
 import HeroBanner from '../../components/HeroBanner';
+import { supportEmail } from '../../data/support';
 
 export default function HelpCenter() {
   const [searchQuery, setSearchQuery] = useState('');
   const [openFaq, setOpenFaq] = useState(null);
 
-  // Message Form State
   const [ticket, setTicket] = useState({
     subject: '',
     category: 'Classroom & Students',
     message: '',
   });
-  const [sending, setSending] = useState(false);
-  const [sentSuccess, setSentSuccess] = useState(false);
 
   const faqs = [
     {
@@ -53,13 +51,10 @@ export default function HelpCenter() {
     e.preventDefault();
     if (!ticket.subject.trim() || !ticket.message.trim()) return;
 
-    setSending(true);
-    setTimeout(() => {
-      setSending(false);
-      setSentSuccess(true);
-      setTicket({ subject: '', category: 'Classroom & Students', message: '' });
-      setTimeout(() => setSentSuccess(false), 4000);
-    }, 700);
+    const subject = `[ClassSphere Teacher Support] ${ticket.category}: ${ticket.subject.trim()}`;
+    const body = ticket.message.trim();
+    const mailto = `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
   };
 
   return (
@@ -105,7 +100,12 @@ export default function HelpCenter() {
           </div>
           <div>
             <h3 className="text-xs font-bold text-slate-900 dark:text-white">Email Hotline</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">support@classsphere.edu</p>
+            <a
+              className="text-[11px] text-slate-500 hover:underline dark:text-slate-400"
+              href={`mailto:${supportEmail}`}
+            >
+              {supportEmail}
+            </a>
           </div>
         </div>
       </div>
@@ -176,16 +176,9 @@ export default function HelpCenter() {
                 Send Us a Message
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Have an inquiry or issue? We reply within 2 hours.
+                Your email app will open with your message addressed to support.
               </p>
             </div>
-
-            {sentSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-1.5 font-semibold">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                Message sent! We will follow up by email.
-              </div>
-            )}
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
@@ -234,11 +227,10 @@ export default function HelpCenter() {
 
             <button
               type="submit"
-              disabled={sending}
-              className="w-full py-2.5 rounded-xl bg-[#fde047] hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition shadow-sm disabled:opacity-60"
+              className="w-full py-2.5 rounded-xl bg-[#fde047] hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
             >
               <Send className="w-3.5 h-3.5" />
-              {sending ? 'Sending message...' : 'Submit Support Ticket'}
+              Open Email Draft
             </button>
           </form>
         </div>
