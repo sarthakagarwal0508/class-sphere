@@ -151,23 +151,30 @@ const register = async (req, res) => {
       ),
     });
 
+    let emailSent = true;
+
     try {
       await sendOtpEmail(user.email, otp);
     } catch (emailError) {
-      await User.deleteOne({ _id: user._id });
-
+      emailSent = false;
       console.error("Registration email failed:", emailError.message);
 
-      return res.status(502).json({
-        success: false,
-        message: "Unable to send verification email. Please try again.",
-      });
+      // Keep the account; allow an immediate resend since the email may not have gone out.
+      await User.updateOne(
+        { _id: user._id },
+        { $unset: { otpResendAvailableAt: 1 } }
+      );
     }
+
+    console.log(
+      `User registered: ${user.email} (id ${user._id}) in db "${User.db.name}", collection "${User.collection.name}"`
+    );
 
     return res.status(201).json({
       success: true,
-      message:
-        "Registration successful. Verify your email using the OTP sent to you.",
+      message: emailSent
+        ? "Registration successful. Verify your email using the OTP sent to you."
+        : "Account created, but we couldn't send the OTP. Please use Resend OTP.",
       data: {
         userId: user._id,
         name: user.name,
@@ -175,6 +182,7 @@ const register = async (req, res) => {
         role: user.role,
         isEmailVerified: false,
         otpExpiresInMinutes: OTP_EXPIRY_MINUTES,
+        emailSent,
       },
     });
   } catch (error) {

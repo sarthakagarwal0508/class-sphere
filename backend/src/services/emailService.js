@@ -1,4 +1,3 @@
-
 const sendOtpEmail = async (email, otp) => {
   const apiKey = process.env.SENDLIBERTY_API_KEY;
   const senderEmail = process.env.SENDLIBERTY_FROM_EMAIL;
@@ -16,6 +15,7 @@ const sendOtpEmail = async (email, otp) => {
       "https://sendliberty.com/api/send",
       {
         method: "POST",
+        signal: AbortSignal.timeout(15000),
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
