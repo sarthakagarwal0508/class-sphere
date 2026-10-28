@@ -1,23 +1,76 @@
 
 const mongoose = require("mongoose");
+const { randomUUID } = require("crypto");
+
 const Assignment = require("../models/Assignment");
 const Classroom = require("../models/Classroom");
 const Submission = require("../models/Submission");
+const cloudinary = require("../config/cloudinary");
 
+const isValidId = (id) => mongoose.isValidObjectId(id);
+
+const isClassroomMember = (classroom, user) => {
+  if (!classroom || !user) return false;
+
+  const userId = String(user._id);
+
+  if (String(classroom.teacher) === userId) return true;
+
+  return (
+    user.role === "student" &&
+    classroom.students.some((id) => String(id) === userId)
+  );
+};
+
+const uploadAssignmentPdf = (buffer) =>
+  new Promise((resolve, reject) => {
+    const publicId = `classsphere/assignments/${randomUUID()}.pdf`;
+
+    cloudinary.uploader
+      .upload_stream(
+        {
+          resource_type: "raw",
+          type: "authenticated",
+          public_id: publicId,
+          overwrite: false,
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      )
+      .end(buffer);
+  });
+
+const deleteCloudPdf = async (publicId) => {
+  if (!publicId) return;
+
+  return cloudinary.uploader.destroy(publicId, {
+    resource_type: "raw",
+    type: "authenticated",
+  });
+};
+
+// CREATE ASSIGNMENT + OPTIONAL QUESTION PDF
 const createAssignment = async (req, res) => {
+  let uploadedPublicId = null;
+
   try {
     const { id: classroomId } = req.params;
-    const { title, description = "", dueDate, maxMarks } = req.body;
+    const {
+      title,
+      description = "",
+      dueDate,
+      maxMarks,
+    } = req.body || {};
 
-    // Validate classroom ID
-    if (!mongoose.isValidObjectId(classroomId)) {
+    if (!isValidId(classroomId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
       });
     }
 
-    // Validate title
     if (
       typeof title !== "string" ||
       title.trim().length < 3 ||
@@ -29,7 +82,6 @@ const createAssignment = async (req, res) => {
       });
     }
 
-    // Validate description
     if (
       typeof description !== "string" ||
       description.trim().length > 5000
@@ -40,10 +92,8 @@ const createAssignment = async (req, res) => {
       });
     }
 
-    // Validate deadline
     if (
       typeof dueDate !== "string" ||
-      dueDate.trim() === "" ||
       !Number.isFinite(Date.parse(dueDate))
     ) {
       return res.status(400).json({
@@ -61,20 +111,29 @@ const createAssignment = async (req, res) => {
       });
     }
 
-    // Validate maximum marks
+    const parsedMaxMarks = Number(maxMarks);
+
     if (
-      typeof maxMarks !== "number" ||
-      !Number.isFinite(maxMarks) ||
-      maxMarks < 1 ||
-      maxMarks > 10000
+      !Number.isFinite(parsedMaxMarks) ||
+      parsedMaxMarks < 1 ||
+      parsedMaxMarks > 10000
     ) {
       return res.status(400).json({
         success: false,
-        message: "Maximum marks must be a number between 1 and 10000.",
+        message: "Maximum marks must be between 1 and 10000.",
       });
     }
 
-    // Find classroom
+    if (
+      req.file &&
+      req.file.buffer.subarray(0, 5).toString() !== "%PDF-"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "The uploaded file is not a valid PDF.",
+      });
+    }
+
     const classroom = await Classroom.findById(classroomId);
 
     if (!classroom) {
@@ -84,33 +143,52 @@ const createAssignment = async (req, res) => {
       });
     }
 
-    // Only the classroom's own teacher can create assignments
-    if (classroom.teacher.toString() !== req.user._id.toString()) {
+    if (String(classroom.teacher) !== String(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: "Only the classroom teacher can create assignments.",
       });
     }
 
-    // Create assignment
+    let attachment = undefined;
+
+    if (req.file) {
+      const uploaded = await uploadAssignmentPdf(req.file.buffer);
+      uploadedPublicId = uploaded.public_id;
+
+      attachment = {
+        cloudinaryPublicId: uploaded.public_id,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: "application/pdf",
+      };
+    }
+
     const assignment = await Assignment.create({
       title: title.trim(),
       description: description.trim(),
       classroom: classroom._id,
       teacher: req.user._id,
       dueDate: parsedDueDate,
-      maxMarks,
+      maxMarks: parsedMaxMarks,
+      ...(attachment ? { attachment } : {}),
     });
 
     return res.status(201).json({
       success: true,
       message: "Assignment created successfully.",
-      data: {
-        assignment,
-      },
+      data: { assignment },
     });
   } catch (error) {
-    console.error("Create assignment error:", error.message);
+    if (uploadedPublicId) {
+      try {
+        await deleteCloudPdf(uploadedPublicId);
+      } catch (cleanupError) {
+        console.error("PDF cleanup error:", cleanupError.message);
+      }
+    }
+
+    console.error("Create assignment error:", error);
 
     return res.status(500).json({
       success: false,
@@ -118,13 +196,13 @@ const createAssignment = async (req, res) => {
     });
   }
 };
- // get assignmrent
- 
+
+// GET CLASSROOM ASSIGNMENTS
 const getAssignments = async (req, res) => {
   try {
     const { id: classroomId } = req.params;
 
-    if (!mongoose.isValidObjectId(classroomId)) {
+    if (!isValidId(classroomId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid classroom ID.",
@@ -140,14 +218,7 @@ const getAssignments = async (req, res) => {
       });
     }
 
-    const isTeacher =
-      classroom.teacher.toString() === req.user._id.toString();
-
-    const isStudent = classroom.students.some(
-      (studentId) => studentId.toString() === req.user._id.toString()
-    );
-
-    if (!isTeacher && !isStudent) {
+    if (!isClassroomMember(classroom, req.user)) {
       return res.status(403).json({
         success: false,
         message: "You are not authorized to view these assignments.",
@@ -157,18 +228,31 @@ const getAssignments = async (req, res) => {
     const assignments = await Assignment.find({
       classroom: classroomId,
     })
+      .select("-attachment.cloudinaryPublicId")
       .populate("teacher", "name email")
       .sort({ dueDate: 1 });
 
+    const result = assignments.map((assignment) => {
+      const item = assignment.toObject();
+
+      item.hasAttachment = Boolean(
+        item.attachment?.cloudinaryPublicId
+      );
+
+      if (item.attachment) {
+        delete item.attachment.cloudinaryPublicId;
+      }
+
+      return item;
+    });
+
     return res.status(200).json({
       success: true,
-      count: assignments.length,
-      data: {
-        assignments,
-      },
+      count: result.length,
+      data: { assignments: result },
     });
   } catch (error) {
-    console.error("Get assignments error:", error.message);
+    console.error("Get assignments error:", error);
 
     return res.status(500).json({
       success: false,
@@ -176,14 +260,107 @@ const getAssignments = async (req, res) => {
     });
   }
 };
- // assignment submission 
 
+// VIEW/DOWNLOAD ASSIGNMENT PDF
+const getAssignmentAttachment = async (req, res) => {
+  try {
+    const { id: assignmentId } = req.params;
+
+    if (!isValidId(assignmentId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid assignment ID.",
+      });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignment not found.",
+      });
+    }
+
+    const classroom = await Classroom.findById(assignment.classroom);
+
+    if (!isClassroomMember(classroom, req.user)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to view this PDF.",
+      });
+    }
+
+    const publicId = assignment.attachment?.cloudinaryPublicId;
+
+    if (!publicId) {
+      return res.status(404).json({
+        success: false,
+        message: "This assignment has no attached PDF.",
+      });
+    }
+
+    const signedUrl = cloudinary.utils.private_download_url(
+      publicId,
+      "pdf",
+      {
+        resource_type: "raw",
+        type: "authenticated",
+        expires_at: Math.floor(Date.now() / 1000) + 60,
+      }
+    );
+
+    const fileResponse = await fetch(signedUrl);
+
+    if (!fileResponse.ok) {
+      console.error(
+        "Cloudinary PDF response status:",
+        fileResponse.status
+      );
+
+      return res.status(502).json({
+        success: false,
+        message: "Unable to retrieve the assignment PDF.",
+      });
+    }
+
+    const buffer = Buffer.from(await fileResponse.arrayBuffer());
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", buffer.length);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+
+    const filename = (
+      assignment.attachment.originalName || "assignment.pdf"
+    ).replace(/[\r\n"]/g, "_");
+
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${filename}"`
+    );
+
+    return res.status(200).send(buffer);
+  } catch (error) {
+    console.error("Get assignment PDF error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve assignment PDF.",
+    });
+  }
+};
+
+// SUBMIT ASSIGNMENT
 const submitAssignment = async (req, res) => {
   try {
     const { id: assignmentId } = req.params;
-    const { answerText = "", submissionUrl = "" } = req.body;
+    const {
+      answerText = "",
+      submissionUrl = "",
+    } = req.body || {};
 
-    if (!mongoose.isValidObjectId(assignmentId)) {
+    if (!isValidId(assignmentId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid assignment ID.",
@@ -246,7 +423,7 @@ const submitAssignment = async (req, res) => {
     }
 
     const isMember = classroom.students.some(
-      (studentId) => studentId.toString() === req.user._id.toString()
+      (studentId) => String(studentId) === String(req.user._id)
     );
 
     if (!isMember) {
@@ -292,12 +469,10 @@ const submitAssignment = async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "Assignment submitted successfully.",
-      data: {
-        submission,
-      },
+      data: { submission },
     });
   } catch (error) {
-    console.error("Submit assignment error:", error.message);
+    console.error("Submit assignment error:", error);
 
     return res.status(500).json({
       success: false,
@@ -305,13 +480,13 @@ const submitAssignment = async (req, res) => {
     });
   }
 };
-// get assignment submission of students 
 
+// GET STUDENT SUBMISSIONS FOR AN ASSIGNMENT
 const getAssignmentSubmissions = async (req, res) => {
   try {
     const { id: assignmentId } = req.params;
 
-    if (!mongoose.isValidObjectId(assignmentId)) {
+    if (!isValidId(assignmentId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid assignment ID.",
@@ -327,7 +502,7 @@ const getAssignmentSubmissions = async (req, res) => {
       });
     }
 
-    if (assignment.teacher.toString() !== req.user._id.toString()) {
+    if (String(assignment.teacher) !== String(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: "Only the assignment teacher can view submissions.",
@@ -343,12 +518,10 @@ const getAssignmentSubmissions = async (req, res) => {
     return res.status(200).json({
       success: true,
       count: submissions.length,
-      data: {
-        submissions,
-      },
+      data: { submissions },
     });
   } catch (error) {
-    console.error("Get assignment submissions error:", error.message);
+    console.error("Get assignment submissions error:", error);
 
     return res.status(500).json({
       success: false,
@@ -356,16 +529,16 @@ const getAssignmentSubmissions = async (req, res) => {
     });
   }
 };
- // grading 
- 
+
+// GRADE SUBMISSION
 const gradeSubmission = async (req, res) => {
   try {
     const { assignmentId, submissionId } = req.params;
-    const { marksObtained, feedback = "" } = req.body;
+    const { marksObtained, feedback = "" } = req.body || {};
 
     if (
-      !mongoose.isValidObjectId(assignmentId) ||
-      !mongoose.isValidObjectId(submissionId)
+      !isValidId(assignmentId) ||
+      !isValidId(submissionId)
     ) {
       return res.status(400).json({
         success: false,
@@ -373,10 +546,12 @@ const gradeSubmission = async (req, res) => {
       });
     }
 
+    const marks = Number(marksObtained);
+
     if (
-      typeof marksObtained !== "number" ||
-      !Number.isFinite(marksObtained) ||
-      marksObtained < 0
+      marksObtained === undefined ||
+      !Number.isFinite(marks) ||
+      marks < 0
     ) {
       return res.status(400).json({
         success: false,
@@ -403,14 +578,14 @@ const gradeSubmission = async (req, res) => {
       });
     }
 
-    if (assignment.teacher.toString() !== req.user._id.toString()) {
+    if (String(assignment.teacher) !== String(req.user._id)) {
       return res.status(403).json({
         success: false,
         message: "Only the assignment teacher can grade submissions.",
       });
     }
 
-    if (marksObtained > assignment.maxMarks) {
+    if (marks > assignment.maxMarks) {
       return res.status(400).json({
         success: false,
         message: `Marks cannot exceed ${assignment.maxMarks}.`,
@@ -429,7 +604,7 @@ const gradeSubmission = async (req, res) => {
       });
     }
 
-    submission.marksObtained = marksObtained;
+    submission.marksObtained = marks;
     submission.feedback = feedback.trim();
     submission.status = "graded";
     submission.gradedAt = new Date();
@@ -439,12 +614,10 @@ const gradeSubmission = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Submission graded successfully.",
-      data: {
-        submission,
-      },
+      data: { submission },
     });
   } catch (error) {
-    console.error("Grade submission error:", error.message);
+    console.error("Grade submission error:", error);
 
     return res.status(500).json({
       success: false,
@@ -452,13 +625,13 @@ const gradeSubmission = async (req, res) => {
     });
   }
 };
-// see grading by student
 
+// STUDENT VIEWS THEIR SUBMISSION AND GRADE
 const getMySubmission = async (req, res) => {
   try {
     const { id: assignmentId } = req.params;
 
-    if (!mongoose.isValidObjectId(assignmentId)) {
+    if (!isValidId(assignmentId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid assignment ID.",
@@ -484,7 +657,7 @@ const getMySubmission = async (req, res) => {
     }
 
     const isMember = classroom.students.some(
-      (studentId) => studentId.toString() === req.user._id.toString()
+      (studentId) => String(studentId) === String(req.user._id)
     );
 
     if (!isMember) {
@@ -507,12 +680,15 @@ const getMySubmission = async (req, res) => {
           title: assignment.title,
           dueDate: assignment.dueDate,
           maxMarks: assignment.maxMarks,
+          hasAttachment: Boolean(
+            assignment.attachment?.cloudinaryPublicId
+          ),
         },
         submission,
       },
     });
   } catch (error) {
-    console.error("Get my submission error:", error.message);
+    console.error("Get my submission error:", error);
 
     return res.status(500).json({
       success: false,
@@ -524,6 +700,7 @@ const getMySubmission = async (req, res) => {
 module.exports = {
   createAssignment,
   getAssignments,
+  getAssignmentAttachment,
   submitAssignment,
   getAssignmentSubmissions,
   gradeSubmission,

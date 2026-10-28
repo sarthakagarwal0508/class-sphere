@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const assignmentSchema = new mongoose.Schema(
@@ -38,6 +39,25 @@ const assignmentSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 1,
+    },
+
+    attachment: {
+      cloudinaryPublicId: {
+        type: String,
+        default: null,
+      },
+      originalName: {
+        type: String,
+        default: null,
+      },
+      fileSize: {
+        type: Number,
+        default: null,
+      },
+      mimeType: {
+        type: String,
+        default: null,
+      },
     },
   },
   {
