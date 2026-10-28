@@ -15,6 +15,7 @@ const submissionSchema = new mongoose.Schema(
       required: true,
     },
 
+    // Student's written answer
     answerText: {
       type: String,
       trim: true,
@@ -22,11 +23,35 @@ const submissionSchema = new mongoose.Schema(
       default: "",
     },
 
+    // Optional external link to submitted work
     submissionUrl: {
       type: String,
       trim: true,
       maxlength: 2048,
       default: "",
+    },
+
+    // Optional PDF uploaded by the student to Cloudinary
+    attachment: {
+      cloudinaryPublicId: {
+        type: String,
+        default: null,
+      },
+
+      originalName: {
+        type: String,
+        default: null,
+      },
+
+      fileSize: {
+        type: Number,
+        default: null,
+      },
+
+      mimeType: {
+        type: String,
+        default: null,
+      },
     },
 
     submittedAt: {
@@ -63,7 +88,7 @@ const submissionSchema = new mongoose.Schema(
   }
 );
 
-// One submission record per student per assignment.
+// One submission record per student per assignment
 submissionSchema.index(
   { assignment: 1, student: 1 },
   { unique: true }

@@ -42,6 +42,26 @@ const uploadAssignmentPdf = (buffer) =>
       .end(buffer);
   });
 
+const uploadSubmissionPdf = (buffer) =>
+  new Promise((resolve, reject) => {
+    const publicId = `classsphere/submissions/${randomUUID()}.pdf`;
+
+    cloudinary.uploader
+      .upload_stream(
+        {
+          resource_type: "raw",
+          type: "authenticated",
+          public_id: publicId,
+          overwrite: false,
+        },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        }
+      )
+      .end(buffer);
+  });
+
 const deleteCloudPdf = async (publicId) => {
   if (!publicId) return;
 
@@ -150,7 +170,7 @@ const createAssignment = async (req, res) => {
       });
     }
 
-    let attachment = undefined;
+    let attachment;
 
     if (req.file) {
       const uploaded = await uploadAssignmentPdf(req.file.buffer);
@@ -174,10 +194,19 @@ const createAssignment = async (req, res) => {
       ...(attachment ? { attachment } : {}),
     });
 
+    const result = assignment.toObject();
+
+    if (result.attachment) {
+      result.attachment.hasAttachment = Boolean(
+        result.attachment.cloudinaryPublicId
+      );
+      delete result.attachment.cloudinaryPublicId;
+    }
+
     return res.status(201).json({
       success: true,
       message: "Assignment created successfully.",
-      data: { assignment },
+      data: { assignment: result },
     });
   } catch (error) {
     if (uploadedPublicId) {
@@ -228,7 +257,6 @@ const getAssignments = async (req, res) => {
     const assignments = await Assignment.find({
       classroom: classroomId,
     })
-      .select("-attachment.cloudinaryPublicId")
       .populate("teacher", "name email")
       .sort({ dueDate: 1 });
 
@@ -261,7 +289,7 @@ const getAssignments = async (req, res) => {
   }
 };
 
-// VIEW/DOWNLOAD ASSIGNMENT PDF
+// VIEW/DOWNLOAD TEACHER'S ASSIGNMENT PDF
 const getAssignmentAttachment = async (req, res) => {
   try {
     const { id: assignmentId } = req.params;
@@ -351,8 +379,10 @@ const getAssignmentAttachment = async (req, res) => {
   }
 };
 
-// SUBMIT ASSIGNMENT
+// SUBMIT ASSIGNMENT: TEXT, URL, PDF, OR A COMBINATION
 const submitAssignment = async (req, res) => {
+  let uploadedPublicId = null;
+
   try {
     const { id: assignmentId } = req.params;
     const {
@@ -387,13 +417,6 @@ const submitAssignment = async (req, res) => {
       });
     }
 
-    if (!answerText.trim() && !submissionUrl.trim()) {
-      return res.status(400).json({
-        success: false,
-        message: "Provide an answer or a submission URL.",
-      });
-    }
-
     if (
       submissionUrl.trim() &&
       !/^https?:\/\/\S+$/i.test(submissionUrl.trim())
@@ -401,6 +424,30 @@ const submitAssignment = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Provide a valid HTTP or HTTPS submission URL.",
+      });
+    }
+
+    if (
+      !answerText.trim() &&
+      !submissionUrl.trim() &&
+      !req.file
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide an answer, a submission URL, or a PDF file.",
+      });
+    }
+
+    if (
+      req.file &&
+      (
+        !req.file.buffer ||
+        req.file.buffer.subarray(0, 5).toString() !== "%PDF-"
+      )
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "The uploaded file is not a valid PDF.",
       });
     }
 
@@ -459,6 +506,21 @@ const submitAssignment = async (req, res) => {
       });
     }
 
+    const previousPublicId =
+      submission.attachment?.cloudinaryPublicId || null;
+
+    if (req.file) {
+      const uploaded = await uploadSubmissionPdf(req.file.buffer);
+      uploadedPublicId = uploaded.public_id;
+
+      submission.attachment = {
+        cloudinaryPublicId: uploaded.public_id,
+        originalName: req.file.originalname,
+        fileSize: req.file.size,
+        mimeType: "application/pdf",
+      };
+    }
+
     submission.answerText = answerText.trim();
     submission.submissionUrl = submissionUrl.trim();
     submission.submittedAt = new Date();
@@ -466,12 +528,47 @@ const submitAssignment = async (req, res) => {
 
     await submission.save();
 
+    if (
+      uploadedPublicId &&
+      previousPublicId &&
+      previousPublicId !== uploadedPublicId
+    ) {
+      try {
+        await deleteCloudPdf(previousPublicId);
+      } catch (cleanupError) {
+        console.error(
+          "Previous submission PDF cleanup error:",
+          cleanupError.message
+        );
+      }
+    }
+
+    const responseSubmission = submission.toObject();
+
+    if (responseSubmission.attachment) {
+      responseSubmission.attachment.hasAttachment = Boolean(
+        responseSubmission.attachment.cloudinaryPublicId
+      );
+      delete responseSubmission.attachment.cloudinaryPublicId;
+    }
+
     return res.status(201).json({
       success: true,
       message: "Assignment submitted successfully.",
-      data: { submission },
+      data: { submission: responseSubmission },
     });
   } catch (error) {
+    if (uploadedPublicId) {
+      try {
+        await deleteCloudPdf(uploadedPublicId);
+      } catch (cleanupError) {
+        console.error(
+          "Submission PDF cleanup error:",
+          cleanupError.message
+        );
+      }
+    }
+
     console.error("Submit assignment error:", error);
 
     return res.status(500).json({
@@ -481,7 +578,7 @@ const submitAssignment = async (req, res) => {
   }
 };
 
-// GET STUDENT SUBMISSIONS FOR AN ASSIGNMENT
+// GET STUDENT SUBMISSIONS FOR AN ASSIGNMENT (TEACHER)
 const getAssignmentSubmissions = async (req, res) => {
   try {
     const { id: assignmentId } = req.params;
@@ -515,10 +612,23 @@ const getAssignmentSubmissions = async (req, res) => {
       .populate("student", "name email")
       .sort({ submittedAt: -1 });
 
+    const result = submissions.map((submission) => {
+      const item = submission.toObject();
+
+      if (item.attachment) {
+        item.attachment.hasAttachment = Boolean(
+          item.attachment.cloudinaryPublicId
+        );
+        delete item.attachment.cloudinaryPublicId;
+      }
+
+      return item;
+    });
+
     return res.status(200).json({
       success: true,
-      count: submissions.length,
-      data: { submissions },
+      count: result.length,
+      data: { submissions: result },
     });
   } catch (error) {
     console.error("Get assignment submissions error:", error);
@@ -529,6 +639,114 @@ const getAssignmentSubmissions = async (req, res) => {
     });
   }
 };
+
+ // VIEW/DOWNLOAD A STUDENT'S SUBMITTED PDF (TEACHER ONLY)
+const getSubmissionAttachment = async (req, res) => {
+  try {
+    const { assignmentId, submissionId } = req.params;
+
+    if (
+      !isValidId(assignmentId) ||
+      !isValidId(submissionId)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid assignment or submission ID.",
+      });
+    }
+
+    // Find assignment
+    const assignment = await Assignment.findById(assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({
+        success: false,
+        message: "Assignment not found.",
+      });
+    }
+
+    // Only the teacher who created this assignment can access submissions
+    if (String(assignment.teacher) !== String(req.user._id)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the assignment teacher can view submitted PDFs.",
+      });
+    }
+
+    // Ensure this submission belongs to this assignment
+    const submission = await Submission.findOne({
+      _id: submissionId,
+      assignment: assignmentId,
+    });
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found for this assignment.",
+      });
+    }
+
+    const attachment = submission.attachment;
+    const publicId = attachment?.cloudinaryPublicId;
+
+    if (!publicId) {
+      return res.status(404).json({
+        success: false,
+        message: "This student has not uploaded a PDF.",
+      });
+    }
+
+    // Generate a short-lived URL for the authenticated Cloudinary PDF
+    const signedUrl = cloudinary.utils.private_download_url(
+      publicId,
+      "pdf",
+      {
+        resource_type: "raw",
+        type: "authenticated",
+        expires_at: Math.floor(Date.now() / 1000) + 60,
+      }
+    );
+
+    const fileResponse = await fetch(signedUrl);
+
+    if (!fileResponse.ok) {
+      console.error(
+        "Cloudinary submission PDF response:",
+        fileResponse.status
+      );
+
+      return res.status(502).json({
+        success: false,
+        message: "Unable to retrieve the student's PDF.",
+      });
+    }
+
+    const buffer = Buffer.from(await fileResponse.arrayBuffer());
+
+    const filename = (
+      attachment.originalName || "student-submission.pdf"
+    ).replace(/[\r\n"]/g, "_");
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", buffer.length);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${filename}"`
+    );
+
+    return res.status(200).send(buffer);
+  } catch (error) {
+    console.error("Get submission attachment error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to retrieve the student's PDF.",
+    });
+  }
+};
+
 
 // GRADE SUBMISSION
 const gradeSubmission = async (req, res) => {
@@ -611,10 +829,19 @@ const gradeSubmission = async (req, res) => {
 
     await submission.save();
 
+    const result = submission.toObject();
+
+    if (result.attachment) {
+      result.attachment.hasAttachment = Boolean(
+        result.attachment.cloudinaryPublicId
+      );
+      delete result.attachment.cloudinaryPublicId;
+    }
+
     return res.status(200).json({
       success: true,
       message: "Submission graded successfully.",
-      data: { submission },
+      data: { submission: result },
     });
   } catch (error) {
     console.error("Grade submission error:", error);
@@ -672,6 +899,15 @@ const getMySubmission = async (req, res) => {
       student: req.user._id,
     });
 
+    let submissionResult = submission ? submission.toObject() : null;
+
+    if (submissionResult?.attachment) {
+      submissionResult.attachment.hasAttachment = Boolean(
+        submissionResult.attachment.cloudinaryPublicId
+      );
+      delete submissionResult.attachment.cloudinaryPublicId;
+    }
+
     return res.status(200).json({
       success: true,
       data: {
@@ -684,7 +920,7 @@ const getMySubmission = async (req, res) => {
             assignment.attachment?.cloudinaryPublicId
           ),
         },
-        submission,
+        submission: submissionResult,
       },
     });
   } catch (error) {
@@ -703,6 +939,7 @@ module.exports = {
   getAssignmentAttachment,
   submitAssignment,
   getAssignmentSubmissions,
+   getSubmissionAttachment,
   gradeSubmission,
   getMySubmission,
 };

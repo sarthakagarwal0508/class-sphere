@@ -9,6 +9,7 @@ const {
   getAssignmentAttachment,
   submitAssignment,
   getAssignmentSubmissions,
+  getSubmissionAttachment,
   gradeSubmission,
   getMySubmission,
 } = require("../controllers/assignmentController");
@@ -42,6 +43,7 @@ router.post(
   "/assignments/:id/submit",
   protect,
   authorizeRoles("student"),
+  uploadPdf,
   submitAssignment
 );
 
@@ -65,5 +67,10 @@ router.get(
   authorizeRoles("student"),
   getMySubmission
 );
-
+router.get(
+  "/assignments/:assignmentId/submissions/:submissionId/attachment",
+  protect,
+  authorizeRoles("teacher"),
+  getSubmissionAttachment
+);
 module.exports = router;
