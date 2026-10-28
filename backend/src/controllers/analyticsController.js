@@ -215,7 +215,7 @@ const getTeacherClassroomAnalytics = async (req, res) => {
 
     const submissions = await Submission.find({
       assignment: { $in: assignmentIds },
-    }).select("student status marksObtained");
+    }).select("student assignment status marksObtained");
 
     const totalPossibleSubmissions =
       classroom.students.length * assignments.length;
