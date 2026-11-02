@@ -13,14 +13,16 @@ const MODEL_WINDOW_DAYS = 90;
 
 /**
  * Calculate the six features expected by the FastAPI/XGBoost service.
- * Day 0 is courseStartDate. The observation window includes all of day 90,
- * therefore its exclusive end is courseStartDate + 91 days.
+ * Day 0 is courseStartDate. Metrics include data up to the current request time,
+ * capped at the end of course day 90. The optional end argument makes the
+ * observation cutoff explicit and keeps feature calculation aligned with DB queries.
  */
 const calculateStudentMetrics = (
   assignments,
   studentSubmissions,
   activityEvents,
-  courseStartDate
+  courseStartDate,
+  observationEndExclusive
 ) => {
   const courseStart = new Date(courseStartDate);
   if (Number.isNaN(courseStart.getTime())) {
@@ -28,7 +30,22 @@ const calculateStudentMetrics = (
   }
 
   const windowStart = courseStart.getTime();
-  const windowEndExclusive = windowStart + (MODEL_WINDOW_DAYS + 1) * DAY_IN_MS;
+  const maxWindowEndExclusive =
+    windowStart + (MODEL_WINDOW_DAYS + 1) * DAY_IN_MS;
+  const requestedWindowEnd =
+    observationEndExclusive === undefined
+      ? maxWindowEndExclusive
+      : new Date(observationEndExclusive).getTime();
+
+  if (!Number.isFinite(requestedWindowEnd)) {
+    throw new TypeError("A valid observationEndExclusive is required.");
+  }
+
+  // Never include data before the course starts or after course day 90.
+  const windowEndExclusive = Math.max(
+    windowStart,
+    Math.min(requestedWindowEnd, maxWindowEndExclusive)
+  );
 
   const assignmentMap = new Map(
     assignments.map((assignment) => [String(assignment._id), assignment])
@@ -172,18 +189,16 @@ const getClassroomRiskPredictions = async (req, res) => {
       });
     }
 
-    const predictionEligibleFrom = new Date(
-      courseStartDate.getTime() + MODEL_WINDOW_DAYS * DAY_IN_MS
+    // Send a prediction request on any course day. Use data available up to
+    // this request time, while retaining the maximum day-90 observation cap.
+    const maxWindowEndExclusive =
+      courseStartDate.getTime() + (MODEL_WINDOW_DAYS + 1) * DAY_IN_MS;
+    const observationEndExclusive = new Date(
+      Math.max(
+        courseStartDate.getTime(),
+        Math.min(Date.now(), maxWindowEndExclusive)
+      )
     );
-
-    if (Date.now() < predictionEligibleFrom.getTime()) {
-      return res.status(409).json({
-        success: false,
-        code: "MODEL_WINDOW_NOT_REACHED",
-        message: "Risk predictions are available only from day 90 of the course.",
-        data: { courseStartDate, predictionEligibleFrom },
-      });
-    }
 
     if (classroom.students.length === 0) {
       return res.status(200).json({
@@ -205,9 +220,7 @@ const getClassroomRiskPredictions = async (req, res) => {
 
     const studentIds = classroom.students.map((student) => student._id);
     const assignmentIds = assignments.map((assignment) => assignment._id);
-    const windowEndExclusive = new Date(
-      courseStartDate.getTime() + (MODEL_WINDOW_DAYS + 1) * DAY_IN_MS
-    );
+    const windowEndExclusive = observationEndExclusive;
 
     const [submissions, activityEvents] = await Promise.all([
       assignmentIds.length
@@ -248,7 +261,8 @@ const getClassroomRiskPredictions = async (req, res) => {
         assignments,
         submissionsByStudent.get(key) || [],
         activityByStudent.get(key) || [],
-        courseStartDate
+        courseStartDate,
+        observationEndExclusive
       );
       return { student, metrics };
     });
@@ -286,12 +300,14 @@ const getClassroomRiskPredictions = async (req, res) => {
         model: {
           name: "XGBoost",
           target: "Fail or Withdrawn",
-          observationWindowDays: 90,
-          day90Included: true,
+          observationWindowDays: MODEL_WINDOW_DAYS,
+          day90Included:
+            observationEndExclusive.getTime() >
+            courseStartDate.getTime() + MODEL_WINDOW_DAYS * DAY_IN_MS,
           threshold: 0.35,
         },
         courseStartDate,
-        predictionEligibleFrom,
+        observationWindowEnd: observationEndExclusive,
         totalStudents: students.length,
         predictedStudents: predictions.length,
         atRiskStudents: students.filter((item) => item.prediction.at_risk).length,
@@ -302,7 +318,7 @@ const getClassroomRiskPredictions = async (req, res) => {
         disclaimer:
           "Risk scores are model estimates for teacher support, not diagnoses or guarantees. Do not use them as the sole basis for decisions affecting a student.",
         activityDataNote:
-          "active_days counts distinct course-relative days with recorded student activity (assignment list/submission, quiz list/attempt, study-material list/download, or doubt creation/reply). Only events from day 0 through day 90 are included.",
+          "active_days counts distinct course-relative days with recorded student activity (assignment list/submission, quiz list/attempt, study-material list/download, or doubt creation/reply). Events from course day 0 through the prediction request time are included, capped at course day 90.",
       },
     });
   } catch (error) {
@@ -317,4 +333,4 @@ const getClassroomRiskPredictions = async (req, res) => {
 module.exports = {
   calculateStudentMetrics,
   getClassroomRiskPredictions,
-};
+};  

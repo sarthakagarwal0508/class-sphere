@@ -141,3 +141,61 @@ test("uses course-relative days rather than calendar dates for active_days", () 
 
   assert.equal(result.active_days, 2);
 });
+
+test("uses only data available up to an early prediction request time", () => {
+  const requestTime = new Date(atDay(20).getTime() + 12 * 60 * 60 * 1000);
+  const result = calculateStudentMetrics(
+    assignments,
+    [
+      {
+        assignment: "assignment-1",
+        submittedAt: atDay(11),
+        status: "graded",
+        marksObtained: 80,
+      },
+      {
+        assignment: "assignment-2",
+        submittedAt: atDay(21),
+        status: "graded",
+        marksObtained: 25,
+      },
+    ],
+    [
+      { occurredAt: atDay(10) },
+      { occurredAt: atDay(20) },
+      { occurredAt: new Date(atDay(20).getTime() + 13 * 60 * 60 * 1000) },
+    ],
+    start,
+    requestTime
+  );
+
+  assert.equal(result.num_assessments_done, 1);
+  assert.equal(result.avg_score, 80);
+  assert.equal(result.active_days, 3);
+});
+
+test("never includes data after course day 90 even when request time is later", () => {
+  const result = calculateStudentMetrics(
+    assignments,
+    [
+      {
+        assignment: "assignment-1",
+        submittedAt: atDay(90),
+        status: "graded",
+        marksObtained: 80,
+      },
+      {
+        assignment: "assignment-2",
+        submittedAt: atDay(91),
+        status: "graded",
+        marksObtained: 25,
+      },
+    ],
+    [{ occurredAt: atDay(90) }, { occurredAt: atDay(91) }],
+    start,
+    atDay(120)
+  );
+
+  assert.equal(result.num_assessments_done, 1);
+  assert.equal(result.active_days, 1);
+});

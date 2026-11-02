@@ -19,22 +19,6 @@ class ModelServiceError extends Error {
 
 const getModelBaseUrl = () => {
   const value = process.env.MODEL_API_URL;
-  const apiKey = process.env.MODEL_API_KEY;
-
-  if (!apiKey) {
-    throw new ModelServiceError(
-      "MODEL_API_KEY is not configured.",
-      "MODEL_API_KEY_NOT_CONFIGURED",
-      503
-    );
-  }
-  if (apiKey.length < 32) {
-    throw new ModelServiceError(
-      "MODEL_API_KEY must contain at least 32 characters.",
-      "MODEL_API_KEY_TOO_WEAK",
-      503
-    );
-  }
 
   if (!value) {
     throw new ModelServiceError(
@@ -188,7 +172,6 @@ const postJson = async (path, body) => {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "X-Model-API-Key": process.env.MODEL_API_KEY,
         },
         body: JSON.stringify(body),
         signal: controller.signal,
